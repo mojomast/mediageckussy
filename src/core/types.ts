@@ -85,6 +85,16 @@ export interface PackageManifest {
   mediaType: string;
   packageTier: string;
   generatedFiles: GeneratedFileRecord[];
+  hydrationLog?: Array<{
+    field?: string;
+    file?: string;
+    provider: string;
+    model: string;
+    confidence: number;
+    status: "pending" | "accepted" | "rejected";
+    generatedAt: string;
+    tokenUsage: { prompt: number; completion: number };
+  }>;
   requiredFiles: string[];
   departments: Array<{
     name: string;

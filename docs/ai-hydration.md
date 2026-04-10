@@ -24,16 +24,32 @@ Suggested defaults:
 - Ollama: use it for local-only experiments or offline-ish workflows.
 
 ## Hydration Modes
-<!-- TODO -->
+- Field mode hydrates one canon field and stores the result as a pending suggestion in `00_admin/ai_suggestions.yaml`.
+- Document mode fills `TODO`, `TBD`, and `{{placeholder}}` markers in generated docs while leaving protected manual-edit blocks untouched.
+- Bulk mode runs field hydration first, then document hydration, and writes `00_admin/hydration_report.yaml`.
 
 ## CLI Command Reference
-<!-- TODO -->
+- `hydrate --canon <path> --out <path> --field canon.logline`
+- `hydrate --canon <path> --out <path> --file 06_press_kit/press_kit.md`
+- `hydrate --canon <path> --out <path> --mode bulk`
+- `hydrate accept --out <path> --field canon.logline`
+- `hydrate accept --out <path> --all --min-confidence 0.8`
+- `hydrate reject --out <path> --field canon.logline`
+- `hydrate status --out <path>`
 
 ## Suggestion Workflow
-<!-- TODO -->
+Suggestions are written to `00_admin/ai_suggestions.yaml` with provider, model, token usage, and confidence metadata. They stay pending until a user explicitly accepts or rejects them.
+
+Accepting a suggestion updates the canon field to `status: draft`, `owner: agent`, and carries over the model confidence. Rejecting removes the sidecar entry and marks the manifest hydration log accordingly.
 
 ## Prompt Library
-<!-- TODO -->
+Prompt templates live under `src/ai/prompts/`.
+
+- `base-system.md` contains the shared instruction frame.
+- Each stable media type has its own `system.md`.
+- Field prompts live in `src/ai/prompts/<media-type>/fields/`.
+
+Templates use Handlebars-style interpolation against canon values so teams can customize prompts without changing code.
 
 ## Token Usage & Cost Awareness
-<!-- TODO -->
+Each suggestion records prompt and completion token counts. Bulk hydration also writes token totals to `00_admin/hydration_report.yaml` so teams can keep AI use explicit, reviewable, and budget-aware.

@@ -26,6 +26,13 @@ export async function loadCanon(canonPath: string): Promise<CanonProject> {
   return canonProjectSchema.parse(normalized);
 }
 
+export async function saveCanon(canonPath: string, canon: CanonProject): Promise<void> {
+  const serialized = path.extname(canonPath).toLowerCase().includes("json")
+    ? JSON.stringify(canon, null, 2)
+    : YAML.stringify(canon);
+  await fs.writeFile(canonPath, serialized, "utf8");
+}
+
 export function fingerprintCanon(canon: CanonProject): string {
   return crypto.createHash("sha256").update(JSON.stringify(canon)).digest("hex").slice(0, 12);
 }

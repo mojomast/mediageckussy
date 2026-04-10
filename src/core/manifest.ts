@@ -21,11 +21,36 @@ export function buildManifest(input: {
     mediaType: input.mediaType,
     packageTier: input.packageTier,
     generatedFiles: input.generatedFiles,
+    hydrationLog: [],
     requiredFiles: input.requiredFiles,
     departments: [...departmentMap.entries()].map(([name, fileCount]) => ({ name, fileCount })),
   };
 }
 
+export async function readManifest(outputDir: string): Promise<PackageManifest> {
+  return fs.readJson(path.join(outputDir, "00_admin/package_manifest.json"));
+}
+
 export async function writeManifest(outputDir: string, manifest: PackageManifest) {
   await fs.writeJson(path.join(outputDir, "00_admin/package_manifest.json"), manifest, { spaces: 2 });
+}
+
+export async function appendHydrationLog(outputDir: string, entry: NonNullable<PackageManifest["hydrationLog"]>[number]) {
+  const manifest = await readManifest(outputDir);
+  manifest.hydrationLog = [...(manifest.hydrationLog ?? []), entry];
+  await writeManifest(outputDir, manifest);
+}
+
+export async function updateHydrationLogStatus(
+  outputDir: string,
+  target: { field?: string; file?: string },
+  status: "pending" | "accepted" | "rejected",
+) {
+  const manifest = await readManifest(outputDir);
+  manifest.hydrationLog = (manifest.hydrationLog ?? []).map((entry) => {
+    const matchesField = target.field && entry.field === target.field;
+    const matchesFile = target.file && entry.file === target.file;
+    return matchesField || matchesFile ? { ...entry, status } : entry;
+  });
+  await writeManifest(outputDir, manifest);
 }

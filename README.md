@@ -224,6 +224,22 @@ Use stable region IDs in custom templates. Nested markers are not supported, and
   - protected human-edit block preservation
   - bundle redaction validation
 
+## AI Hydration
+- AI hydration is opt-in and never runs silently during generation.
+- Providers are configured via environment variables in `.env.example`.
+- Field hydration stores pending suggestions in `00_admin/ai_suggestions.yaml`.
+- Document hydration fills placeholders in generated docs while respecting protected manual-edit regions.
+- Bulk hydration writes a summary to `00_admin/hydration_report.yaml`.
+
+Examples:
+
+```bash
+npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --field canon.logline
+npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --file 06_press_kit/press_kit.md
+npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --mode bulk
+npx tsx src/cli/index.ts hydrate status --out output/neon-aftercare
+```
+
 ## Canon Model
 - Input format: YAML or JSON
 - Required canon sections include title, logline, format, genre, tone, audience, comps, duration/count, themes, world/setting, assumptions, publication flags, characters, and episodes.
