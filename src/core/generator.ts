@@ -32,8 +32,10 @@ export async function generatePackage(options: GenerateOptions) {
   const mediaType = options.mediaType ?? canon.canon.format.value;
   const formatPack = getFormatPack(mediaType);
 
-  if (!formatPack.supported) {
-    throw new Error(`Format pack for ${mediaType} is only stubbed in this MVP.`);
+  if (formatPack.status === "stubbed" || !formatPack.supported) {
+    throw new Error(
+      `Format "${mediaType}" is not yet implemented.\nRun formats --all to see all available formats including stubs.`,
+    );
   }
 
   const outputDir = options.outputDir;

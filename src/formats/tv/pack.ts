@@ -3,6 +3,7 @@ import type { FormatPack } from "../../core/types.js";
 export const tvFormatPack: FormatPack = {
   mediaType: "tv_series",
   supported: true,
+  status: "stable",
   directories: [
     "00_admin",
     "01_development",

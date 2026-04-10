@@ -17,6 +17,7 @@ export function getFormatPack(mediaType: string): FormatPack {
   return pack;
 }
 
-export function listFormats() {
-  return packs.map((pack) => ({ mediaType: pack.mediaType, supported: pack.supported }));
+export function listFormats(options?: { all?: boolean }) {
+  const filtered = options?.all ? packs : packs.filter((pack) => pack.status === "stable");
+  return filtered.map((pack) => ({ mediaType: pack.mediaType, status: pack.status, supported: pack.supported }));
 }

@@ -4,6 +4,7 @@ function placeholderFormatPack(mediaType: string): FormatPack {
   return {
     mediaType,
     supported: false,
+    status: "stubbed",
     directories: ["00_admin", "01_development", "16_ops"],
     requiredFiles: ["README.md", "HANDOFF.md", "00_admin/canon_lock.yaml", "00_admin/package_manifest.json"],
     templates: [],

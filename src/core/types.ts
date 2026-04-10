@@ -122,6 +122,7 @@ export interface TemplateDefinition {
 export interface FormatPack {
   mediaType: string;
   supported: boolean;
+  status: "stable" | "experimental" | "stubbed";
   directories: string[];
   requiredFiles: string[];
   templates: TemplateDefinition[];

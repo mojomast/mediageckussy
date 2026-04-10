@@ -3,6 +3,7 @@ import type { FormatPack } from "../../core/types.js";
 export const webSeriesPack: FormatPack = {
   mediaType: "web_series",
   supported: true,
+  status: "stable",
   directories: [
     "00_admin",
     "01_development",

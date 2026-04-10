@@ -16,7 +16,12 @@ async function main() {
   }
 
   if (command === "formats") {
-    console.log(JSON.stringify(listFormats(), null, 2));
+    const showAll = process.argv.includes("--all");
+    const formats = listFormats({ all: showAll }).map((item) => ({
+      mediaType: item.status === "stubbed" ? `${item.mediaType} [STUBBED]` : item.mediaType,
+      status: item.status,
+    }));
+    console.log(JSON.stringify(formats, null, 2));
     process.exit(0);
   }
 

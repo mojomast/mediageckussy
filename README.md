@@ -71,9 +71,8 @@ Current supported outputs are intentionally scaffold-first: they give you a cons
 - `feature_film`: implemented in MVP
 - `podcast`: implemented in MVP
 - `web_series`: implemented in MVP
-- `game`: stubbed
-- `book_comic`: stubbed
-- `album_music_project`: stubbed
+
+Stub formats (`game`, `book_comic`, `album_music_project`) are in the registry but not yet implemented. Use `formats --all` to see them.
 
 ## Install
 ```bash
@@ -128,6 +127,12 @@ List format packs:
 
 ```bash
 npx tsx src/cli/index.ts formats
+```
+
+Show stable and stubbed formats:
+
+```bash
+npx tsx src/cli/index.ts formats --all
 ```
 
 Print onboarding steps for a sample package:

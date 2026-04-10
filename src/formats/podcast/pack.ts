@@ -3,6 +3,7 @@ import type { FormatPack } from "../../core/types.js";
 export const podcastPack: FormatPack = {
   mediaType: "podcast",
   supported: true,
+  status: "stable",
   directories: [
     "00_admin",
     "01_development",
