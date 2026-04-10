@@ -1,124 +1,114 @@
-import { useMemo, useState } from "react";
-import type { ProjectSummary, StudioOptions } from "../lib/api";
+import type { ProjectSummary } from "../lib/api";
 
 type Props = {
   projects: ProjectSummary[];
-  options: StudioOptions | null;
   status: string;
   onOpen: (slug: string) => void;
   onStartInterview: () => void;
-  onCreate: (input: {
-    title: string;
-    mediaType: string;
-    packageTier: "light" | "standard" | "full";
-    provider: string;
-    model: string;
-  }) => Promise<void>;
 };
 
-export function ProjectDashboard({ projects, options, status, onOpen, onCreate, onStartInterview }: Props) {
-  const availableProviders = useMemo(() => options?.providers.filter((provider) => provider.available) ?? [], [options]);
-  const [title, setTitle] = useState("Night Signal");
-  const [mediaType, setMediaType] = useState(options?.formats[0] ?? "tv_series");
-  const [packageTier, setPackageTier] = useState<"light" | "standard" | "full">("full");
-  const [provider, setProvider] = useState(availableProviders[0]?.id ?? "openrouter");
-  const [model, setModel] = useState(availableProviders[0]?.model ?? "google/gemini-2.5-flash-lite");
+export function ProjectDashboard({ projects, status, onOpen, onStartInterview }: Props) {
+  const hasProjects = projects.length > 0;
 
   return (
     <main className="dashboard-layout">
-      <section className="panel interview-banner">
-        <div>
-          <div className="eyebrow">◆ New here? Start with an interview →</div>
-          <p>Answer a few questions and we&apos;ll build your package.</p>
-        </div>
-        <button className="primary-button" onClick={onStartInterview}>Start Interview</button>
-      </section>
+      {!hasProjects && (
+        <section className="dashboard-empty dot-grid">
+          <div className="dashboard-empty__glyph text-glow">◈</div>
+          <h1 className="dashboard-empty__title text-display">G.E.C.K.</h1>
+          <p className="dashboard-empty__subtitle">Media Package Generator</p>
+          <div className="dashboard-empty__rule" aria-hidden="true" />
+          <p className="dashboard-empty__unit">UNIT v2.0.0 // FUTURE-TEC DIVISION</p>
+          <div className="dashboard-empty__rule" aria-hidden="true" />
+          <p className="dashboard-empty__lead">
+            This kit contains everything required to establish a viable media project in the post-development wasteland.
+          </p>
+          <div className="dashboard-empty__contents">
+            <p>Contents include:</p>
+            <ul>
+              <li>Canon lock file and field provenance system</li>
+              <li>AI-assisted copy hydration</li>
+              <li>Creative asset generation</li>
+              <li>Static site export and archive delivery</li>
+            </ul>
+          </div>
+          <button className="btn btn--primary dashboard-empty__cta" onClick={onStartInterview}>Initialize New Project</button>
+          <div className="divider-starburst">Or Load Existing Canon</div>
+          <div className="dashboard-dropzone" role="presentation">
+            <span>DROP canon.yaml HERE</span>
+          </div>
+          <p className="status-inline">{status}</p>
+        </section>
+      )}
 
-      <section className="panel launch-panel">
-        <div className="eyebrow">Hosted Demo</div>
-        <h1>Build a project, iterate with built-in inference, then export the package.</h1>
-        <p className="muted">This Studio pass is optimized for a hosted demo flow: browser-first project creation, prompt-guided hydration, live editing, and downloadable package archives.</p>
-        <div className="form-grid">
-          <label>
-            <span>Project title</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} />
-          </label>
-          <label>
-            <span>Format</span>
-            <select value={mediaType} onChange={(event) => setMediaType(event.target.value)}>
-              {(options?.formats ?? []).map((format) => <option key={format} value={format}>{format}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Package tier</span>
-            <select value={packageTier} onChange={(event) => setPackageTier(event.target.value as "light" | "standard" | "full") }>
-              {(options?.packageTiers ?? ["light", "standard", "full"]).map((tier) => <option key={tier} value={tier}>{tier}</option>)}
-            </select>
-          </label>
-          <label>
-            <span>Inference provider</span>
-            <select
-              value={provider}
-              onChange={(event) => {
-                const nextProvider = availableProviders.find((item) => item.id === event.target.value);
-                setProvider(event.target.value);
-                setModel(nextProvider?.model ?? "");
-              }}
-            >
-              {availableProviders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
-          <label className="full-width">
-            <span>Model</span>
-            <input value={model} onChange={(event) => setModel(event.target.value)} />
-          </label>
-        </div>
-        <div className="row gap wrap">
-          <button className="primary-button" onClick={() => onCreate({ title, mediaType, packageTier, provider, model })}>Create Project</button>
-          <span className="status-inline">{status}</span>
-        </div>
-      </section>
+      {hasProjects && (
+        <>
+          <section className="card card--glow interview-banner dashboard-banner">
+            <div>
+              <div className="dashboard-banner__title">◈ NEW PROJECT? START WITH AN INTERVIEW</div>
+              <p>Answer ~15 questions. Walk away with a full package.</p>
+            </div>
+            <button className="btn btn--primary" onClick={onStartInterview}>Begin Interview →</button>
+          </section>
 
-      <section className="dashboard-grid">
-        {projects.length === 0 && (
-          <article className="panel empty-state-card">
-            <div className="eyebrow">No Projects Yet</div>
-            <h2>Start with the interview or create a starter package.</h2>
-            <p className="muted">Your hosted demo projects will appear here once they are generated into `output/`.</p>
-            <div className="row gap wrap">
-              <button className="primary-button" onClick={onStartInterview}>Start Interview</button>
-              <button onClick={() => onCreate({ title, mediaType, packageTier, provider, model })}>Create Project</button>
-            </div>
-          </article>
-        )}
+          <section className="dashboard-grid">
+            {projects.map((project) => {
+              const suggestionTone = project.pendingSuggestionCount > 0 ? "text-glow--amber" : "muted";
+              const suggestionText = project.pendingSuggestionCount > 0
+                ? `${project.pendingSuggestionCount} suggestions pending`
+                : "0 suggestions pending";
 
-        {projects.map((project) => (
-          <article key={project.slug} className="card project-card">
-            <div className="row between wrap">
-              <h2>{project.title}</h2>
-              <span className="format-badge">{project.mediaType}</span>
-            </div>
-            <div className="row between wrap card-topline">
-              <p>{project.slug} · {project.packageTier}</p>
-              <span className={`badge ${project.validation.ok ? "ok" : "warn"}`}>{project.validation.ok ? "Ready" : "Needs Work"}</span>
-            </div>
-            <p className="muted">Inference: {project.settings?.llmProvider ?? "default"} · {project.settings?.llmModel ?? ""}</p>
-            <div className="row between wrap metric-row">
-              <span>Completeness</span>
-              <strong>{project.validation.completenessScore}%</strong>
-            </div>
-            <div className="progress"><div style={{ width: `${project.validation.completenessScore}%` }} /></div>
-            <div className="row between wrap project-meta-row">
-              <span className="muted">{project.pendingSuggestionCount} pending suggestions</span>
-              <span className={`badge ${project.pendingSuggestionCount > 0 ? "warn" : "ok"}`}>{project.pendingSuggestionCount > 0 ? "Review Needed" : "Suggestions Clear"}</span>
-            </div>
-            <div className="row gap wrap">
-              <button onClick={() => onOpen(project.slug)}>Open Workspace</button>
-              <a className="button-link" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
-            </div>
-          </article>
-        ))}
-      </section>
+              return (
+                <article key={project.slug} className="dossier project-dossier card--glow">
+                  <div className="dossier__header">
+                    <span>Dossier</span>
+                    <div className="row gap wrap">
+                      <span className="badge badge--dim">{formatLabel(project.mediaType)}</span>
+                      <span className={`badge ${project.validation.ok ? "badge--ok" : "badge--warn"}`}>
+                        {project.validation.ok ? "Draft" : "Review"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="dossier__body project-dossier__body">
+                    <h2 className="project-dossier__title text-display">{project.title}</h2>
+                    <p className="project-dossier__meta">
+                      Generated: {formatGeneratedAt(project.generatedAt)} // <span className={suggestionTone}>{suggestionText}</span>
+                    </p>
+                    <div className="project-dossier__progress">
+                      <div className="progress-bar" aria-label="Project completeness">
+                        <div className="progress-bar__fill" style={{ width: `${project.validation.completenessScore}%` }} />
+                      </div>
+                      <span>{project.validation.completenessScore}% complete</span>
+                    </div>
+                    <div className="row gap wrap project-dossier__actions">
+                      <button className="btn btn--ghost" onClick={() => onOpen(project.slug)}>Open →</button>
+                      <a className="btn btn--ghost" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </section>
+        </>
+      )}
     </main>
   );
+}
+
+function formatGeneratedAt(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  return `${year}-${month}-${day} // ${hours}:${minutes}`;
+}
+
+function formatLabel(mediaType: string) {
+  return mediaType.replace(/_/g, " ").toUpperCase();
 }

@@ -102,7 +102,6 @@ export function App() {
     >
       {!inInterview && tab === "Dashboard" && <ProjectDashboard
         projects={projects}
-        options={options}
         status={status}
         onStartInterview={() => {
           setView({ kind: "interview" });
@@ -112,22 +111,6 @@ export function App() {
           setSelectedSlug(slug);
           setView({ kind: "workspace", tab: "Canon" });
           setStatus(`Opened ${slug}.`);
-        }}
-        onCreate={async (input) => {
-          setStatus("Creating project and generating initial package...");
-          const result = await api.createProject(input, (event) => {
-            if (event.event === "started") {
-              setStatus("Project scaffold created. Generating package...");
-            }
-          });
-          const doneEvent = result.events.find((event) => event.event === "done");
-          const slug = typeof doneEvent?.data === "object" && doneEvent?.data && "slug" in doneEvent.data ? String((doneEvent.data as { slug: string }).slug) : null;
-          await refreshProjects();
-          if (slug) {
-            setSelectedSlug(slug);
-            setView({ kind: "workspace", tab: "Canon" });
-            setStatus(`Project ${slug} is ready.`);
-          }
         }}
       />}
 
