@@ -1,5 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Mediageckussy Studio favicon">
-  <rect width="64" height="64" rx="14" fill="#f1e5d4"/>
-  <path d="M32 10 50 32 32 54 14 32Z" fill="#01696f"/>
-  <circle cx="32" cy="32" r="7" fill="#f1e5d4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" fill="#080a08"/>
+  <polygon
+    points="16,4 28,16 16,28 4,16"
+    fill="none"
+    stroke="#39ff14"
+    stroke-width="2"
+  />
+  <polygon
+    points="16,8 24,16 16,24 8,16"
+    fill="#39ff14"
+    opacity="0.2"
+  />
+  <circle cx="16" cy="16" r="3" fill="#39ff14"/>
 </svg>
