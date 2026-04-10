@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{publicCanon.title}} | Press</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <main class="page">
+      <a href="index.html">Home</a>
+      <h1>Press</h1>
+      <p>{{publicCanon.logline}}</p>
+      <h2>Comparable Projects</h2>
+      <ul>
+        {{#each canon.comps.value}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ul>
+      <p>This page uses only approved public canon values in the MVP.</p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{publicCanon.title}} | Story</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <main class="page">
+      <a href="index.html">Home</a>
+      <h1>Story</h1>
+      {{#each publicCanon.structure}}
+      <section class="card stack">
+        <h2>{{title}}</h2>
+        <p>{{summary}}</p>
+      </section>
+      {{/each}}
+    </main>
+  </body>
+</html>

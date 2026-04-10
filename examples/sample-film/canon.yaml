@@ -1,0 +1,247 @@
+id: glass-harbor
+slug: glass-harbor
+package_tier: full
+outputs:
+  website:
+    enabled: true
+  press_bundle:
+    enabled: true
+  partner_bundle:
+    enabled: true
+canon:
+  title:
+    value: Glass Harbor
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+    visibility: public
+  logline:
+    value: When a drowned luxury marina starts returning impossible objects to shore, a bankrupt salvage diver and an estranged architect uncover a real-estate fraud built on engineered memory loss.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - README.md
+      - 01_development/feature_treatment.md
+      - site/index.html
+    visibility: public
+  format:
+    value: feature_film
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - HANDOFF.md
+    visibility: public
+  genre:
+    value: neo-noir mystery drama
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.92
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+    visibility: public
+  tone:
+    value:
+      - atmospheric
+      - melancholic
+      - precise
+      - quietly unsettling
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 01_development/one_page_film_overview.md
+      - 03_story_design/visual_approach_lookbook.md
+      - site/about.html
+    visibility: public
+  audience:
+    value:
+      - arthouse thriller audience
+      - festival programmers
+      - prestige indie drama viewers
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.86
+    downstream_dependencies:
+      - 10_finance/financing_memo.md
+      - 14_distribution/festival_strategy.md
+    visibility: internal
+  comps:
+    value:
+      - Decision to Leave
+      - Night Moves
+      - Chinatown
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.81
+    downstream_dependencies:
+      - 01_development/one_page_film_overview.md
+      - 06_press_kit/press_kit.md
+      - site/press.html
+    visibility: public
+  duration_count:
+    value: 118 minute feature
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.94
+    downstream_dependencies:
+      - README.md
+      - site/index.html
+      - 14_distribution/festival_strategy.md
+    visibility: public
+  themes:
+    value:
+      - memory as infrastructure
+      - luxury built on erasure
+      - debt, inheritance, and guilt
+      - the cost of recovering truth
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.88
+    downstream_dependencies:
+      - 01_development/feature_treatment.md
+      - site/about.html
+    visibility: public
+  world_setting:
+    value: Set in a coastal redevelopment zone where emptied shipyards have been converted into high-end marinas, data centers, and memory-care real estate, the film treats the waterfront as both graveyard and speculative asset.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.92
+    downstream_dependencies:
+      - 01_development/feature_treatment.md
+      - 03_story_design/visual_approach_lookbook.md
+      - site/about.html
+    visibility: public
+  production_assumptions:
+    value:
+      - location-heavy waterfront shoot with contained interiors
+      - underwater work achieved through a mix of tank inserts and controlled practical work
+      - modest ensemble with two leads and institutional supporting cast
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.73
+    downstream_dependencies:
+      - 10_finance/feature_budget_top_sheet.md
+    visibility: internal
+  business_assumptions:
+    value:
+      - position as prestige thriller for festival launch and specialty distribution
+      - partner materials should emphasize contained production scale and visual distinctiveness
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.7
+    downstream_dependencies:
+      - 10_finance/financing_memo.md
+      - site/partners.html
+    visibility: internal
+  legal_assumptions:
+    value:
+      - all marina, care-facility, and redevelopment references must remain fictionalized
+      - title and premise require trademark and rights clearance review before market use
+    status: draft
+    owner: legal
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.72
+    downstream_dependencies:
+      - 11_legal/rights_and_chain_of_title.md
+      - 16_ops/missing_items_report.md
+    visibility: internal
+  publication_flags:
+    value:
+      site_enabled: true
+      partner_bundle_enabled: true
+      press_bundle_enabled: true
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - HANDOFF.md
+      - 16_ops/approval_workflow.md
+    visibility: internal
+  characters:
+    value:
+      - id: lena-voss
+        name: Lena Voss
+        role: salvage diver
+        description: A commercially licensed diver who knows the harbor's dead zones better than the developers selling waterfront serenity.
+        visibility: public
+      - id: ellis-kade
+        name: Ellis Kade
+        role: architect
+        description: A disgraced designer returning home to discover his most successful project may have been built to conceal a crime.
+        visibility: public
+      - id: eva-march
+        name: Eva March
+        role: marina operator
+        description: A polished executive whose talent for civic reinvention depends on nobody auditing what was erased to make it possible.
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.93
+    downstream_dependencies:
+      - 02_scripts/feature_screenplay.md
+      - 06_press_kit/press_kit.md
+      - site/characters.html
+    visibility: public
+  episodes:
+    value:
+      - code: FILM
+        title: Glass Harbor
+        logline: Feature-film placeholder entry for shared canon compatibility.
+        status: approved
+        visibility: internal
+    status: approved
+    owner: system
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies: []
+    visibility: internal
+  structure:
+    value:
+      - id: act-i
+        title: Act I - The Return
+        summary: Lena retrieves a luxury yacht's black box after a storm and finds traces of objects that should have been logged as destroyed years earlier.
+        visibility: public
+      - id: act-ii-a
+        title: Act II-A - The Model District
+        summary: Ellis helps decode the marina's design history, revealing that the redevelopment plan doubled as a map of suppressed claims and missing residents.
+        visibility: public
+      - id: act-ii-b
+        title: Act II-B - The Inventory Of Loss
+        summary: As Lena and Ellis dig deeper, recovered artifacts begin triggering selective memory collapses among the people meant to benefit from the district's renewal.
+        visibility: public
+      - id: act-iii
+        title: Act III - Low Tide Disclosure
+        summary: During a blackout evacuation, the harbor gives up the final proof, forcing the city to choose between market stability and public truth.
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 01_development/feature_treatment.md
+      - 02_scripts/feature_screenplay.md
+      - site/story.html
+    visibility: public

@@ -1,0 +1,25 @@
+# HANDOFF
+
+## Status
+- Generated package for `{{canon.title.value}}`
+- Media type: `{{canon.format.value}}`
+- Package tier: `{{project.package_tier}}`
+- Website export enabled: `{{project.outputs.website.enabled}}`
+
+## First Files To Read
+- `README.md`
+- `00_admin/canon_lock.yaml`
+- `00_admin/package_manifest.json`
+- `16_ops/missing_items_report.md`
+- `01_development/series_bible.md`
+- `06_press_kit/press_kit.md`
+
+## Generation Notes
+- Canon-first generation with lock metadata preserved in `00_admin/canon_lock.yaml`
+- Downstream outputs are marked with canon fingerprints for stale-output detection
+- Public website pages are generated only from approved public fields
+
+## Operator Notes
+- Re-run full generation after canon edits that change title, logline, visibility, characters, or episodes
+- Use partial regeneration for a single file or department when making scoped updates
+- Review `16_ops/validation_report.json` before external handoff

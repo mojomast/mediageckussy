@@ -1,0 +1,80 @@
+:root {
+  color-scheme: dark;
+  --bg: #0a0a0f;
+  --panel: #161621;
+  --text: #f4f1ea;
+  --muted: #a5a0b5;
+  --accent: #8df7d8;
+  --border: #2b2a3a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(180deg, #0a0a0f 0%, #141420 100%);
+  color: var(--text);
+}
+
+a {
+  color: var(--accent);
+}
+
+.site-header,
+.page,
+.hero,
+.panel {
+  width: min(1100px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.site-header {
+  padding: 1.25rem 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+nav {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero,
+.panel,
+.card {
+  background: rgba(22, 22, 33, 0.88);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.hero,
+.panel,
+.page {
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+}
+
+.eyebrow,
+.meta {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.card {
+  padding: 1rem;
+}
+
+.stack {
+  margin-bottom: 1rem;
+}

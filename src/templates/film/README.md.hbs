@@ -1,0 +1,45 @@
+# {{canon.title.value}}
+
+## Purpose
+Index the generated feature film package for creative, finance, legal, press, partner, and ops readers.
+
+## Package Summary
+{{canon.logline.value}}
+
+## Project Snapshot
+- Format: `{{canon.format.value}}`
+- Genre: `{{canon.genre.value}}`
+- Duration / Count: `{{canon.duration_count.value}}`
+- Package tier: `{{project.package_tier}}`
+- Canon fingerprint: `{{meta.canonFingerprint}}`
+
+## Audience Index
+
+### Creative
+- `01_development/one_page_film_overview.md`
+- `01_development/feature_treatment.md`
+- `02_scripts/feature_screenplay.md`
+- `03_story_design/visual_approach_lookbook.md`
+
+### Finance / Legal / Distribution
+- `10_finance/feature_budget_top_sheet.md`
+- `10_finance/financing_memo.md`
+- `11_legal/rights_and_chain_of_title.md`
+- `14_distribution/festival_strategy.md`
+
+### Press / Public
+- `06_press_kit/press_kit.md`
+- `07_website/website_content.md`
+- `site/index.html`
+
+### Operations
+- `00_admin/canon_lock.yaml`
+- `00_admin/package_manifest.json`
+- `16_ops/missing_items_report.md`
+- `16_ops/qa_checklists.md`
+- `16_ops/approval_workflow.md`
+
+## Story Beats
+{{#each canon.structure.value}}
+- `{{title}}` - {{summary}}
+{{/each}}

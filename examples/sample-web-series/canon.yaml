@@ -1,0 +1,249 @@
+id: soft-launch
+slug: soft-launch
+package_tier: full
+outputs:
+  website:
+    enabled: true
+  press_bundle:
+    enabled: true
+  partner_bundle:
+    enabled: true
+canon:
+  title:
+    value: Soft Launch
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - site/index.html
+    visibility: public
+  logline:
+    value: Three freelance creators turn a half-finished co-working studio into a live-streamed production lab, only to discover their audience likes the collapse more than the work.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.93
+    downstream_dependencies:
+      - README.md
+      - 01_development/series_overview.md
+      - site/index.html
+    visibility: public
+  format:
+    value: web_series
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+    visibility: public
+  genre:
+    value: creator-economy comedy drama
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.89
+    downstream_dependencies:
+      - 01_development/web_series_deck.md
+      - 15_sponsors_and_partnerships/sponsor_one_sheet.md
+      - site/index.html
+    visibility: public
+  tone:
+    value:
+      - fast
+      - self-aware
+      - anxious
+      - platform-native
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.88
+    downstream_dependencies:
+      - 01_development/series_overview.md
+      - site/about.html
+    visibility: public
+  audience:
+    value:
+      - short-form comedy viewers
+      - creator economy audiences
+      - sponsor partners targeting young digital natives
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.84
+    downstream_dependencies:
+      - 05_marketing/audience_strategy.md
+      - 14_platform_distribution/platform_release_plan.md
+      - 15_sponsors_and_partnerships/sponsor_one_sheet.md
+    visibility: internal
+  comps:
+    value:
+      - High Maintenance
+      - The Guild
+      - Broad City Web Series
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.79
+    downstream_dependencies:
+      - 01_development/web_series_deck.md
+      - 05_marketing/audience_strategy.md
+    visibility: public
+  duration_count:
+    value: 8 episodes x 12 minutes
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 02_episode_guides/episode_guide.md
+      - 14_platform_distribution/platform_release_plan.md
+      - site/faq.html
+    visibility: public
+  themes:
+    value:
+      - work as performance
+      - monetizing intimacy
+      - algorithmic attention and selfhood
+      - friendship under audience pressure
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.85
+    downstream_dependencies:
+      - 01_development/series_overview.md
+      - 03_series_structure/arc_and_continuity.md
+      - site/about.html
+    visibility: public
+  world_setting:
+    value: The series lives inside a low-rent creator warehouse where every room doubles as a set, a job, a branding surface, and a lease risk.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 01_development/series_overview.md
+      - site/about.html
+    visibility: public
+  production_assumptions:
+    value:
+      - single main location with flexible digital overlays
+      - limited cast with recurring creator guests
+      - release cadence tied to social clips and short-form promos
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.73
+    downstream_dependencies:
+      - 14_platform_distribution/platform_release_plan.md
+    visibility: internal
+  business_assumptions:
+    value:
+      - mixed platform-native release and sponsor-supported rollout
+      - sponsorship must feel diegetic or creator-aligned to avoid audience backlash
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.72
+    downstream_dependencies:
+      - 05_marketing/audience_strategy.md
+      - 14_platform_distribution/platform_release_plan.md
+      - 15_sponsors_and_partnerships/sponsor_one_sheet.md
+      - site/sponsors.html
+    visibility: internal
+  legal_assumptions:
+    value:
+      - sponsor disclosures and platform terms require review before launch
+    status: draft
+    owner: legal
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.7
+    downstream_dependencies:
+      - 16_ops/missing_items_report.md
+    visibility: internal
+  publication_flags:
+    value:
+      site_enabled: true
+      partner_bundle_enabled: true
+      press_bundle_enabled: true
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - HANDOFF.md
+      - 16_ops/approval_workflow.md
+    visibility: internal
+  characters:
+    value:
+      - id: rey-sato
+        name: Rey Sato
+        role: creator-director
+        description: A compulsive aesthetic optimizer who can turn any crisis into an on-brand live moment.
+        visibility: public
+        kind: contributor
+      - id: maris-lane
+        name: Maris Lane
+        role: producer-performer
+        description: A practical organizer whose face keeps becoming the public front for decisions she did not make.
+        visibility: public
+        kind: contributor
+      - id: dante-cho
+        name: Dante Cho
+        role: editor-stream engineer
+        description: A workflow maximalist who sees every emotional problem as a routing issue until the system breaks in public.
+        visibility: public
+        kind: contributor
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 08_creators_and_talent/creator_talent_kit.md
+      - site/talent.html
+    visibility: public
+  episodes:
+    value:
+      - code: EP01
+        title: Ring Light Debt
+        logline: The team launches its first live build stream to save rent and accidentally reveals how unfinished the whole studio really is.
+        status: approved
+        visibility: public
+      - code: EP02
+        title: Brand Safety Incident
+        logline: A sponsor inquiry collides with a public meltdown, forcing everyone to decide whether authenticity is a product or a liability.
+        status: approved
+        visibility: public
+      - code: EP03
+        title: Thumbnail Face
+        logline: Maris becomes the accidental face of the channel when a clipped apology outperforms the actual show.
+        status: approved
+        visibility: public
+      - code: EP04
+        title: Soft Moderation
+        logline: Dante tries to automate community management and ends up creating a feedback loop that edits the team in real time.
+        status: approved
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.91
+    downstream_dependencies:
+      - 02_episode_guides/episode_guide.md
+      - site/episodes.html
+    visibility: public
+  structure:
+    value:
+      - id: launch
+        title: Launch To Backlash
+        summary: The season arc tracks the team's shift from improvised survival streaming to sponsor-facing self-surveillance, with each success increasing the cost of honesty.
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.84
+    downstream_dependencies:
+      - 03_series_structure/arc_and_continuity.md
+    visibility: public

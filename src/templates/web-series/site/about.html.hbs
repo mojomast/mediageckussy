@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{publicCanon.title}} | About</title>
+    <link rel="stylesheet" href="assets/styles.css">
+  </head>
+  <body>
+    <main class="page">
+      <a href="index.html">Home</a>
+      <h1>About {{publicCanon.title}}</h1>
+      <p>{{publicCanon.world_setting}}</p>
+      <ul>
+        {{#each canon.themes.value}}
+        <li>{{this}}</li>
+        {{/each}}
+      </ul>
+    </main>
+  </body>
+</html>

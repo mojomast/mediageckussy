@@ -1,0 +1,245 @@
+id: signal-and-bone
+slug: signal-and-bone
+package_tier: full
+outputs:
+  website:
+    enabled: true
+  press_bundle:
+    enabled: true
+  partner_bundle:
+    enabled: true
+canon:
+  title:
+    value: Signal and Bone
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/launch_press_kit.md
+      - site/index.html
+    visibility: public
+  logline:
+    value: Two former emergency dispatchers reopen bizarre archived calls to investigate the citywide systems failures buried inside them, turning procedural memory into a weekly conspiracy show.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - README.md
+      - 01_development/show_bible.md
+      - site/index.html
+    visibility: public
+  format:
+    value: podcast
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - HANDOFF.md
+    visibility: public
+  genre:
+    value: documentary-style mystery podcast
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/launch_press_kit.md
+      - site/index.html
+    visibility: public
+  tone:
+    value:
+      - investigative
+      - intimate
+      - eerie
+      - dryly funny
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.88
+    downstream_dependencies:
+      - 01_development/show_bible.md
+      - 02_episode_design/episode_format.md
+      - site/about.html
+    visibility: public
+  audience:
+    value:
+      - narrative podcast listeners
+      - mystery and journalism audiences
+      - sponsors targeting culture-forward listeners
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.83
+    downstream_dependencies:
+      - 14_distribution/platform_strategy.md
+      - 15_business_dev/ad_inventory_model.md
+    visibility: internal
+  comps:
+    value:
+      - Reply All
+      - Serial
+      - Welcome to Night Vale
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.78
+    downstream_dependencies:
+      - 06_press_kit/launch_press_kit.md
+      - site/press.html
+    visibility: public
+  duration_count:
+    value: 10 episodes x 35 minutes plus trailer
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.92
+    downstream_dependencies:
+      - README.md
+      - 02_episode_design/episode_format.md
+      - site/faq.html
+    visibility: public
+  themes:
+    value:
+      - infrastructure and memory
+      - public systems under private pressure
+      - testimony versus evidence
+      - the afterlife of bureaucratic speech
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.86
+    downstream_dependencies:
+      - 01_development/show_bible.md
+      - site/about.html
+    visibility: public
+  world_setting:
+    value: The show is anchored in a rust-belt city where old dispatch systems, privatized utilities, and vanished neighborhoods leave behind records that sound more coherent than the institutions that made them.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 01_development/show_bible.md
+      - site/about.html
+    visibility: public
+  production_assumptions:
+    value:
+      - desk-recorded host sessions with field tape inserts
+      - original score and archival-sounding sound design
+      - scripted ad breaks separated clearly from editorial segments
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.74
+    downstream_dependencies:
+      - 02_episode_design/episode_format.md
+    visibility: internal
+  business_assumptions:
+    value:
+      - launch with a three-episode drop then weekly cadence
+      - position for mission-aligned sponsors and listener support after traction
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.71
+    downstream_dependencies:
+      - 14_distribution/platform_strategy.md
+      - 15_business_dev/ad_inventory_model.md
+      - site/advertise.html
+    visibility: internal
+  legal_assumptions:
+    value:
+      - archived call language must be fictionalized unless rights are cleared
+      - guest, music, and clip releases require review before publication
+    status: draft
+    owner: legal
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.73
+    downstream_dependencies:
+      - 16_ops/missing_items_report.md
+    visibility: internal
+  publication_flags:
+    value:
+      site_enabled: true
+      partner_bundle_enabled: true
+      press_bundle_enabled: true
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - HANDOFF.md
+      - 16_ops/approval_workflow.md
+    visibility: internal
+  characters:
+    value:
+      - id: tessa-rowe
+        name: Tessa Rowe
+        role: host
+        description: A former dispatcher whose clipped professionalism starts to crack as the archived calls begin mapping onto her own missing years.
+        visibility: public
+        kind: host
+      - id: nico-vale
+        name: Nico Vale
+        role: host
+        description: A municipal data analyst turned audio obsessive who treats every contradiction as proof that the city is narrating around a wound.
+        visibility: public
+        kind: host
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.91
+    downstream_dependencies:
+      - 08_host_talent/host_talent_kit.md
+      - 06_press_kit/launch_press_kit.md
+      - site/hosts.html
+    visibility: public
+  episodes:
+    value:
+      - code: EP01
+        title: The Tone Before The Siren
+        logline: The hosts revisit a maintenance call that seems to predict a substation failure three months before it officially happened.
+        status: approved
+        visibility: public
+      - code: EP02
+        title: Mutual Aid Switchboard
+        logline: A volunteer hotline and a utility outage collapse into the same audio record, exposing how emergency labor gets reassigned in the dark.
+        status: approved
+        visibility: public
+      - code: EP03
+        title: The Building That Stayed On The Map
+        logline: Tessa recognizes a caller address from a district she was told no longer exists in city records.
+        status: approved
+        visibility: public
+      - code: EP04
+        title: Courtesy Hold
+        logline: A routine complaint call reveals a corporate escalation script that has been quietly replacing real dispatch notes.
+        status: approved
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 02_episode_design/episode_guide.md
+      - site/episodes.html
+    visibility: public
+  structure:
+    value:
+      - id: season-arc
+        title: Launch Arc
+        summary: Each episode opens a new call record while revealing how the hosts themselves are implicated in the city's forgotten infrastructure failures.
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.85
+    downstream_dependencies:
+      - 01_development/show_bible.md
+    visibility: public

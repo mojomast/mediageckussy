@@ -1,0 +1,248 @@
+id: neon-aftercare
+slug: neon-aftercare
+package_tier: full
+outputs:
+  website:
+    enabled: true
+  press_bundle:
+    enabled: true
+  partner_bundle:
+    enabled: true
+canon:
+  title:
+    value: Neon Aftercare
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+    visibility: public
+  logline:
+    value: After a catastrophic biotech launch, a night-shift cleanup crew turns crisis management into a secret second business while trying to stay ahead of regulators, influencers, and each other.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.93
+    downstream_dependencies:
+      - README.md
+      - 01_development/series_bible.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+    visibility: public
+  format:
+    value: tv_series
+    status: locked
+    owner: user
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 1
+    downstream_dependencies:
+      - README.md
+      - HANDOFF.md
+    visibility: public
+  genre:
+    value: sci-fi workplace dramedy
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - README.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+    visibility: public
+  tone:
+    value:
+      - tense
+      - funny
+      - humane
+      - procedural with neon paranoia
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.9
+    downstream_dependencies:
+      - 01_development/series_bible.md
+      - site/about.html
+    visibility: public
+  audience:
+    value:
+      - genre-streaming audience
+      - premium TV viewers
+      - festival and partner readers
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.88
+    downstream_dependencies:
+      - README.md
+    visibility: internal
+  comps:
+    value:
+      - Severance
+      - Station Eleven
+      - Better Off Ted
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.76
+    downstream_dependencies:
+      - 06_press_kit/press_kit.md
+      - site/press.html
+    visibility: public
+  duration_count:
+    value: 8 x 45 min episodes
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - README.md
+      - 01_development/series_bible.md
+      - site/index.html
+    visibility: public
+  themes:
+    value:
+      - cleanup labor as invisible heroism
+      - monetizing disaster
+      - loyalty under regulatory pressure
+      - reinventing family in crisis
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.84
+    downstream_dependencies:
+      - 01_development/series_bible.md
+      - 07_website/website_content.md
+      - site/about.html
+    visibility: public
+  world_setting:
+    value: The series unfolds in a near-future waterfront district where biotech startups lease converted shipping terminals and every public health failure is also a branding problem.
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.91
+    downstream_dependencies:
+      - 01_development/series_bible.md
+      - site/about.html
+    visibility: public
+  production_assumptions:
+    value:
+      - contained night locations
+      - ensemble cast with recurring guest regulators
+      - practical effects supported by light VFX cleanup
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.74
+    downstream_dependencies:
+      - 01_development/series_bible.md
+    visibility: internal
+  business_assumptions:
+    value:
+      - premium genre positioning for streamers and festival labs
+      - partner deck should emphasize scalable season engine
+    status: draft
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.67
+    downstream_dependencies:
+      - 16_ops/missing_items_report.md
+    visibility: internal
+  legal_assumptions:
+    value:
+      - biotech terminology requires legal and scientific review
+      - public claims must avoid implying real company affiliation
+    status: draft
+    owner: legal
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.7
+    downstream_dependencies:
+      - 16_ops/missing_items_report.md
+    visibility: internal
+  publication_flags:
+    value:
+      site_enabled: true
+      partner_bundle_enabled: true
+      press_bundle_enabled: true
+    status: approved
+    owner: producer
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.95
+    downstream_dependencies:
+      - HANDOFF.md
+      - 16_ops/approval_workflow.md
+    visibility: internal
+  characters:
+    value:
+      - id: mara-vale
+        name: Mara Vale
+        role: crew lead
+        description: An unflappable former harbor medic who can neutralize a contamination event faster than she can process her own grief.
+        visibility: public
+      - id: jonah-quill
+        name: Jonah Quill
+        role: systems broker
+        description: A compliance dropout who treats every emergency as a puzzle in incentives, leverage, and plausible deniability.
+        visibility: public
+      - id: ines-rho
+        name: Ines Rho
+        role: brand salvage specialist
+        description: A crisis storyteller who can rewrite a scandal overnight, provided nobody asks whether the new version is true.
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.92
+    downstream_dependencies:
+      - README.md
+      - 01_development/character_bible.md
+      - 06_press_kit/press_kit.md
+      - site/index.html
+      - site/characters.html
+    visibility: public
+  episodes:
+    value:
+      - code: S01E01
+        title: False Positive
+        logline: The cleanup team lands a side contract after discovering the startup behind the disaster needs quieter operators than its lawyers can provide.
+        status: approved
+        visibility: public
+      - code: S01E02
+        title: Vapor Containment
+        logline: A chemical leak becomes a branding exercise when the crew is hired to stage competence for investors during an active emergency.
+        status: approved
+        visibility: public
+      - code: S01E03
+        title: Tender Offer
+        logline: Jonah turns a regulator's informal warning into leverage, forcing the team to decide how corrupt they are willing to look in private.
+        status: approved
+        visibility: public
+      - code: S01E04
+        title: Glow Window
+        logline: Mara's old harbor network spots their moonlighting operation, collapsing the boundary between mutual aid and profiteering.
+        status: approved
+        visibility: public
+      - code: S01E05
+        title: After Image
+        logline: Ines launches a cover story so persuasive that it starts reshaping what the team believes actually happened.
+        status: approved
+        visibility: public
+      - code: S01E06
+        title: Open Circuit
+        logline: The crew's hidden business goes public on the same night the district loses power, forcing them to rescue the city that now wants them investigated.
+        status: approved
+        visibility: public
+    status: approved
+    owner: editor
+    updated_at: 2026-04-10T00:00:00.000Z
+    confidence: 0.94
+    downstream_dependencies:
+      - README.md
+      - 03_story_room/episode_guide.md
+      - 07_website/website_content.md
+      - site/index.html
+      - site/episodes.html
+    visibility: public

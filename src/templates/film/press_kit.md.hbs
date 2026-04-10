@@ -1,0 +1,19 @@
+# Press Kit
+
+## Project Snapshot
+- Title: {{canon.title.value}}
+- Format: {{canon.format.value}}
+- Genre: {{canon.genre.value}}
+
+## Logline
+{{canon.logline.value}}
+
+## Characters
+{{#each canon.characters.value}}
+- {{name}}: {{description}}
+{{/each}}
+
+## Comparable Projects
+{{#each canon.comps.value}}
+- {{this}}
+{{/each}}

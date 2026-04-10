@@ -1,0 +1,18 @@
+# Approval Workflow
+
+## Roles
+- Owner: can edit canon, approve package tiers, and authorize exports
+- Editor: can refine generated docs and request regeneration
+- Producer: can approve finance and production assumptions
+- Legal reviewer: can approve public and rights-sensitive language
+- Publicist: can approve press and website content
+
+## Lock Rules
+- `locked` canon fields should not be changed without explicit owner review
+- `approved` public fields may flow to website outputs
+- `draft` fields may appear in internal docs but should not be treated as final
+
+## Regeneration Rules
+- Whole package: use when canon changes broadly
+- Department regeneration: use when only one area needs refresh
+- Single file regeneration: use when preserving the rest of the package state

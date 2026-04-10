@@ -1,0 +1,15 @@
+# Website Content Scaffold
+
+## Home
+- Title: {{canon.title.value}}
+- Logline: {{canon.logline.value}}
+
+## Story
+{{#each publicCanon.structure}}
+- {{title}}: {{summary}}
+{{/each}}
+
+## Characters
+{{#each publicCanon.characters}}
+- {{name}}: {{description}}
+{{/each}}

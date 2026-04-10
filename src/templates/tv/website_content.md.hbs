@@ -1,0 +1,22 @@
+# Website Content Scaffold
+
+## Home
+- Title: {{canon.title.value}}
+- Logline: {{canon.logline.value}}
+
+## About
+- World: {{canon.world_setting.value}}
+- Themes:
+{{#each canon.themes.value}}
+  - {{this}}
+{{/each}}
+
+## Characters
+{{#each publicCanon.characters}}
+- {{name}}: {{description}}
+{{/each}}
+
+## Episodes
+{{#each publicCanon.episodes}}
+- {{code}} - {{title}}: {{logline}}
+{{/each}}

@@ -1,0 +1,53 @@
+{
+  "name": "media-package-generator",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/cli/index.js",
+  "bin": {
+    "mpg": "dist/cli/index.js"
+  },
+  "directories": {
+    "doc": "docs",
+    "example": "examples"
+  },
+  "scripts": {
+    "onboard:tv": "tsx src/cli/onboard.ts examples/sample-tv/canon.yaml output/neon-aftercare",
+    "onboard:film": "tsx src/cli/onboard.ts examples/sample-film/canon.yaml output/glass-harbor",
+    "onboard:podcast": "tsx src/cli/onboard.ts examples/sample-podcast/canon.yaml output/signal-and-bone",
+    "onboard:web": "tsx src/cli/onboard.ts examples/sample-web-series/canon.yaml output/soft-launch",
+    "build": "tsc -p tsconfig.json",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "generate:example": "tsx src/cli/index.ts generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare",
+    "generate:film": "tsx src/cli/index.ts generate --canon examples/sample-film/canon.yaml --out output/glass-harbor",
+    "generate:podcast": "tsx src/cli/index.ts generate --canon examples/sample-podcast/canon.yaml --out output/signal-and-bone",
+    "generate:web": "tsx src/cli/index.ts generate --canon examples/sample-web-series/canon.yaml --out output/soft-launch",
+    "regenerate:website": "tsx src/cli/index.ts regenerate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --department website",
+    "publish:tv": "tsx src/cli/publish-site.ts output/neon-aftercare deploy/neon-aftercare-site",
+    "publish:film": "tsx src/cli/publish-site.ts output/glass-harbor deploy/glass-harbor-site",
+    "publish:podcast": "tsx src/cli/publish-site.ts output/signal-and-bone deploy/signal-and-bone-site",
+    "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site"
+  },
+  "keywords": [
+    "media",
+    "generator",
+    "canon",
+    "templates",
+    "static-site"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Canon-first media package generator for TV-first repo-native creative packages.",
+  "dependencies": {
+    "fs-extra": "^11.3.2",
+    "handlebars": "^4.7.8",
+    "yaml": "^2.8.1",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/handlebars": "^4.0.40",
+    "@types/node": "^25.6.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2"
+  }
+}

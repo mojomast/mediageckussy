@@ -1,0 +1,15 @@
+# Website Content Scaffold
+
+## Home
+- Title: {{canon.title.value}}
+- Hook: {{canon.logline.value}}
+
+## Hosts
+{{#each publicCanon.characters}}
+- {{name}}: {{description}}
+{{/each}}
+
+## Episodes
+{{#each publicCanon.episodes}}
+- {{code}} - {{title}}: {{logline}}
+{{/each}}
