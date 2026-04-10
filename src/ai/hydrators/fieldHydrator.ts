@@ -10,7 +10,7 @@ export async function hydrateField(
   fieldPath: string,
   outputDir: string,
   provider: LLMProvider,
-  options: { force?: boolean; dryRun?: boolean },
+  options: { force?: boolean; dryRun?: boolean; promptHint?: string },
 ): Promise<{ suggestion: AISuggestion; skipped: boolean; reason?: string }> {
   const field = getCanonField(canon, fieldPath);
   if (!options.force && (field.status === "approved" || field.status === "locked")) {
@@ -37,8 +37,9 @@ export async function hydrateField(
     "fields",
     promptFile,
   ], canon, { fieldPath, currentValue: stringifyFieldValue(field.value) });
+  const promptWithHint = options.promptHint ? `${user}\n\nAdditional user guidance:\n${options.promptHint}` : user;
 
-  const response = await provider.complete({ system, user });
+  const response = await provider.complete({ system, user: promptWithHint });
   const parsed = parseConfidence(response.content);
   const suggestion: AISuggestion = {
     field: fieldPath,

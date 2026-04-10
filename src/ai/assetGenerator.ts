@@ -1,4 +1,5 @@
 import path from "node:path";
+import crypto from "node:crypto";
 import fs from "fs-extra";
 import Handlebars from "handlebars";
 import { registerAsset } from "../core/manifest.js";
@@ -42,7 +43,7 @@ export async function generateAsset(
   const spec = ASSET_SPECS[assetType];
   const prompt = options.promptOverride ?? await buildAssetPrompt(canon, assetType, options.characterId);
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const fileName = `${canon.slug}-${assetType}-${timestamp}.png`;
+  const fileName = `${canon.slug}-${assetType}-${timestamp}-${crypto.randomUUID().slice(0, 8)}.png`;
   const relativeAssetPath = path.join("site", "assets", "generated", assetType, fileName);
   const absoluteAssetPath = path.join(outputDir, relativeAssetPath);
 

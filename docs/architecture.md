@@ -46,6 +46,16 @@ The server and frontend are both local-first.
 
 The frontend talks to the local API only. It does not introduce any remote persistence layer or authentication stack.
 
+## Hosted Demo Mode
+The current Studio/server layer can now be hosted as a guided demo:
+
+- project creation is server-owned and writes into managed workspaces under `output/`
+- inference provider and model selection are stored per project
+- site preview, asset preview, file access, and archive export are routed through the backend
+- built-in inference is intended to run with server-side provider keys only
+
+This is intentionally a hosted-demo architecture, not a full production multi-tenant SaaS foundation. It removes the most brittle localhost assumptions but does not yet add authentication, tenant isolation, background workers, or object storage.
+
 ## Data Contracts
 - `CanonProject` remains the source-of-truth project model, now extended for AI and asset workflows.
 - `PackageManifest` tracks generated files plus `generatedAssets` and `hydrationLog` entries.

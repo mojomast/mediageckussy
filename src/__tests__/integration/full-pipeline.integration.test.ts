@@ -13,11 +13,13 @@ import { MockImageProvider } from "../../ai/image/index.js";
 import { generateAsset } from "../../ai/assetGenerator.js";
 import { readManifest } from "../../core/manifest.js";
 import { createApp } from "../../server/app.js";
+import { archiveRoot, writeHostedProject } from "../../server/workspace.js";
 
 describe("full pipeline integration", () => {
   test("generate, hydrate, accept, regenerate, asset, and server listing work together", async () => {
     const outputDir = path.resolve("output/integration-tv");
     await fs.remove(outputDir);
+    await fs.remove(path.join(archiveRoot, "integration-tv.tar.gz"));
     const canonPath = fixturePath("examples/sample-tv/canon.yaml");
 
     await generatePackage({ canonPath, outputDir });
@@ -38,6 +40,20 @@ describe("full pipeline integration", () => {
 
     const manifest = await readManifest(outputDir);
     expect((manifest.generatedAssets ?? []).length).toBeGreaterThan(0);
+
+    await writeHostedProject({
+      id: "integration-tv",
+      slug: "integration-tv",
+      title: accepted.canon.title.value,
+      mediaType: accepted.canon.format.value,
+      packageTier: accepted.package_tier,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      settings: {
+        llmProvider: "openrouter",
+        llmModel: "google/gemini-2.5-flash-lite",
+      },
+    });
 
     const app = createApp();
     const response = await request(app).get("/api/projects");

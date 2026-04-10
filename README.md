@@ -261,7 +261,15 @@ npx tsx src/cli/index.ts assets list --out output/neon-aftercare
 npm run studio:dev
 ```
 
-Studio provides six local views:
+Studio now supports a hosted-demo workflow in addition to local use:
+- create a project from the browser with a starter canon
+- choose built-in inference via OpenRouter or Z.AI
+- iterate on canon fields and generated docs with prompt-guided hydration
+- review and accept field suggestions in the UI
+- preview hosted site/assets through server routes
+- export the full project workspace as a downloadable archive
+
+Studio still provides six workspace views:
 - Dashboard for project list and quick actions
 - Canon editor for field editing and AI suggestions
 - Files view for generated package browsing and editing
@@ -269,10 +277,15 @@ Studio provides six local views:
 - Assets gallery for images and prompt metadata
 - Ops view for validation and placeholder-fix workflows
 
+Recommended hosted demo inference defaults:
+- OpenRouter with `google/gemini-2.5-flash-lite` for low-latency, low-cost iteration
+- Z.AI with `glm-4.5-flash` as an alternate built-in backend
+
 ## Environment Variables
 - Use `.env.example` as the single reference for LLM, image, hydration, and Studio config.
 - Only set the providers you plan to use.
 - AI and image features are opt-in and never run silently.
+- For hosted demos, keep all inference keys server-side and expose only your app API to the browser.
 
 ## Contributing
 - Run `npm run check`, `npm test`, and `npm run test:integration` before committing cross-cutting changes.
@@ -302,6 +315,13 @@ Studio provides six local views:
 - Publish the static site into `deploy/<project-slug>-site` with the `publish:*` scripts.
 - Serve that folder locally with `python3 -m http.server` or copy it to any static host.
 - The deploy step is a filesystem copy, so it works with nginx, GitHub Pages, Netlify static uploads, S3-style buckets, or any plain web root.
+
+## Hosted Demo Notes
+- The current hosted-demo implementation is server-owned workspace hosting, not full multi-tenant SaaS auth.
+- Browser users create projects inside managed workspaces under the server's `output/` root.
+- File access, site preview, asset preview, and archive download all go through server routes rather than raw filesystem paths.
+- Built-in inference is configured server-side and selected per project in Studio settings.
+- For production SaaS hardening, add authentication, tenant scoping, rate limiting, background jobs, and object storage-backed exports.
 
 ## Deploy to GitHub Pages
 This repo includes a GitHub Actions workflow that generates and publishes all four sample demo sites to GitHub Pages on every push to `main` and on manual dispatch. It builds each sample package, copies the published static sites into a single Pages artifact, and serves them under separate subdirectories.

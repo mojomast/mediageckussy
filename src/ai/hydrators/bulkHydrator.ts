@@ -25,6 +25,7 @@ export async function hydratePackage(
     concurrency?: number;
     dryRun?: boolean;
     minConfidence?: number;
+    promptHint?: string;
   },
 ): Promise<HydrationReport> {
   const canon = await loadCanon(canonPath);
@@ -37,7 +38,7 @@ export async function hydratePackage(
   let documentReplacements = 0;
 
   for (const fieldPath of fieldPaths) {
-    const result = await hydrateField(canon, fieldPath, outputDir, provider, { dryRun: options.dryRun });
+    const result = await hydrateField(canon, fieldPath, outputDir, provider, { dryRun: options.dryRun, promptHint: options.promptHint });
     if (result.skipped) {
       skipped.push(result.reason ?? fieldPath);
       continue;
@@ -58,7 +59,7 @@ export async function hydratePackage(
       continue;
     }
 
-    const result = await hydrateDocument(canon, absolutePath, provider, { dryRun: options.dryRun });
+    const result = await hydrateDocument(canon, absolutePath, provider, { dryRun: options.dryRun, promptHint: options.promptHint });
     documentReplacements += result.replacements;
     skipped.push(...result.skipped);
   }

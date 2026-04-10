@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 
-export function ValidationOps({ slug }: { slug: string }) {
+export function ValidationOps({ slug, setStatus }: { slug: string; setStatus: (value: string) => void }) {
   const [validation, setValidation] = useState<any>(null);
 
   useEffect(() => {
@@ -17,7 +17,17 @@ export function ValidationOps({ slug }: { slug: string }) {
         <span>{validation.completenessScore}</span>
       </div>
       <div className="progress"><div style={{ width: `${validation.completenessScore}%` }} /></div>
-      <button onClick={() => api.stream(`/api/projects/${slug}/hydrate`, { mode: "bulk" }, () => undefined)}>Fix All Placeholders</button>
+      <div className="row gap wrap">
+        <button onClick={async () => {
+          setStatus("Running bulk hydration...");
+          await api.runHydrate(slug, { mode: "bulk" }, async () => {
+            const response = await api.getValidation(slug);
+            setValidation(response.data);
+            setStatus("Bulk hydration finished.");
+          });
+        }}>Fix All Placeholders</button>
+        <a className="button-link" href={api.archiveUrl(slug)}>Export Archive</a>
+      </div>
       {validation.issues.map((issue: any, index: number) => (
         <div key={index} className={`issue ${issue.level}`}>
           <strong>{issue.code}</strong>

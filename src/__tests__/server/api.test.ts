@@ -1,55 +1,35 @@
 import fs from "fs-extra";
 import path from "node:path";
 import request from "supertest";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { createApp } from "../../server/app.js";
-import { generatePackage } from "../../core/generator.js";
-import { fixturePath } from "../helpers.js";
-import { loadCanon } from "../../utils/canon.js";
+import { archiveRoot, workspaceRoot } from "../../server/workspace.js";
 
 describe("server API", () => {
   const app = createApp();
 
-  test("GET /api/projects returns array when output has valid packages", async () => {
-    const outputDir = path.resolve("output/api-tv");
-    await fs.remove(outputDir);
-    await generatePackage({ canonPath: fixturePath("examples/sample-tv/canon.yaml"), outputDir });
+  beforeEach(async () => {
+    await fs.remove(path.join(workspaceRoot, "hosted-api-demo"));
+    await fs.remove(path.join(archiveRoot, "hosted-api-demo.tar.gz"));
+  });
 
-    const response = await request(app).get("/api/projects");
+  test("GET /api/studio/options returns available formats and providers", async () => {
+    const response = await request(app).get("/api/studio/options");
     expect(response.body.ok).toBe(true);
-    expect(Array.isArray(response.body.data)).toBe(true);
+    expect(response.body.data.formats).toContain("tv_series");
+    expect(Array.isArray(response.body.data.providers)).toBe(true);
   });
 
-  test("GET /api/projects/:slug returns manifest and validation", async () => {
-    const outputDir = path.resolve("output/api-project");
-    await fs.remove(outputDir);
-    await generatePackage({ canonPath: fixturePath("examples/sample-tv/canon.yaml"), outputDir });
-
-    const response = await request(app).get("/api/projects/api-project");
-    expect(response.body.ok).toBe(true);
-    expect(response.body.data.manifest).toBeDefined();
-    expect(response.body.data.validation).toBeDefined();
-  });
-
-  test("PUT /api/projects/:slug/canon rejects body that modifies a locked field", async () => {
-    const outputDir = path.resolve("output/api-locked");
-    await fs.remove(outputDir);
-    await generatePackage({ canonPath: fixturePath("examples/sample-tv/canon.yaml"), outputDir });
-    const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
-    canon.canon.title.value = "Changed";
-
-    const response = await request(app).put("/api/projects/api-locked/canon").send(canon);
-    expect(response.status).toBe(400);
-    expect(response.body.error).toMatch(/Locked fields cannot be modified/);
-  });
-
-  test("POST /api/projects/:slug/generate returns SSE stream with done event", async () => {
-    const outputDir = path.resolve("output/api-generate");
-    await fs.remove(outputDir);
-    await generatePackage({ canonPath: fixturePath("examples/sample-tv/canon.yaml"), outputDir });
-
+  test("POST /api/projects creates hosted project and emits done event", async () => {
     const response = await request(app)
-      .post("/api/projects/api-generate/generate")
+      .post("/api/projects")
+      .send({
+        title: "Hosted API Demo",
+        mediaType: "tv_series",
+        packageTier: "full",
+        provider: "openrouter",
+        model: "google/gemini-2.5-flash-lite",
+      })
       .buffer(true)
       .parse((res, callback) => {
         let body = "";
@@ -59,15 +39,37 @@ describe("server API", () => {
       });
 
     expect(String(response.body)).toContain("event: done");
+    expect(await fs.pathExists(path.join(workspaceRoot, "hosted-api-demo", ".studio-project.json"))).toBe(true);
+
+    const projects = await request(app).get("/api/projects");
+    expect(projects.body.data.some((project: { slug: string }) => project.slug === "hosted-api-demo")).toBe(true);
   });
 
-  test("GET /api/projects/:slug/files/00_admin/canon_lock.yaml returns file content", async () => {
-    const outputDir = path.resolve("output/api-file-read");
-    await fs.remove(outputDir);
-    await generatePackage({ canonPath: fixturePath("examples/sample-tv/canon.yaml"), outputDir });
+  test("GET /api/projects/:slug/files rejects traversal attempts", async () => {
+    await request(app)
+      .post("/api/projects")
+      .send({ title: "Hosted API Demo", mediaType: "tv_series", packageTier: "full" });
 
-    const response = await request(app).get("/api/projects/api-file-read/files/00_admin/canon_lock.yaml");
-    expect(response.body.ok).toBe(true);
-    expect(response.body.data.content).toContain("Neon Aftercare");
+    const response = await request(app).get("/api/projects/hosted-api-demo/files/../../package.json");
+    expect(response.body.ok).toBe(false);
+  });
+
+  test("GET /api/projects/:slug/archive returns tarball download", async () => {
+    const createResponse = await request(app)
+      .post("/api/projects")
+      .send({ title: "Hosted API Demo", mediaType: "tv_series", packageTier: "full" })
+      .buffer(true)
+      .parse((res, callback) => {
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => { body += chunk; });
+        res.on("end", () => callback(null, body));
+      });
+
+    expect(String(createResponse.body)).toContain("event: done");
+
+    const response = await request(app).get("/api/projects/hosted-api-demo/archive");
+    expect(response.status).toBe(200);
+    expect(response.headers["content-disposition"]).toContain("hosted-api-demo.tar.gz");
   });
 });

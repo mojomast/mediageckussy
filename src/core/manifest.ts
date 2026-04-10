@@ -8,6 +8,7 @@ export function buildManifest(input: {
   packageTier: string;
   requiredFiles: string[];
   generatedFiles: GeneratedFileRecord[];
+  existingManifest?: PackageManifest;
 }): PackageManifest {
   const departmentMap = new Map<string, number>();
 
@@ -21,8 +22,8 @@ export function buildManifest(input: {
     mediaType: input.mediaType,
     packageTier: input.packageTier,
     generatedFiles: input.generatedFiles,
-    generatedAssets: [],
-    hydrationLog: [],
+    generatedAssets: input.existingManifest?.generatedAssets ?? [],
+    hydrationLog: input.existingManifest?.hydrationLog ?? [],
     requiredFiles: input.requiredFiles,
     departments: [...departmentMap.entries()].map(([name, fileCount]) => ({ name, fileCount })),
   };

@@ -10,7 +10,7 @@ export async function hydrateDocument(
   canon: CanonProject,
   filePath: string,
   provider: LLMProvider,
-  options: { dryRun?: boolean },
+  options: { dryRun?: boolean; promptHint?: string },
 ): Promise<{ replacements: number; skipped: string[] }> {
   const original = await fs.readFile(filePath, "utf8");
   const analysis = analyzeProtectedRegions(original);
@@ -36,6 +36,7 @@ export async function hydrateDocument(
         "Surrounding content:",
         context,
         "Write replacement text only.",
+        options.promptHint ? `Additional user guidance:\n${options.promptHint}` : "",
       ].join("\n\n"),
     });
     const parsed = parseConfidence(response.content);

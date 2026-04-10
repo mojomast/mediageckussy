@@ -9,18 +9,19 @@
 - Image provider abstraction, prompt sidecars, and mood board composition.
 - Local Express Studio server and React/Vite Studio UI.
 - GitHub Actions validation, integration coverage, and demo deployment to GitHub Pages.
+- Hosted Studio demo flow with browser project creation, built-in provider selection, suggestion review, and archive export.
 
 ## Still Stubbed Or Deferred
 - Full package implementations for `game`, `book_comic`, and `album_music_project`.
 - Rich dependency-aware regeneration beyond current fingerprint and metadata checks.
 - Persistent Studio job management and detailed streaming progress.
 - Packaged prompt assets for compiled-only distributions.
-- External auth, multi-user collaboration, or cloud sync.
+- External auth, multi-user collaboration, tenant isolation, billing, and cloud sync.
 
 ## Near-Term Cleanup Targets
 1. Harden CLI argument parsing so nested command groups are less brittle.
-2. Expand integration coverage around Studio mutation routes and hydration accept/reject flows.
-3. Improve static hosting support for Studio and generated sites under non-root base paths.
+2. Expand integration coverage around Studio mutation routes, suggestion review flows, and archive export.
+3. Add authentication, rate limiting, and abuse protection for hosted demo deployments.
 4. Add deeper validation around protected-region mismatches and hydration drift.
 
 ## Longer-Term Additions

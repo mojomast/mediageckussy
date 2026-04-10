@@ -68,6 +68,13 @@ describe("AI providers", () => {
     expect(() => resolveProvider("unknown")).toThrow(/Unknown LLM provider "unknown"/);
   });
 
+  test("resolveProvider('zai') throws if key env var is not set", async () => {
+    delete process.env.MEDIAGECKUSSY_ZAI_API_KEY;
+    const { resolveProvider } = await import("../../ai/providers/index.js");
+
+    expect(() => resolveProvider("zai")).toThrow(/MEDIAGECKUSSY_ZAI_API_KEY/);
+  });
+
   test("OpenAIProvider.complete returns a normalized CompletionResponse", async () => {
     process.env.MEDIAGECKUSSY_OPENAI_API_KEY = "test-key";
     openAIState.create.mockResolvedValue({

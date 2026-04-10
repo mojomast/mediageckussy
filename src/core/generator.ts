@@ -1,7 +1,7 @@
 import path from "node:path";
 import YAML from "yaml";
 import { getFormatPack } from "./formats.js";
-import { buildManifest, writeManifest } from "./manifest.js";
+import { buildManifest, readManifest, writeManifest } from "./manifest.js";
 import { TemplateRegistry } from "./template-registry.js";
 import { validatePackage } from "./validators.js";
 import type { CanonProject, GenerateOptions, GeneratedFileRecord } from "./types.js";
@@ -41,6 +41,9 @@ export async function generatePackage(options: GenerateOptions) {
   }
 
   const outputDir = options.outputDir;
+  const existingManifest = await fs.pathExists(path.join(outputDir, "00_admin/package_manifest.json"))
+    ? await readManifest(outputDir)
+    : undefined;
   const repoRoot = path.resolve(path.join(import.meta.dirname, "../../"));
   const registry = new TemplateRegistry(formatPack.templates);
   const canonFingerprint = fingerprintCanon(canon);
@@ -130,6 +133,7 @@ export async function generatePackage(options: GenerateOptions) {
     packageTier: canon.package_tier,
     requiredFiles: formatPack.requiredFiles,
     generatedFiles: records,
+    existingManifest,
   });
 
   await writeManifest(outputDir, manifest);
@@ -159,6 +163,7 @@ export async function generatePackage(options: GenerateOptions) {
     packageTier: canon.package_tier,
     requiredFiles: formatPack.requiredFiles,
     generatedFiles: records,
+    existingManifest: manifest,
   });
 
   await writeManifest(outputDir, finalManifest);

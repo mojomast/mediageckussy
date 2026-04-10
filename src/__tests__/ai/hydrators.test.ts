@@ -41,6 +41,32 @@ describe("AI hydrators", () => {
     expect(result.suggestion.confidence).toBe(0.85);
   });
 
+  test("hydrateField appends prompt hint to the user prompt", async () => {
+    const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
+    const outputDir = await createTempOutputDir("hydrate-field-hint");
+    const seen: string[] = [];
+    const provider = {
+      id: "mock",
+      name: "Mock",
+      async complete(req: { user: string }) {
+        seen.push(req.user);
+        return {
+          content: "hinted\nCONFIDENCE: 0.9",
+          model: "mock-llm",
+          usage: { promptTokens: 1, completionTokens: 1 },
+          durationMs: 0,
+        };
+      },
+      async isAvailable() {
+        return true;
+      },
+    };
+
+    await hydrateField(canon, "canon.logline", outputDir, provider, { force: true, promptHint: "Make it sharper." });
+
+    expect(seen[0]).toContain("Make it sharper.");
+  });
+
   test("hydrateDocument does not modify protected manual-edit regions", async () => {
     const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
     const outputDir = await createTempOutputDir("hydrate-doc-protected");
