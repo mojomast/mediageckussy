@@ -247,6 +247,27 @@ Use stable region IDs in custom templates. Nested markers are not supported, and
 - Serve that folder locally with `python3 -m http.server` or copy it to any static host.
 - The deploy step is a filesystem copy, so it works with nginx, GitHub Pages, Netlify static uploads, S3-style buckets, or any plain web root.
 
+## Deploy to GitHub Pages
+This repo includes a GitHub Actions workflow that generates and publishes all four sample demo sites to GitHub Pages on every push to `main` and on manual dispatch. It builds each sample package, copies the published static sites into a single Pages artifact, and serves them under separate subdirectories.
+
+To enable it:
+1. Open the repository Settings on GitHub.
+2. Go to Pages.
+3. Set the source to GitHub Actions.
+
+The included workflow is a demo deployment for the sample canon files. For your own real projects, fork the workflow and replace the sample generate/publish commands with your own canon paths and publish targets.
+
+## Deploy to Netlify
+You can deploy a generated static site to Netlify with a simple build config such as:
+
+```toml
+[build]
+  command = "npm ci && npm run generate:example && npm run publish:tv"
+  publish = "deploy/neon-aftercare-site"
+```
+
+Replace the command and publish path with the format and project you actually want to deploy.
+
 ## Output Structure
 - `00_admin/`: canon lock + manifest
 - `01_development/`: TV bibles or film overview/treatment

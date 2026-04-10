@@ -1,0 +1,28 @@
+name: Validate
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate TV sample
+        run: npm run generate:example
+
+      - name: Validate TV output report
+        run: node -e "const fs=require('fs'); const p='output/neon-aftercare/16_ops/validation_report.json'; if(!fs.existsSync(p)) throw new Error('validation_report.json missing'); const report=JSON.parse(fs.readFileSync(p,'utf8')); if(report.ok !== true) { console.error(report); process.exit(1); }"
+
+      - name: TypeScript compile check
+        run: npx tsc --noEmit
