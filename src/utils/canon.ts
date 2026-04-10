@@ -49,3 +49,16 @@ export function publicCanonSlice(canon: CanonProject) {
     structure: (canon.canon.structure?.value ?? []).filter((item) => item.visibility === "public"),
   };
 }
+
+export function diffLockedFields(previous: CanonProject, next: CanonProject): string[] {
+  const changed: string[] = [];
+
+  for (const [key, previousField] of Object.entries(previous.canon)) {
+    const nextField = next.canon[key as keyof CanonProject["canon"]];
+    if (previousField.status === "locked" && JSON.stringify(previousField.value) !== JSON.stringify(nextField?.value)) {
+      changed.push(`canon.${key}`);
+    }
+  }
+
+  return changed;
+}

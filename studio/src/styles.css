@@ -1,0 +1,130 @@
+:root {
+  --color-primary: #01696f;
+  --color-surface: #f1e5d4;
+  --color-text: #172021;
+  font-family: Satoshi, system-ui, sans-serif;
+}
+
+[data-theme="dark"] {
+  --color-primary: #4f98a3;
+  --color-surface: #1b2324;
+  --color-text: #f4efe6;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--color-primary) 20%, var(--color-surface));
+}
+
+.tab-bar, .row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dashboard-grid, .asset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.asset-grid img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.card, .panel {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(1, 105, 111, 0.2);
+  border-radius: 16px;
+  padding: 1rem;
+}
+
+.three-column {
+  display: grid;
+  grid-template-columns: 220px 1fr 300px;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.two-column {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+.sidebar {
+  max-height: calc(100vh - 100px);
+  overflow: auto;
+}
+
+.field-button, .file-button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #999;
+}
+
+.status-dot.approved { background: #3a7bff; }
+.status-dot.locked { background: #d1a233; }
+.status-dot.deprecated { background: #b44; }
+
+textarea {
+  width: 100%;
+  min-height: 60vh;
+}
+
+.site-frame {
+  width: 100%;
+  height: calc(100vh - 80px);
+  border: 0;
+}
+
+.badge.ok { color: #126b2e; }
+.badge.warn { color: #9a6a14; }
+
+.progress {
+  width: 100%;
+  height: 10px;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progress > div {
+  height: 100%;
+  background: var(--color-primary);
+}
+
+.issue.error { border-left: 4px solid #c64646; padding-left: 0.75rem; }
+.issue.warning { border-left: 4px solid #c28c2d; padding-left: 0.75rem; }
+
+@media (max-width: 900px) {
+  .three-column, .two-column {
+    grid-template-columns: 1fr;
+  }
+}

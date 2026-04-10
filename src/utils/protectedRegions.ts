@@ -82,12 +82,13 @@ export function reapplyProtectedRegions(newContent: string, regions: Map<string,
   let result = newContent;
 
   for (const [regionId, regionContent] of regions.entries()) {
+    const escapedRegionId = regionId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     const htmlPattern = new RegExp(
-      `(<!--\\s*MANUAL_EDIT_START:\\s*${regionId}\\s*-->)([\\s\\S]*?)(<!--\\s*MANUAL_EDIT_END:\\s*${regionId}\\s*-->)`,
+      `(<!--\\s*MANUAL_EDIT_START:\\s*${escapedRegionId}\\s*-->)([\\s\\S]*?)(<!--\\s*MANUAL_EDIT_END:\\s*${escapedRegionId}\\s*-->)`,
       "g",
     );
     const hashPattern = new RegExp(
-      `(^\\s*#\\s*MANUAL_EDIT_START:\\s*${regionId}\\s*$)([\\s\\S]*?)(^\\s*#\\s*MANUAL_EDIT_END:\\s*${regionId}\\s*$)`,
+      `(^\\s*#\\s*MANUAL_EDIT_START:\\s*${escapedRegionId}\\s*$)([\\s\\S]*?)(^\\s*#\\s*MANUAL_EDIT_END:\\s*${escapedRegionId}\\s*$)`,
       "gm",
     );
 

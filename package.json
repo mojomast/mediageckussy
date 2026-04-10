@@ -28,7 +28,10 @@
     "publish:film": "tsx src/cli/publish-site.ts output/glass-harbor deploy/glass-harbor-site",
     "publish:podcast": "tsx src/cli/publish-site.ts output/signal-and-bone deploy/signal-and-bone-site",
     "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site",
-    "test:regions": "vitest run src/utils/protectedRegions.test.ts"
+    "test:regions": "vitest run src/utils/protectedRegions.test.ts",
+    "studio": "node dist/server/index.js",
+    "studio:dev": "concurrently \"npx tsx watch src/server/index.ts\" \"vite studio/ --port 5173\"",
+    "build:studio": "cd studio && vite build --outDir ../dist-studio"
   },
   "keywords": [
     "media",
@@ -42,6 +45,8 @@
   "description": "Canon-first media package generator for TV-first repo-native creative packages.",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.87.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
     "fs-extra": "^11.3.2",
     "handlebars": "^4.7.8",
     "openai": "^6.34.0",
@@ -50,11 +55,23 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
     "@types/fs-extra": "^11.0.4",
     "@types/handlebars": "^4.0.40",
     "@types/node": "^25.6.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "@types/supertest": "^7.2.0",
+    "@vitejs/plugin-react": "^5.0.2",
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.10",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
+    "supertest": "^7.1.4",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
+    "vite": "^7.1.3",
     "vitest": "^4.1.4"
   }
 }

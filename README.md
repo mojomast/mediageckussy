@@ -253,6 +253,20 @@ npx tsx src/cli/index.ts assets moodboard --canon examples/sample-tv/canon.yaml 
 npx tsx src/cli/index.ts assets list --out output/neon-aftercare
 ```
 
+## Studio UI
+
+```bash
+npm run studio:dev
+```
+
+Studio provides six local views:
+- Dashboard for project list and quick actions
+- Canon editor for field editing and AI suggestions
+- Files view for generated package browsing and editing
+- Site preview for the generated static site
+- Assets gallery for images and prompt metadata
+- Ops view for validation and placeholder-fix workflows
+
 ## Canon Model
 - Input format: YAML or JSON
 - Required canon sections include title, logline, format, genre, tone, audience, comps, duration/count, themes, world/setting, assumptions, publication flags, characters, and episodes.
