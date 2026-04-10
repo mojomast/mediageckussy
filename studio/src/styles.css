@@ -150,6 +150,41 @@ button {
   margin: 0;
 }
 
+.project-card {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.empty-state-card {
+  grid-column: 1 / -1;
+}
+
+.card-topline,
+.metric-row,
+.project-meta-row {
+  align-items: center;
+}
+
+.card-topline p,
+.project-meta-row,
+.metric-row {
+  margin: 0;
+}
+
+.format-badge {
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(1, 105, 111, 0.1);
+  color: var(--color-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.error-panel {
+  max-width: 760px;
+}
+
 .three-column {
   display: grid;
   grid-template-columns: 220px 1fr 300px;

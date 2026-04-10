@@ -408,12 +408,14 @@ async function listProjects() {
     }
     const manifest = await fs.readJson(manifestPath);
     const validation = await fs.readJson(validationPath);
+    const suggestions = await loadSuggestions(outputDir);
     return {
       slug: entry.slug,
       title: entry.title,
       mediaType: manifest.mediaType,
       packageTier: manifest.packageTier,
       validation,
+      pendingSuggestionCount: suggestions.filter((item) => item.status === "pending").length,
       generatedAt: manifest.generatedAt,
       settings: entry.settings,
     };

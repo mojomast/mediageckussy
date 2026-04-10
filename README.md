@@ -261,25 +261,30 @@ npx tsx src/cli/index.ts assets list --out output/neon-aftercare
 npm run studio:dev
 ```
 
-Studio now supports a hosted-demo workflow in addition to local use:
-- create a project from the browser with a starter canon
-- choose built-in inference via OpenRouter or Z.AI
-- iterate on canon fields and generated docs with prompt-guided hydration
-- review and accept field suggestions in the UI
-- preview hosted site/assets through server routes
-- export the full project workspace as a downloadable archive
+Studio now runs as a hosted-demo shell over server-managed workspaces in `output/`.
 
-Studio still provides six workspace views:
-- Dashboard for project list and quick actions
-- Canon editor for field editing and AI suggestions
-- Files view for generated package browsing and editing
-- Site preview for the generated static site
-- Assets gallery for images and prompt metadata
-- Ops view for validation and placeholder-fix workflows
+The current Studio flow is:
+- start from the Dashboard or the guided interview
+- create a hosted project with a starter canon or interview-built canon
+- choose built-in inference through OpenRouter or Z.AI
+- iterate on canon fields and generated files with prompt-guided hydration
+- review pending AI suggestions in the Canon view
+- preview the generated site and assets through safe backend routes
+- export the full package as a downloadable archive
+
+Studio provides six main workspace views plus the interview flow:
+- Dashboard for project creation, project cards, and quick actions
+- Interview for guided project onboarding and package generation
+- Canon for field editing, provider settings, and AI suggestion review
+- Files for generated package browsing, editing, and archive download
+- Site for hosted static preview
+- Assets for generated images and prompt metadata
+- Ops for validation, completeness tracking, bulk placeholder fixes, and export
 
 Recommended hosted demo inference defaults:
-- OpenRouter with `google/gemini-2.5-flash-lite` for low-latency, low-cost iteration
+- OpenRouter with `google/gemini-2.5-flash-lite` for low-latency iteration
 - Z.AI with `glm-4.5-flash` as an alternate built-in backend
+- keep provider API keys server-side only
 
 ## Environment Variables
 - Use `.env.example` as the single reference for LLM, image, hydration, and Studio config.

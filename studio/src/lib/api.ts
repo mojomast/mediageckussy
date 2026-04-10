@@ -11,6 +11,7 @@ export type ProjectSummary = {
   packageTier: string;
   generatedAt: string;
   validation: { ok: boolean; completenessScore: number; issues: Array<{ level: string; code: string; message: string }> };
+  pendingSuggestionCount: number;
   settings?: { llmProvider: string; llmModel: string };
 };
 

@@ -12,6 +12,6 @@ export default defineConfig({
     environment: "node",
     testTimeout: 30_000,
     hookTimeout: 30_000,
-    exclude: ["dist/**", "node_modules/**"],
+    exclude: ["dist/**", "**/node_modules/**"],
   },
 });

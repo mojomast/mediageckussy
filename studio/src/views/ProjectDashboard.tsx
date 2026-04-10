@@ -80,16 +80,42 @@ export function ProjectDashboard({ projects, options, status, onOpen, onCreate, 
       </section>
 
       <section className="dashboard-grid">
+        {projects.length === 0 && (
+          <article className="panel empty-state-card">
+            <div className="eyebrow">No Projects Yet</div>
+            <h2>Start with the interview or create a starter package.</h2>
+            <p className="muted">Your hosted demo projects will appear here once they are generated into `output/`.</p>
+            <div className="row gap wrap">
+              <button className="primary-button" onClick={onStartInterview}>Start Interview</button>
+              <button onClick={() => onCreate({ title, mediaType, packageTier, provider, model })}>Create Project</button>
+            </div>
+          </article>
+        )}
+
         {projects.map((project) => (
           <article key={project.slug} className="card project-card">
             <div className="row between wrap">
               <h2>{project.title}</h2>
+              <span className="format-badge">{project.mediaType}</span>
+            </div>
+            <div className="row between wrap card-topline">
+              <p>{project.slug} · {project.packageTier}</p>
               <span className={`badge ${project.validation.ok ? "ok" : "warn"}`}>{project.validation.ok ? "Ready" : "Needs Work"}</span>
             </div>
-            <p>{project.mediaType} · {project.packageTier}</p>
             <p className="muted">Inference: {project.settings?.llmProvider ?? "default"} · {project.settings?.llmModel ?? ""}</p>
-            <p className="muted">Completeness {project.validation.completenessScore}</p>
-            <button onClick={() => onOpen(project.slug)}>Open Workspace</button>
+            <div className="row between wrap metric-row">
+              <span>Completeness</span>
+              <strong>{project.validation.completenessScore}%</strong>
+            </div>
+            <div className="progress"><div style={{ width: `${project.validation.completenessScore}%` }} /></div>
+            <div className="row between wrap project-meta-row">
+              <span className="muted">{project.pendingSuggestionCount} pending suggestions</span>
+              <span className={`badge ${project.pendingSuggestionCount > 0 ? "warn" : "ok"}`}>{project.pendingSuggestionCount > 0 ? "Review Needed" : "Suggestions Clear"}</span>
+            </div>
+            <div className="row gap wrap">
+              <button onClick={() => onOpen(project.slug)}>Open Workspace</button>
+              <a className="button-link" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
+            </div>
           </article>
         ))}
       </section>

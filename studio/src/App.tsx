@@ -63,6 +63,27 @@ export function App() {
     }
   }, [selectedSlug, view]);
 
+  useEffect(() => {
+    if (view.kind === "interview") {
+      document.title = "Interview | Mediageckussy Studio";
+      return;
+    }
+
+    const suffix = selectedSlug ? ` - ${selectedSlug}` : "";
+    const title = view.tab === "Dashboard"
+      ? "Dashboard"
+      : view.tab === "Canon"
+        ? "Canon"
+        : view.tab === "Files"
+          ? "Files"
+          : view.tab === "Site"
+            ? "Site"
+            : view.tab === "Assets"
+              ? "Assets"
+              : "Ops";
+    document.title = `${title}${suffix} | Mediageckussy Studio`;
+  }, [selectedSlug, view]);
+
   return (
     <div data-theme={theme} className="app-shell">
       <header className="app-header">
