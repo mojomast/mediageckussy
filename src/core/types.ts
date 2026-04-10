@@ -85,6 +85,15 @@ export interface PackageManifest {
   mediaType: string;
   packageTier: string;
   generatedFiles: GeneratedFileRecord[];
+  generatedAssets?: Array<{
+    type: string;
+    path: string;
+    provider: string;
+    model: string;
+    prompt: string;
+    canonFingerprint: string;
+    generatedAt: string;
+  }>;
   hydrationLog?: Array<{
     field?: string;
     file?: string;

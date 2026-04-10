@@ -240,6 +240,19 @@ npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out out
 npx tsx src/cli/index.ts hydrate status --out output/neon-aftercare
 ```
 
+## Creative Asset Tools
+- Creative assets are opt-in image generations tied to canon context.
+- Generated files land under `site/assets/generated/` so they publish with the static site.
+- Each image also writes a `.prompt.json` sidecar with prompt and model metadata.
+
+Examples:
+
+```bash
+npx tsx src/cli/index.ts assets generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --type poster
+npx tsx src/cli/index.ts assets moodboard --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --panels 6
+npx tsx src/cli/index.ts assets list --out output/neon-aftercare
+```
+
 ## Canon Model
 - Input format: YAML or JSON
 - Required canon sections include title, logline, format, genre, tone, audience, comps, duration/count, themes, world/setting, assumptions, publication flags, characters, and episodes.

@@ -21,6 +21,7 @@ export function buildManifest(input: {
     mediaType: input.mediaType,
     packageTier: input.packageTier,
     generatedFiles: input.generatedFiles,
+    generatedAssets: [],
     hydrationLog: [],
     requiredFiles: input.requiredFiles,
     departments: [...departmentMap.entries()].map(([name, fileCount]) => ({ name, fileCount })),
@@ -32,6 +33,7 @@ export async function readManifest(outputDir: string): Promise<PackageManifest> 
 }
 
 export async function writeManifest(outputDir: string, manifest: PackageManifest) {
+  await fs.ensureDir(path.join(outputDir, "00_admin"));
   await fs.writeJson(path.join(outputDir, "00_admin/package_manifest.json"), manifest, { spaces: 2 });
 }
 
@@ -52,5 +54,14 @@ export async function updateHydrationLogStatus(
     const matchesFile = target.file && entry.file === target.file;
     return matchesField || matchesFile ? { ...entry, status } : entry;
   });
+  await writeManifest(outputDir, manifest);
+}
+
+export async function registerAsset(
+  outputDir: string,
+  asset: NonNullable<PackageManifest["generatedAssets"]>[number],
+) {
+  const manifest = await readManifest(outputDir);
+  manifest.generatedAssets = [...(manifest.generatedAssets ?? []), asset];
   await writeManifest(outputDir, manifest);
 }

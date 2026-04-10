@@ -8,6 +8,10 @@ import { hydratePackage } from "../ai/hydrators/bulkHydrator.js";
 import { resolveProvider } from "../ai/providers/index.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../ai/suggestions.js";
 import { loadCanon } from "../utils/canon.js";
+import { generateAsset, type AssetType } from "../ai/assetGenerator.js";
+import { resolveImageProvider } from "../ai/image/index.js";
+import { generateMoodBoard } from "../ai/moodboard.js";
+import { readManifest } from "../core/manifest.js";
 
 function readArg(flag: string) {
   const index = process.argv.indexOf(flag);
@@ -19,7 +23,7 @@ async function main() {
   const subcommand = process.argv[3];
 
   if (!command || command === "help") {
-    console.log("Usage: mpg <generate|regenerate|formats|hydrate> [options]");
+    console.log("Usage: mpg <generate|regenerate|formats|hydrate|assets> [options]");
     process.exit(0);
   }
 
@@ -146,6 +150,63 @@ async function main() {
     }
 
     throw new Error("Provide one of --field, --file, or --mode bulk for hydrate");
+  }
+
+  if (command === "assets") {
+    const canonPath = readArg("--canon");
+    const outputDir = readArg("--out");
+    const type = readArg("--type") as AssetType | undefined;
+    const providerName = readArg("--provider");
+    const promptOverride = readArg("--prompt-override");
+    const character = readArg("--character");
+    const all = process.argv.includes("--all");
+    const dryRun = process.argv.includes("--dry-run");
+
+    if (subcommand === "list") {
+      if (!outputDir) {
+        throw new Error("--out is required for assets list");
+      }
+      const manifest = await readManifest(path.resolve(outputDir));
+      console.log(JSON.stringify(manifest.generatedAssets ?? [], null, 2));
+      process.exit(0);
+    }
+
+    if (!canonPath || !outputDir) {
+      throw new Error("Both --canon and --out are required.");
+    }
+
+    const canon = await loadCanon(path.resolve(canonPath));
+    const provider = resolveImageProvider(providerName);
+
+    if (subcommand === "moodboard") {
+      const panels = Number(readArg("--panels") ?? "6") as 4 | 6 | 9;
+      const moodboardPath = await generateMoodBoard(canon, path.resolve(outputDir), provider, panels);
+      console.log(JSON.stringify({ ok: true, moodboardPath }, null, 2));
+      process.exit(0);
+    }
+
+    if (subcommand === "generate") {
+      const assetTypes: AssetType[] = all
+        ? ["poster", "key-art", "character-portrait", "episode-card", "mood-board-panel", "social-banner", "podcast-cover"]
+        : type ? [type] : [];
+
+      if (assetTypes.length === 0) {
+        throw new Error("Provide --type or --all for assets generate");
+      }
+
+      const results = [];
+      for (const assetType of assetTypes) {
+        results.push(await generateAsset(canon, path.resolve(outputDir), assetType, provider, {
+          characterId: character ?? undefined,
+          promptOverride: promptOverride ?? undefined,
+          dryRun,
+        }));
+      }
+      console.log(JSON.stringify(results, null, 2));
+      process.exit(0);
+    }
+
+    throw new Error(`Unknown assets subcommand: ${subcommand ?? ""}`);
   }
 
   throw new Error(`Unknown command: ${command}`);
