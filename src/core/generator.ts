@@ -7,6 +7,8 @@ import { validatePackage } from "./validators.js";
 import type { CanonProject, GenerateOptions, GeneratedFileRecord } from "./types.js";
 import { ensureDirectories, writeTextFile } from "../utils/fs.js";
 import { fingerprintCanon, loadCanon, publicCanonSlice } from "../utils/canon.js";
+import { analyzeProtectedRegions, reapplyProtectedRegions } from "../utils/protectedRegions.js";
+import fs from "fs-extra";
 
 function buildTemplateData(canon: CanonProject, fingerprint: string) {
   const publicCanon = publicCanonSlice(canon);
@@ -47,6 +49,7 @@ export async function generatePackage(options: GenerateOptions) {
   await ensureDirectories(outputDir, formatPack.directories);
 
   const records: GeneratedFileRecord[] = [];
+  const protectedRegionWarnings: string[] = [];
   const selectedTemplates = registry.selectForDepartment(mediaType, canon.package_tier, options.department, options.file);
 
   for (const template of selectedTemplates) {
@@ -66,7 +69,19 @@ export async function generatePackage(options: GenerateOptions) {
         })
       : rendered;
 
-    await writeTextFile(path.join(outputDir, template.path), finalContent);
+    const targetPath = path.join(outputDir, template.path);
+    let contentToWrite = finalContent;
+
+    if (await fs.pathExists(targetPath)) {
+      const existingContent = await fs.readFile(targetPath, "utf8");
+      const analysis = analyzeProtectedRegions(existingContent);
+      if (analysis.hasMarkers && analysis.regions.size === 0) {
+        protectedRegionWarnings.push(`Protected region marker mismatch in ${template.path}`);
+      }
+      contentToWrite = reapplyProtectedRegions(finalContent, analysis.regions);
+    }
+
+    await writeTextFile(targetPath, contentToWrite);
 
     records.push({
       path: template.path,
@@ -106,7 +121,7 @@ export async function generatePackage(options: GenerateOptions) {
 
   await writeManifest(outputDir, manifest);
 
-  const validation = await validatePackage({ outputDir, canon, manifest });
+  const validation = await validatePackage({ outputDir, canon, manifest, protectedRegionWarnings });
   await writeTextFile(
     path.join(outputDir, "16_ops/validation_report.json"),
     JSON.stringify(validation, null, 2),

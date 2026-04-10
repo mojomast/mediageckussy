@@ -178,7 +178,32 @@ python3 -m http.server 4173 --directory deploy/your-project-site
 - Additional current department values include `scripts`, `story_design`, `episode_design`, `host_talent`, `distribution`, `business_dev`, `finance`, `legal`, and `release_prep` depending on format.
 - `--file` must match a generated output path exactly, such as `site/press.html` or `06_press_kit/press_kit.md`.
 - Scoped regeneration still refreshes `00_admin/canon_lock.yaml`, `00_admin/package_manifest.json`, and `16_ops/validation_report.json`.
-- Protected manual-edit regions are not implemented yet, so regenerated files should be treated as generator-owned.
+
+## Manual Edits
+Generated files can preserve human-authored content inside protected regions.
+
+For Markdown, HTML, and plain text templates use:
+
+```html
+<!-- MANUAL_EDIT_START: region-id -->
+Your human-maintained content here.
+<!-- MANUAL_EDIT_END: region-id -->
+```
+
+For YAML-style comment files use:
+
+```yaml
+# MANUAL_EDIT_START: region-id
+# MANUAL_EDIT_END: region-id
+```
+
+During regeneration the generator will:
+1. read the existing file
+2. extract region content by `region-id`
+3. regenerate the file
+4. reapply the saved content into matching regions
+
+Use stable region IDs in custom templates. Nested markers are not supported, and mismatched start/end markers will produce a warning in `16_ops/validation_report.json`.
 
 ## Validation
 - Validation runs automatically after every generate or regenerate command.

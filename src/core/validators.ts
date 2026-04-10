@@ -11,6 +11,7 @@ export async function validatePackage(params: {
   outputDir: string;
   canon: CanonProject;
   manifest: PackageManifest;
+  protectedRegionWarnings?: string[];
 }): Promise<ValidationResult> {
   const issues: ValidationIssue[] = [];
 
@@ -43,6 +44,14 @@ export async function validatePackage(params: {
     if (record.outputFormat === "md" && !content.includes(record.canonFingerprint)) {
       issues.push({ level: "warning", code: "stale_output", message: `File may be stale against canon fingerprint: ${record.path}`, path: record.path });
     }
+  }
+
+  for (const warning of params.protectedRegionWarnings ?? []) {
+    issues.push({
+      level: "warning",
+      code: "protected_region_mismatch",
+      message: warning,
+    });
   }
 
   return {

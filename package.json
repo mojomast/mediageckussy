@@ -25,7 +25,8 @@
     "publish:tv": "tsx src/cli/publish-site.ts output/neon-aftercare deploy/neon-aftercare-site",
     "publish:film": "tsx src/cli/publish-site.ts output/glass-harbor deploy/glass-harbor-site",
     "publish:podcast": "tsx src/cli/publish-site.ts output/signal-and-bone deploy/signal-and-bone-site",
-    "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site"
+    "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site",
+    "test:regions": "tsx --test src/utils/protectedRegions.test.ts"
   },
   "keywords": [
     "media",
