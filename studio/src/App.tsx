@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { AppShell, type WorkspaceTab } from "./components/AppShell";
 import { api, type ProjectSummary, type StudioOptions } from "./lib/api";
 import { AssetGallery } from "./views/AssetGallery";
 import { CanonEditor } from "./views/CanonEditor";
@@ -7,20 +8,21 @@ import { PackagePreview } from "./views/PackagePreview";
 import { ProjectDashboard } from "./views/ProjectDashboard";
 import { ValidationOps } from "./views/ValidationOps";
 
-type Tab = "Dashboard" | "Canon" | "Files" | "Site" | "Assets" | "Ops";
+type Tab = Exclude<WorkspaceTab, "Interview">;
 type View = { kind: "workspace"; tab: Tab } | { kind: "interview" };
 
 export function App() {
   const [view, setView] = useState<View>(resolveViewFromPath());
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(resolveSlugFromPath());
-  const [theme, setTheme] = useState("light");
   const [options, setOptions] = useState<StudioOptions | null>(null);
   const [status, setStatus] = useState("Ready to create or continue a hosted demo project.");
   const [projectSettings, setProjectSettings] = useState<{ llmProvider: string; llmModel: string } | null>(null);
 
   const tab = view.kind === "workspace" ? view.tab : "Dashboard";
   const inInterview = view.kind === "interview";
+  const selectedProject = selectedSlug ? projects.find((project) => project.slug === selectedSlug) : null;
+  const shellProjectTitle = selectedProject?.title ?? (inInterview ? "NEW PROJECT INITIALIZATION" : "NO PROJECT LOADED");
 
   async function refreshProjects() {
     const [projectResponse, optionsResponse] = await Promise.all([
@@ -85,24 +87,19 @@ export function App() {
   }, [selectedSlug, view]);
 
   return (
-    <div data-theme={theme} className="app-shell">
-      <header className="app-header">
-        <div>
-          <div className="brand">Mediageckussy Studio</div>
-          <div className="muted">Hosted demo workspace for end-to-end media package generation.</div>
-        </div>
-        <nav className="tab-bar">
-          {(["Dashboard", "Canon", "Files", "Site", "Assets", "Ops"] as Tab[]).map((item) => (
-            <button key={item} className={!inInterview && tab === item ? "active" : ""} onClick={() => setView({ kind: "workspace", tab: item })}>{item}</button>
-          ))}
-          <button className={inInterview ? "active" : ""} onClick={() => {
-            setView({ kind: "interview" });
-            setStatus("Interview mode.");
-          }}>Interview</button>
-        </nav>
-        <button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>{theme === "light" ? "Dark" : "Light"}</button>
-      </header>
+    <AppShell
+      activeTab={inInterview ? "Interview" : tab}
+      projectTitle={shellProjectTitle}
+      onSelectTab={(nextTab) => {
+        if (nextTab === "Interview") {
+          setView({ kind: "interview" });
+          setStatus("Interview mode.");
+          return;
+        }
 
+        setView({ kind: "workspace", tab: nextTab });
+      }}
+    >
       {!inInterview && tab === "Dashboard" && <ProjectDashboard
         projects={projects}
         options={options}
@@ -145,7 +142,7 @@ export function App() {
       {!inInterview && tab === "Site" && selectedSlug && <iframe className="site-frame" src={api.siteUrl(selectedSlug)} title="Site Preview" />}
       {!inInterview && tab === "Assets" && selectedSlug && <AssetGallery slug={selectedSlug} setStatus={setStatus} />}
       {!inInterview && tab === "Ops" && selectedSlug && <ValidationOps slug={selectedSlug} setStatus={setStatus} />}
-    </div>
+    </AppShell>
   );
 }
 

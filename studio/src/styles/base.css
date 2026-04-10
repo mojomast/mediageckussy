@@ -111,6 +111,19 @@ body::after {
   }
 }
 
+@keyframes status-pulse {
+  0%,
+  100% {
+    color: var(--color-phosphor-dim);
+    text-shadow: none;
+  }
+
+  50% {
+    color: var(--color-phosphor);
+    text-shadow: var(--glow-phosphor-sm);
+  }
+}
+
 body {
   margin: 0;
   background: var(--color-void);
