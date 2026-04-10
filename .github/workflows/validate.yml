@@ -24,5 +24,8 @@ jobs:
       - name: Validate TV output report
         run: node -e "const fs=require('fs'); const p='output/neon-aftercare/16_ops/validation_report.json'; if(!fs.existsSync(p)) throw new Error('validation_report.json missing'); const report=JSON.parse(fs.readFileSync(p,'utf8')); if(report.ok !== true) { console.error(report); process.exit(1); }"
 
+      - name: Run test suite
+        run: npm test
+
       - name: TypeScript compile check
         run: npx tsc --noEmit

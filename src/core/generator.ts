@@ -111,6 +111,19 @@ export async function generatePackage(options: GenerateOptions) {
     canonFingerprint,
   });
 
+  records.push({
+    path: "00_admin/package_manifest.json",
+    templateId: "system-package-manifest",
+    department: "admin",
+    audience: ["internal", "ops"],
+    outputFormat: "json",
+    sources: ["generatedFiles"],
+    status: "generated",
+    regenPolicy: "always",
+    generatedAt: new Date().toISOString(),
+    canonFingerprint,
+  });
+
   const manifest = buildManifest({
     projectId: canon.id,
     mediaType,
@@ -127,5 +140,28 @@ export async function generatePackage(options: GenerateOptions) {
     JSON.stringify(validation, null, 2),
   );
 
-  return { canon, manifest, validation };
+  records.push({
+    path: "16_ops/validation_report.json",
+    templateId: "system-validation-report",
+    department: "ops",
+    audience: ["internal", "ops"],
+    outputFormat: "json",
+    sources: ["manifest", "validation"],
+    status: "generated",
+    regenPolicy: "always",
+    generatedAt: new Date().toISOString(),
+    canonFingerprint,
+  });
+
+  const finalManifest = buildManifest({
+    projectId: canon.id,
+    mediaType,
+    packageTier: canon.package_tier,
+    requiredFiles: formatPack.requiredFiles,
+    generatedFiles: records,
+  });
+
+  await writeManifest(outputDir, finalManifest);
+
+  return { canon, manifest: finalManifest, validation };
 }

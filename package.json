@@ -17,6 +17,8 @@
     "onboard:web": "tsx src/cli/onboard.ts examples/sample-web-series/canon.yaml output/soft-launch",
     "build": "tsc -p tsconfig.json",
     "check": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "generate:example": "tsx src/cli/index.ts generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare",
     "generate:film": "tsx src/cli/index.ts generate --canon examples/sample-film/canon.yaml --out output/glass-harbor",
     "generate:podcast": "tsx src/cli/index.ts generate --canon examples/sample-podcast/canon.yaml --out output/signal-and-bone",
@@ -26,7 +28,7 @@
     "publish:film": "tsx src/cli/publish-site.ts output/glass-harbor deploy/glass-harbor-site",
     "publish:podcast": "tsx src/cli/publish-site.ts output/signal-and-bone deploy/signal-and-bone-site",
     "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site",
-    "test:regions": "tsx --test src/utils/protectedRegions.test.ts"
+    "test:regions": "vitest run src/utils/protectedRegions.test.ts"
   },
   "keywords": [
     "media",
@@ -49,6 +51,7 @@
     "@types/handlebars": "^4.0.40",
     "@types/node": "^25.6.0",
     "tsx": "^4.21.0",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.4"
   }
 }
