@@ -8,7 +8,7 @@ type Props = {
   onOpenProject: (slug: string) => void;
 };
 
-const PHASE_LABELS = ["Concept", "World", "Characters", "Themes"];
+const PHASE_LABELS = ["FORMAT", "WORLD", "CHARACTERS", "THEMES"];
 
 export function InterviewView({ options, onOpenProject }: Props) {
   const [provider, setProvider] = useState<string>(options?.providers.find((item) => item.available)?.id ?? "openrouter");
@@ -16,6 +16,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [phase, setPhase] = useState<number | "complete">(1);
   const [totalQuestions, setTotalQuestions] = useState(15);
+  const [questionIndex, setQuestionIndex] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
         setSessionId(start.sessionId);
         setPhase(start.phase);
         setTotalQuestions(start.totalQuestions);
+        setQuestionIndex(1);
         setMessages([{ role: "interviewer", content: start.message }]);
         setError(null);
       } catch {
@@ -61,8 +63,15 @@ export function InterviewView({ options, onOpenProject }: Props) {
   }, [model, provider, sessionId]);
 
   const currentPhaseIndex = phase === "complete" ? 4 : phase;
-  const progressText = phase === "complete" ? "Complete" : `Phase ${phase} of 4`;
+  const progressText = phase === "complete" ? "Phase 4 of 4" : `Phase ${phase} of 4`;
   const availableProviders = useMemo(() => options?.providers.filter((item) => item.available) ?? [], [options]);
+  const currentPhaseLabel = PHASE_LABELS[Math.max(0, currentPhaseIndex - 1)] ?? PHASE_LABELS[0];
+  const progressPercent = phase === "complete"
+    ? 100
+    : Math.max(
+      0,
+      Math.min(100, Math.round((((currentPhaseIndex - 1) + questionIndex / Math.max(totalQuestions, 1)) / 4) * 100)),
+    );
 
   async function submitMessage(message: string) {
     if (!sessionId || !message.trim()) return;
@@ -76,6 +85,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
       const response = await api.sendInterviewMessage(sessionId, message);
       setMessages((current) => [...current, { role: "interviewer", content: response.message }]);
       setPhase(response.phase);
+      setQuestionIndex(response.questionIndex + 1);
       if (response.complete) {
         setPhase("complete");
         setBuilding(true);
@@ -98,16 +108,16 @@ export function InterviewView({ options, onOpenProject }: Props) {
     }
   }
 
-  const progressPercent = phase === "complete"
-    ? 100
-    : Math.max(0, Math.min(100, Math.round(((currentPhaseIndex - 1) / 4) * 100 + (100 / totalQuestions))));
-
   return (
     <main className="interview-shell">
       <header className="interview-header">
-        <div className="row between wrap">
-          <div className="brand-row"><span className="diamond">◆</span><span>mediageckussy</span></div>
-          <span className="muted">{progressText}</span>
+        <div className="interview-header__eyebrow">INTERVIEW // NEW PROJECT INITIALIZATION</div>
+        <div className="interview-header__phase-row">
+          <div>
+            <div className="interview-header__phase">{progressText}: {currentPhaseLabel}</div>
+            <div className="interview-header__labels">{PHASE_LABELS.join(" · ")}</div>
+          </div>
+          <span className="badge badge--dim">{progressText}</span>
         </div>
         <div className="interview-phase-bar" aria-label="Phase progress bar">
           {PHASE_LABELS.map((label, index) => {
@@ -120,42 +130,63 @@ export function InterviewView({ options, onOpenProject }: Props) {
             );
           })}
         </div>
-        <div className="progress" aria-label="Interview progress">
-          <div style={{ width: `${progressPercent}%` }} />
+        <div className="progress-bar interview-progress" aria-label="Interview progress">
+          <div className="progress-bar__fill" style={{ width: `${progressPercent}%` }} />
         </div>
       </header>
 
       <section className="interview-transcript">
-        <div className="welcome-card">
-          <strong>Let&apos;s build your project together.</strong>
-          <p>Answer ~15 questions and we&apos;ll generate your full package for you.</p>
-          <label>
-            <span>Provider</span>
-            <select
-              aria-label="Provider"
-              value={provider}
-              onChange={(event) => {
-                const next = availableProviders.find((item) => item.id === event.target.value);
-                setProvider(event.target.value);
-                setModel(next?.model ?? "");
-              }}
-              disabled={Boolean(sessionId)}
-            >
-              {availableProviders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-            </select>
-          </label>
-        </div>
+        <section className="dossier welcome-dossier">
+          <div className="dossier__header">
+            <span>G.E.C.K. INITIALIZATION SEQUENCE</span>
+          </div>
+          <div className="dossier__body welcome-dossier__body">
+            <p>UNIT: MEDIA PACKAGE GENERATOR v2</p>
+            <p>STATUS: AWAITING PROJECT PARAMETERS</p>
+            <p>
+              This unit will conduct a short intake interview to gather project parameters. Responses will be used to
+              generate a canon-locked media package.
+            </p>
+            <p>ESTIMATED TIME: 5-8 MINUTES</p>
+            <p>QUESTIONS: ~15</p>
+            <label className="welcome-dossier__provider">
+              <span>PROVIDER</span>
+              <select
+                aria-label="Provider"
+                value={provider}
+                onChange={(event) => {
+                  const next = availableProviders.find((item) => item.id === event.target.value);
+                  setProvider(event.target.value);
+                  setModel(next?.model ?? "");
+                }}
+                disabled={Boolean(sessionId)}
+              >
+                {availableProviders.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+              </select>
+            </label>
+            <button className="btn btn--primary welcome-dossier__action" type="button" disabled={Boolean(sessionId)}>
+              Begin Initialization
+            </button>
+          </div>
+        </section>
 
         {messages.map((message, index) => (
-          <article key={`${message.role}-${index}`} className={`chat-bubble ${message.role}`}>
-            {message.role === "interviewer" && <span className="diamond">◆</span>}
-            <div>{message.content}</div>
+          <article key={`${message.role}-${index}`} className={`transcript-entry transcript-entry--${message.role}`}>
+            <div className="transcript-entry__label">
+              {message.role === "interviewer" ? "◈ G.E.C.K. //" : message.role === "user" ? "◉ OPERATOR //" : "SYSTEM //"}
+            </div>
+            <div className={`bubble ${message.role === "interviewer" ? "bubble--interviewer" : message.role === "user" ? "bubble--user" : "transcript-entry__system"}`}>
+              {message.content}
+            </div>
           </article>
         ))}
 
         {loading && (
-          <div className="typing-indicator" aria-label="Typing indicator">
-            <span></span><span></span><span></span>
+          <div className="transcript-entry transcript-entry--interviewer">
+            <div className="transcript-entry__label">◈ G.E.C.K. //</div>
+            <div className="bubble bubble--interviewer typing-indicator" aria-label="Typing indicator">
+              <span></span><span></span><span></span>
+            </div>
           </div>
         )}
 
@@ -167,22 +198,22 @@ export function InterviewView({ options, onOpenProject }: Props) {
         )}
 
         {(phase === "complete" || building || buildState.slug) && (
-          <section className="completion-card">
-            {!buildState.slug ? (
-              <>
-                <strong>✓ Great! Building your package...</strong>
-                <div className="build-step">◌ Generating files... {buildState.step === "generate" ? "[spinner]" : ""}</div>
-                <div className="build-step">◌ Hydrating copy... {building ? "[spinner]" : ""}</div>
-              </>
-            ) : (
-              <>
-                <strong>✓ Your package is ready!</strong>
-                <h2>{buildState.slug}</h2>
-                <p>{buildState.suggestionCount ?? 0} suggestions ready to review</p>
-                <p>Completeness: {buildState.completenessScore ?? 0}%</p>
-                <button onClick={() => onOpenProject(buildState.slug ?? "")}>Open Project →</button>
-              </>
-            )}
+          <section className="completion-card dossier">
+            <div className="dossier__body completion-card__body">
+              <strong>◈ INTERVIEW COMPLETE</strong>
+              {completionLines(buildState, building).map((line, index) => (
+                <div
+                  key={line}
+                  className="completion-card__line"
+                  style={{ animationDelay: `${index * 200}ms` }}
+                >
+                  {line}
+                </div>
+              ))}
+              {buildState.slug && (
+                <button className="btn btn--primary" onClick={() => onOpenProject(buildState.slug ?? "")}>Open Project Dossier →</button>
+              )}
+            </div>
           </section>
         )}
 
@@ -198,17 +229,46 @@ export function InterviewView({ options, onOpenProject }: Props) {
               void submitMessage(input);
             }}
           >
-            <input
-              aria-label="Interview answer"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              disabled={loading}
-              placeholder="Type your answer..."
-            />
-            <button type="submit" disabled={loading || !input.trim()}>Send →</button>
+            <label className={`interview-input ${loading ? "interview-input--loading" : ""}`}>
+              <span className="interview-input__prompt">&gt;_</span>
+              <input
+                aria-label="Interview answer"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                disabled={loading}
+                placeholder="type response..."
+              />
+            </label>
+            <button className="btn btn--primary" type="submit" disabled={loading || !input.trim()}>Transmit →</button>
           </form>
         </footer>
       )}
     </main>
   );
+}
+
+function completionLines(
+  buildState: { slug?: string; suggestionCount?: number; completenessScore?: number; step?: string },
+  building: boolean,
+) {
+  const completeness = buildState.completenessScore ?? 72;
+  const slug = buildState.slug ?? "pending-project";
+  const projectName = slug.replace(/-/g, " ").toUpperCase();
+  const pending = buildState.suggestionCount ?? 14;
+
+  return [
+    "Compiling project parameters... [████████████] DONE",
+    "Initializing canon lock... [████████████] DONE",
+    `Generating package... [${buildProgressBar(building ? completeness : completeness)}] ${completeness}%`,
+    "Running AI hydration... [████████████] DONE",
+    `PROJECT: ${projectName}`,
+    `SLUG: ${slug}`,
+    `COMPLETENESS: ${completeness}%`,
+    `SUGGESTIONS: ${pending} PENDING`,
+  ];
+}
+
+function buildProgressBar(percent: number) {
+  const filled = Math.max(0, Math.min(12, Math.round((percent / 100) * 12)));
+  return `${"█".repeat(filled)}${"░".repeat(12 - filled)}`;
 }

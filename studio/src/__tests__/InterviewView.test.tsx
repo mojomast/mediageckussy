@@ -43,7 +43,7 @@ describe("InterviewView", () => {
 
     render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
 
-    expect(await screen.findByText("Let's build your project together.")).toBeTruthy();
+    expect(await screen.findByText("G.E.C.K. INITIALIZATION SEQUENCE")).toBeTruthy();
     expect(await screen.findByText("What kind of project is this?")).toBeTruthy();
   });
 
@@ -55,7 +55,7 @@ describe("InterviewView", () => {
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
-    await userEvent.click(screen.getByRole("button", { name: "Send →" }));
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
 
     await waitFor(() => expect(apiState.sendInterviewMessage).toHaveBeenCalledWith("sess-1", "TV series"));
     expect(await screen.findByText("What's your project called?")).toBeTruthy();
@@ -70,7 +70,7 @@ describe("InterviewView", () => {
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
-    await userEvent.click(screen.getByRole("button", { name: "Send →" }));
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
 
     expect(await screen.findByLabelText("Typing indicator")).toBeTruthy();
 
@@ -85,7 +85,7 @@ describe("InterviewView", () => {
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
-    await userEvent.click(screen.getByRole("button", { name: "Send →" }));
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
 
     await waitFor(() => expect(screen.getByText("Phase 2 of 4")).toBeTruthy());
   });
@@ -102,9 +102,9 @@ describe("InterviewView", () => {
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "Found family and identity");
-    await userEvent.click(screen.getByRole("button", { name: "Send →" }));
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
 
-    expect(await screen.findByText("✓ Your package is ready!")).toBeTruthy();
+    expect(await screen.findByText("◈ INTERVIEW COMPLETE")).toBeTruthy();
   });
 
   test("Open Project link renders with correct slug after done event", async () => {
@@ -119,9 +119,9 @@ describe("InterviewView", () => {
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "Found family and identity");
-    await userEvent.click(screen.getByRole("button", { name: "Send →" }));
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
 
-    const button = await screen.findByRole("button", { name: "Open Project →" });
+    const button = await screen.findByRole("button", { name: "Open Project Dossier →" });
     await userEvent.click(button);
 
     expect(onOpenProject).toHaveBeenCalledWith("signal-harbor");

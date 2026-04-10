@@ -840,6 +840,34 @@ textarea {
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
+.interview-header__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.interview-header__phase-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.interview-header__phase {
+  color: var(--color-text);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.interview-header__labels {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
 .brand-row {
   display: flex;
   align-items: center;
@@ -860,6 +888,9 @@ textarea {
 }
 
 .phase-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: var(--space-2) var(--space-3);
   background: var(--color-surface-2);
   border: var(--border-width) solid var(--color-border);
@@ -878,6 +909,11 @@ textarea {
   border-color: var(--color-amber);
   color: var(--color-amber);
   box-shadow: var(--glow-amber-sm);
+  animation: status-pulse var(--nav-footer-pulse-duration) infinite;
+}
+
+.interview-progress {
+  margin-top: var(--space-3);
 }
 
 .interview-transcript {
@@ -885,6 +921,59 @@ textarea {
   overflow: auto;
   display: grid;
   gap: var(--space-4);
+}
+
+.welcome-dossier {
+  max-width: var(--card-max-width);
+}
+
+.welcome-dossier__body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.welcome-dossier__provider {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 18rem;
+}
+
+.welcome-dossier__provider span {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.welcome-dossier__action {
+  justify-self: start;
+}
+
+.transcript-entry {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.transcript-entry--interviewer,
+.transcript-entry--system {
+  justify-items: start;
+}
+
+.transcript-entry--user {
+  justify-items: end;
+}
+
+.transcript-entry__label {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.transcript-entry__system {
+  color: var(--color-error);
+  border: var(--border-width) solid var(--color-error-border);
+  background: var(--color-error-surface);
 }
 
 .welcome-card,
@@ -939,6 +1028,20 @@ textarea {
   padding: var(--space-3) var(--space-4);
 }
 
+.completion-card {
+  max-width: var(--card-max-width);
+}
+
+.completion-card__body {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.completion-card__line {
+  opacity: 0;
+  animation: terminal-in var(--duration-slow) var(--ease-smooth) forwards;
+}
+
 .interview-footer {
   position: sticky;
   bottom: 0;
@@ -953,8 +1056,34 @@ textarea {
   gap: var(--space-3);
 }
 
-.interview-input-row input {
+.interview-input {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.interview-input--loading {
+  border-color: var(--color-border-dim);
+}
+
+.interview-input__prompt {
+  color: var(--color-phosphor-dim);
+}
+
+.interview-input input {
   min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.interview-input input:focus {
+  box-shadow: none;
 }
 
 .issue {
@@ -977,6 +1106,7 @@ textarea {
   }
 
   .app-shell__header,
+  .interview-header__phase-row,
   .interview-banner,
   .asset-toolbar {
     align-items: flex-start;
