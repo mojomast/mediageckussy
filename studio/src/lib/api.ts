@@ -16,6 +16,20 @@ export type ProjectSummary = {
 
 export type SSEvent = { event: string; data: unknown };
 
+export type InterviewStartResponse = {
+  sessionId: string;
+  message: string;
+  phase: number;
+  totalQuestions: number;
+};
+
+export type InterviewTurnResponse = {
+  message: string;
+  phase: number | "complete";
+  questionIndex: number;
+  complete: boolean;
+};
+
 export const api = {
   getStudioOptions: () => fetchJson("/api/studio/options"),
   listProjects: () => fetchJson("/api/projects"),
@@ -35,6 +49,18 @@ export const api = {
   runGenerate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/generate`, body, onEvent),
   runHydrate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/hydrate`, body, onEvent),
   runAsset: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/assets/generate`, body, onEvent),
+  startInterview: async (opts?: { provider?: string; model?: string }) => {
+    const response = await fetchJson("/api/interview/start", { method: "POST", body: JSON.stringify(opts ?? {}) });
+    return response.data as InterviewStartResponse;
+  },
+  sendInterviewMessage: async (sessionId: string, message: string) => {
+    const response = await fetchJson("/api/interview/turn", { method: "POST", body: JSON.stringify({ sessionId, message }) });
+    return response.data as InterviewTurnResponse;
+  },
+  completeInterview: async (sessionId: string, onEvent: (event: string, data: unknown) => void) => {
+    const result = await streamJson("/api/interview/complete", { sessionId }, (event) => onEvent(event.event, event.data));
+    return result;
+  },
   siteUrl: (slug: string, filePath = "index.html") => `/api/projects/${slug}/site/${encodePath(filePath)}`,
   assetUrl: (slug: string, filePath: string) => `/api/projects/${slug}/assets-file/${encodePath(filePath)}`,
   archiveUrl: (slug: string) => `/api/projects/${slug}/archive`,

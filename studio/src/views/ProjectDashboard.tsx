@@ -6,6 +6,7 @@ type Props = {
   options: StudioOptions | null;
   status: string;
   onOpen: (slug: string) => void;
+  onStartInterview: () => void;
   onCreate: (input: {
     title: string;
     mediaType: string;
@@ -15,7 +16,7 @@ type Props = {
   }) => Promise<void>;
 };
 
-export function ProjectDashboard({ projects, options, status, onOpen, onCreate }: Props) {
+export function ProjectDashboard({ projects, options, status, onOpen, onCreate, onStartInterview }: Props) {
   const availableProviders = useMemo(() => options?.providers.filter((provider) => provider.available) ?? [], [options]);
   const [title, setTitle] = useState("Night Signal");
   const [mediaType, setMediaType] = useState(options?.formats[0] ?? "tv_series");
@@ -25,6 +26,14 @@ export function ProjectDashboard({ projects, options, status, onOpen, onCreate }
 
   return (
     <main className="dashboard-layout">
+      <section className="panel interview-banner">
+        <div>
+          <div className="eyebrow">◆ New here? Start with an interview →</div>
+          <p>Answer a few questions and we&apos;ll build your package.</p>
+        </div>
+        <button className="primary-button" onClick={onStartInterview}>Start Interview</button>
+      </section>
+
       <section className="panel launch-panel">
         <div className="eyebrow">Hosted Demo</div>
         <h1>Build a project, iterate with built-in inference, then export the package.</h1>
