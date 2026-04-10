@@ -32,7 +32,7 @@ describe("interview engine", () => {
     expect(getNextQuestion(session)?.prompt).toBe("What's the approximate runtime?");
   });
 
-  test("getNextQuestion returns null when all required questions answered", () => {
+  test("getNextQuestion continues to optional follow-ups after required questions are answered", () => {
     const session = createSession();
     session.answers = {
       "canon.format": "tv_series",
@@ -49,7 +49,7 @@ describe("interview engine", () => {
       "canon.themes": ["identity"],
     };
 
-    expect(getNextQuestion(session)).toBeNull();
+    expect(getNextQuestion(session)?.index).toBe(10);
   });
 
   test("runInterviewTurn stores extracted value and advances", async () => {
@@ -64,6 +64,16 @@ describe("interview engine", () => {
     expect(result.complete).toBe(false);
   });
 
+  test("runInterviewTurn uses the scripted next question instead of model-invented follow-ups", async () => {
+    const state = createSession();
+    const provider = mockProvider(`A TV series! That's exciting.\n\nTo get a better sense of the scope, is this a single-camera or multi-camera production?\n<!-- EXTRACT: {"field":"canon.format","value":"tv_series"} -->`);
+
+    const result = await runInterviewTurn(state, "TV series", provider);
+
+    expect(result.response).toContain("What's your project called?");
+    expect(result.response).not.toContain("single-camera or multi-camera");
+  });
+
   test("runInterviewTurn with null extraction does not store value", async () => {
     const state = createSession();
     const provider = mockProvider(`I want to make sure I understand. What kind of project is this?\n<!-- EXTRACT: {"field":"canon.format","value":null} -->`);
@@ -71,6 +81,97 @@ describe("interview engine", () => {
     const result = await runInterviewTurn(state, "maybe screen-based", provider);
 
     expect(result.updatedState.answers["canon.format"]).toBeUndefined();
+  });
+
+  test("runInterviewTurn normalizes human-readable format labels for question gating", async () => {
+    const state = createSession();
+    const provider = mockProvider(`A TV series sounds exciting!\n<!-- EXTRACT: {"field":"canon.format","value":"TV series"} -->`);
+
+    const result = await runInterviewTurn(state, "TV series", provider);
+
+    expect(result.updatedState.answers["canon.format"]).toBe("tv_series");
+  });
+
+  test("runInterviewTurn skips optional follow-up when user says done", async () => {
+    const state = createSession();
+    state.answers = {
+      "canon.format": "tv_series",
+      "canon.title": "Project",
+      "canon.logline": "A project.",
+      "canon.genre": "thriller",
+      "canon.tone": ["moody"],
+      "canon.world_setting": "A world.",
+      "canon.audience": ["adults"],
+      "canon.comps": ["Comp A"],
+      "canon.duration_count": "8 episodes, 45 minutes each",
+      "canon.characters": [{ id: "lead", name: "Lead", role: "lead", description: "desc", visibility: "internal" }],
+    };
+    const provider = mockProvider(`Okay, we'll move on from characters then.\n<!-- EXTRACT: {"field":"canon.characters","value":null} -->`);
+
+    const result = await runInterviewTurn(state, "done", provider);
+
+    expect(result.updatedState.skippedQuestionIndexes).toContain(10);
+    expect(result.response).toContain("What happens in the first episode?");
+  });
+
+  test("runInterviewTurn falls back to parsing character answers when extract block is missing", async () => {
+    const state = createSession();
+    state.answers = {
+      "canon.format": "tv_series",
+      "canon.title": "Project",
+      "canon.logline": "A project.",
+      "canon.genre": "thriller",
+      "canon.tone": ["moody"],
+      "canon.world_setting": "A world.",
+      "canon.audience": ["adults"],
+      "canon.comps": ["Comp A"],
+      "canon.duration_count": "8 episodes, 45 minutes each",
+    };
+    const provider = mockProvider("Dara Osei, a disgraced engineer who is methodical, paranoid, and the only one who believes the signal is real - got it!");
+
+    const result = await runInterviewTurn(state, "Dara Osei, disgraced engineer, methodical and paranoid, the only one who believes the signal is real", provider);
+
+    expect(result.updatedState.answers["canon.characters"]).toEqual([
+      {
+        id: "dara-osei",
+        name: "Dara Osei",
+        role: "disgraced engineer",
+        description: "methodical and paranoid, the only one who believes the signal is real",
+        visibility: "internal",
+      },
+    ]);
+    expect(result.response).toContain("Anyone else important?");
+  });
+
+  test("runInterviewTurn falls back to parsing episode answers when extract block is missing", async () => {
+    const state = createSession();
+    state.answers = {
+      "canon.format": "tv_series",
+      "canon.title": "Project",
+      "canon.logline": "A project.",
+      "canon.genre": "thriller",
+      "canon.tone": ["moody"],
+      "canon.world_setting": "A world.",
+      "canon.audience": ["adults"],
+      "canon.comps": ["Comp A"],
+      "canon.duration_count": "8 episodes, 45 minutes each",
+      "canon.characters": [{ id: "lead", name: "Lead", role: "lead", description: "desc", visibility: "internal" }],
+    };
+    state.skippedQuestionIndexes = [10];
+    const provider = mockProvider("\"Dead Air\" — Dara intercepts the first broadcast and realizes it contains her own voice.");
+
+    const result = await runInterviewTurn(state, '"Dead Air" — Dara intercepts the first broadcast and realizes it contains her own voice', provider);
+
+    expect(result.updatedState.answers["canon.episodes"]).toEqual([
+      {
+        code: "S01E01",
+        title: "Dead Air",
+        logline: "Dara intercepts the first broadcast and realizes it contains her own voice",
+        status: "planned",
+        visibility: "internal",
+      },
+    ]);
+    expect(result.response).toContain("What about episode 2?");
   });
 
   test("buildCanonFromAnswers with full answer set produces valid CanonProject", () => {

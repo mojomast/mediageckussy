@@ -158,13 +158,12 @@ export function getNextQuestion(state: InterviewState): InterviewQuestion | null
   const format = typeof state.answers["canon.format"] === "string" ? state.answers["canon.format"] : undefined;
   const applicableQuestions = INTERVIEW_QUESTIONS.filter((question) => !question.formatsOnly || (format && question.formatsOnly.includes(format)));
 
-  if (applicableQuestions.every((question) => question.optional || isAnswered(state.answers[question.fieldPath], question.fieldType, question.fieldPath, state.answers, question))) {
-    return null;
-  }
-
   const seenCounts = new Map<string, number>();
 
   for (const question of applicableQuestions) {
+    if (state.skippedQuestionIndexes.includes(question.index)) {
+      continue;
+    }
 
     const answerValue = state.answers[question.fieldPath];
 
@@ -193,9 +192,11 @@ function isAnswered(
   fieldPath: string,
   answers: Record<string, unknown>,
   question: InterviewQuestion,
+  state: InterviewState,
 ) {
   if (fieldType === "character" || fieldType === "episode") {
-    const matchingQuestions = INTERVIEW_QUESTIONS.filter((item) => item.fieldPath === fieldPath && item.fieldType === fieldType);
+    const format = typeof state.answers["canon.format"] === "string" ? state.answers["canon.format"] : undefined;
+    const matchingQuestions = INTERVIEW_QUESTIONS.filter((item) => item.fieldPath === fieldPath && item.fieldType === fieldType && (!item.formatsOnly || (format && item.formatsOnly.includes(format))));
     const questionOffset = matchingQuestions.findIndex((item) => item.prompt === question.prompt);
     return Array.isArray(answerValue) && answerValue[questionOffset] != null;
   }

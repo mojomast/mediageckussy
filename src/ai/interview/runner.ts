@@ -50,19 +50,28 @@ export async function runInterviewTurn(
 
   const parsed = parseExtractBlock(response.content);
   const displayedResponse = stripExtractBlock(response.content).trim();
-  const nextAnswers = mergeAnswer(state.answers, currentQuestion.fieldPath, parsed?.value ?? null, currentQuestion.fieldType);
-  const nextQuestion = getNextQuestion({ ...state, answers: nextAnswers });
+  const skippedOptional = Boolean(currentQuestion.optional && parsed?.value == null && shouldTreatAsSkipped(userMessage));
+  const extractedValue = parsed?.value ?? inferAnswerValue(userMessage, currentQuestion.fieldType, currentQuestion.index, skippedOptional);
+  const nextAnswers = mergeAnswer(state.answers, currentQuestion.fieldPath, extractedValue, currentQuestion.fieldType);
   const timestamp = new Date().toISOString();
-  const nextState: InterviewState = {
+  const candidateState: InterviewState = {
     ...state,
     answers: nextAnswers,
+    skippedQuestionIndexes: skippedOptional
+      ? [...state.skippedQuestionIndexes, currentQuestion.index]
+      : state.skippedQuestionIndexes,
     updatedAt: timestamp,
+  };
+  const nextQuestion = getNextQuestion(candidateState);
+  const nextPrompt = buildResponseMessage(displayedResponse, nextQuestion);
+  const nextState: InterviewState = {
+    ...candidateState,
     questionIndex: nextQuestion?.index ?? currentQuestion.index + 1,
     phase: nextQuestion?.phase ?? "complete",
     messages: [
       ...state.messages,
       { role: "user", content: userMessage, timestamp },
-      { role: "interviewer", content: displayedResponse || buildFallbackPrompt(nextQuestion), timestamp },
+      { role: "interviewer", content: nextPrompt, timestamp },
     ],
   };
 
@@ -82,7 +91,7 @@ export async function runInterviewTurn(
   }
 
   return {
-    response: displayedResponse || buildFallbackPrompt(nextQuestion),
+    response: nextPrompt,
     updatedState: nextState,
     complete: false,
   };
@@ -153,6 +162,13 @@ function mergeAnswer(
     };
   }
 
+  if (fieldPath === "canon.format" && typeof value === "string") {
+    return {
+      ...answers,
+      [fieldPath]: normalizeFormat(value),
+    };
+  }
+
   return {
     ...answers,
     [fieldPath]: value,
@@ -164,6 +180,96 @@ function buildFallbackPrompt(nextQuestion: ReturnType<typeof getNextQuestion>) {
     return "That gives me a strong foundation. I’m ready to build your package and fill in the rough edges with AI drafts.";
   }
   return nextQuestion.prompt;
+}
+
+function buildResponseMessage(modelText: string, nextQuestion: ReturnType<typeof getNextQuestion>) {
+  if (!nextQuestion) {
+    return buildFallbackPrompt(nextQuestion);
+  }
+
+  const acknowledgement = firstNonQuestionSentence(modelText);
+  return acknowledgement ? `${acknowledgement}\n\n${nextQuestion.prompt}` : nextQuestion.prompt;
+}
+
+function firstNonQuestionSentence(content: string) {
+  const normalized = content.replace(/\s+/g, " ").trim();
+  if (!normalized) {
+    return "";
+  }
+
+  const sentence = normalized.match(/^.+?[.!?](?=\s|$)/)?.[0]?.trim() ?? normalized;
+  return sentence.endsWith("?") ? "" : sentence;
+}
+
+function normalizeFormat(value: string) {
+  const normalized = value.toLowerCase().trim().replace(/\s+/g, "_");
+  if (normalized === "tv" || normalized === "tv_series" || normalized === "tvseries") return "tv_series";
+  if (normalized === "feature" || normalized === "film" || normalized === "feature_film" || normalized === "featurefilm") return "feature_film";
+  if (normalized === "podcast") return "podcast";
+  if (normalized === "web" || normalized === "web_series" || normalized === "webseries") return "web_series";
+  return normalized;
+}
+
+function inferAnswerValue(
+  userMessage: string,
+  fieldType: "string" | "string[]" | "character" | "episode",
+  questionIndex: number,
+  skippedOptional: boolean,
+) {
+  if (skippedOptional) {
+    return null;
+  }
+
+  if (fieldType === "character") {
+    return inferCharacter(userMessage);
+  }
+
+  if (fieldType === "episode") {
+    return inferEpisode(userMessage, questionIndex);
+  }
+
+  return null;
+}
+
+function inferCharacter(userMessage: string) {
+  const parts = userMessage.split(",").map((item) => item.trim()).filter(Boolean);
+  const name = parts[0];
+  if (!name) {
+    return null;
+  }
+
+  const role = parts[1] || "supporting character";
+  const description = parts.slice(2).join(", ") || parts[1] || userMessage.trim();
+  return {
+    id: slugify(name),
+    name,
+    role,
+    description,
+    visibility: "internal",
+  };
+}
+
+function inferEpisode(userMessage: string, questionIndex: number) {
+  const trimmed = userMessage.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  const titleMatch = trimmed.match(/^"([^"]+)"\s*[—-]\s*(.+)$/);
+  const title = titleMatch?.[1] ?? trimmed.split(/[—-]/)[0]?.replace(/^"|"$/g, "").trim() ?? `Episode ${questionIndex - 10}`;
+  const logline = (titleMatch?.[2]?.trim() ?? trimmed.split(/[—-]/).slice(1).join("-").trim()) || trimmed;
+  const episodeNumber = Math.max(1, questionIndex - 10);
+  return {
+    code: `S01E${String(episodeNumber).padStart(2, "0")}`,
+    title,
+    logline,
+    status: "planned",
+    visibility: "internal",
+  };
+}
+
+function slugify(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "character";
 }
 
 export function shouldTreatAsSkipped(message: string) {

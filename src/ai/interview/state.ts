@@ -12,6 +12,7 @@ export interface InterviewState {
   phase: 1 | 2 | 3 | 4 | "complete";
   questionIndex: number;
   answers: Record<string, unknown>;
+  skippedQuestionIndexes: number[];
   messages: InterviewMessage[];
   startedAt: string;
   updatedAt: string;
@@ -29,6 +30,7 @@ export function createSession(): InterviewState {
     phase: 1,
     questionIndex: 0,
     answers: {},
+    skippedQuestionIndexes: [],
     messages: [],
     startedAt: timestamp,
     updatedAt: timestamp,
