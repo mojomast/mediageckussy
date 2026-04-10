@@ -7,7 +7,7 @@ import { hydrateField } from "../ai/hydrators/fieldHydrator.js";
 import { hydratePackage } from "../ai/hydrators/bulkHydrator.js";
 import { resolveProvider } from "../ai/providers/index.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../ai/suggestions.js";
-import { loadCanon } from "../utils/canon.js";
+import { loadCanon, saveCanon } from "../utils/canon.js";
 import { generateAsset, type AssetType } from "../ai/assetGenerator.js";
 import { resolveImageProvider } from "../ai/image/index.js";
 import { generateMoodBoard } from "../ai/moodboard.js";
@@ -100,8 +100,8 @@ async function main() {
         throw new Error("--field or --all is required for hydrate accept");
       }
 
-      const updated = await acceptSuggestion(path.resolve(outputDir), field, canon);
-      await fs.writeFile(path.join(path.resolve(outputDir), "00_admin/canon_lock.yaml"), JSON.stringify(updated, null, 2), "utf8");
+      await acceptSuggestion(path.resolve(outputDir), field, canon);
+      await saveCanon(path.join(path.resolve(outputDir), "00_admin/canon_lock.yaml"), canon);
       console.log(JSON.stringify({ ok: true, accepted: field }, null, 2));
       process.exit(0);
     }

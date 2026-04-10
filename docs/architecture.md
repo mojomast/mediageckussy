@@ -1,69 +1,62 @@
 # Architecture
 
-## MVP Shape
-`media-package-generator` is a filesystem-first TypeScript CLI for generating repo-native media packages from a structured canon model.
+## v2 Shape
+`media-package-generator` is still a filesystem-first TypeScript toolchain, but v2 adds two opt-in layers around the existing generator: AI hydration and a local Studio UI. The CLI remains the primary interface, and all generated state still lives in the package folder.
 
-## Core Modules
-- `src/core/schema.ts`: Zod schema for the canonical project model.
-- `src/core/formats.ts`: format-pack lookup and supported/stubbed media types.
-- `src/core/template-registry.ts`: Handlebars template loader and selector.
-- `src/core/generator.ts`: phased generation flow.
-- `src/core/manifest.ts`: generated-file inventory.
-- `src/core/validators.ts`: structural, placeholder, and stale-output checks.
+## Top-Level Layers
+- `src/core/`: canon schema, format packs, template selection, generation, manifest writing, and validation.
+- `src/cli/`: direct command surface for generation, regeneration, hydration, asset work, publishing, and onboarding.
+- `src/ai/`: provider adapters, prompt loading, field/document/bulk hydration, asset generation, and mood board composition.
+- `src/server/`: localhost Express wrapper around package, canon, file, validation, hydration, and asset operations.
+- `studio/`: React/Vite single-page app for dashboard, canon editing, file preview, site preview, assets, and ops.
 
-## Generation Phases
-1. Load and validate canon input.
-2. Resolve format pack and required directory map.
-3. Scaffold repo directories.
-4. Render selected templates.
-5. Emit `canon_lock.yaml` and `package_manifest.json`.
-6. Run validation and write `16_ops/validation_report.json`.
+## Generation Pipeline
+1. `loadCanon()` parses YAML or JSON and validates against the canon schema.
+2. `getFormatPack()` resolves the stable media format implementation.
+3. `TemplateRegistry` selects templates for the package tier and requested scope.
+4. `generatePackage()` scaffolds directories, renders templates, and reapplies protected manual-edit regions.
+5. `canon_lock.yaml`, `package_manifest.json`, and `validation_report.json` are written into the package.
 
-## Extensibility
-- Additional media types plug in as `FormatPack` definitions.
-- Template dimensions already include media type, department, audience, package tier, and output format.
-- TV, feature-film, podcast, and web-series packs are implemented; other formats remain stubbed.
+## AI Layer
+The hydration layer is explicit and review-first.
 
-## Format Pack Contract
-A format pack supplies:
-- `mediaType`
-- `supported`
-- `directories`
-- `requiredFiles`
-- `templates`
+- `src/ai/providers/` exposes a shared `LLMProvider` contract and adapters for OpenAI, Anthropic, OpenRouter, and Ollama.
+- `src/ai/hydrators/fieldHydrator.ts` drafts pending canon suggestions into `00_admin/ai_suggestions.yaml`.
+- `src/ai/hydrators/docHydrator.ts` replaces placeholder markers in generated docs while preserving protected regions.
+- `src/ai/hydrators/bulkHydrator.ts` runs field hydration before doc hydration and writes `00_admin/hydration_report.yaml`.
+- `src/ai/prompting.ts` loads prompt templates from `src/ai/prompts/` using source-relative paths.
 
-Each template definition supplies:
-- stable `id`
-- target `department`
-- target `path`
-- `packageTier` coverage
-- `audience`
-- `sources`
-- `regenPolicy`
-- `kind`
-- `templatePath`
+Hydration never silently overwrites approved or locked canon state. Accepted suggestions are merged into `00_admin/canon_lock.yaml` and mirrored into the manifest hydration log.
 
-To add a new format:
-1. Create a new pack under `src/formats/<format>/pack.ts`.
-2. Add handlebars templates under `src/templates/<format>/`.
-3. Register the pack in `src/core/formats.ts`.
-4. Define required files and directory mapping for that media type.
-5. Add a sample canon file and verify generation through the CLI.
+## Creative Assets Layer
+The asset pipeline is separate from core package generation.
+
+- `src/ai/image/` defines the image provider contract and adapters for DALL-E, Stability, Replicate, and Flux.
+- `src/ai/assetGenerator.ts` builds asset prompts, writes generated images under `site/assets/generated/`, and stores `.prompt.json` sidecars.
+- `src/ai/moodboard.ts` assembles multiple generated panels into a composite mood board using `sharp`.
+- Generated assets are registered in `package_manifest.json` under `generatedAssets`.
+
+## Studio Layer
+The server and frontend are both local-first.
+
+- `src/server/app.ts` creates the Express app and registers project routes.
+- `src/server/api/projects.ts` exposes package discovery, canon CRUD, file CRUD, generation, hydration, validation, and asset endpoints.
+- `src/server/index.ts` serves the API and, when present, the built Studio bundle from `dist-studio`.
+- `studio/src/App.tsx` drives the six Studio views: Dashboard, Canon, Files, Site, Assets, and Ops.
+
+The frontend talks to the local API only. It does not introduce any remote persistence layer or authentication stack.
+
+## Data Contracts
+- `CanonProject` remains the source-of-truth project model, now extended for AI and asset workflows.
+- `PackageManifest` tracks generated files plus `generatedAssets` and `hydrationLog` entries.
+- `ValidationResult` remains the package health surface consumed by both the CLI and Studio UI.
 
 ## Deployment Model
-- Generated packages live in `output/<project-slug>`.
-- Static site assets live in `output/<project-slug>/site`.
-- `src/cli/publish-site.ts` copies those assets into a target deploy directory.
-- This keeps generation and publication separate while staying filesystem-first.
+- Generated packages live in `output/<slug>/`.
+- Static site exports live in `output/<slug>/site/` and are copied into `deploy/<slug>-site/` by `publish-site.ts`.
+- The Studio bundle is built separately into `dist-studio/` for local serving, and the Pages workflow publishes it under `/studio/` alongside the sample demo sites.
 
-## Canon Semantics
-- `locked` fields are source-of-truth facts and should only change with explicit human approval.
-- `approved` fields are safe for downstream use, including public export when visibility is public.
-- `draft` fields may appear in internal scaffolds but should be treated as provisional.
-- `downstream_dependencies` is currently advisory metadata used to communicate impact and prepare for deeper dependency-aware regeneration.
-- `visibility` gates publication, especially the static site export.
-
-## Tradeoffs
-- The MVP uses plain files instead of a metadata database.
-- Protected manual-edit blocks are not implemented yet; regeneration is deterministic and file-level.
-- Stale-output detection uses canon fingerprints rather than a deeper dependency graph.
+## Current Tradeoffs
+- Prompt loading depends on source-relative files in `src/ai/prompts/`, so compiled-only distributions need those prompt assets available.
+- CLI argument parsing is still intentionally lightweight and manual.
+- Studio route progress uses coarse SSE events (`started`, `done`, `error`) rather than a persistent job system.

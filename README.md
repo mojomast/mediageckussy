@@ -1,5 +1,9 @@
 # media-package-generator
 
+![CI](https://img.shields.io/github/actions/workflow/status/mojomast/mediageckussy/validate.yml?branch=main)
+![Version](https://img.shields.io/badge/version-2.0.0-01696f)
+![License](https://img.shields.io/badge/license-ISC-lightgrey)
+
 Canon-first media package generation for TV series first, with an extensible path toward film, podcasts, games, books/comics, albums, and web series.
 
 `media-package-generator` turns a structured canon file into a repo-native creative package: internal docs, ops controls, audience-facing materials, and a static website that all stay aligned to the same source of truth.
@@ -67,12 +71,10 @@ This implementation uses `media-package-generator` as the sibling tool repo.
 Current supported outputs are intentionally scaffold-first: they give you a consistent baseline package with lock metadata, ops controls, and public export, while leaving room for human writing and review.
 
 ## Supported Formats
-- `tv_series`: implemented in MVP
-- `feature_film`: implemented in MVP
-- `podcast`: implemented in MVP
-- `web_series`: implemented in MVP
+- Stable: `tv_series`, `feature_film`, `podcast`, `web_series`
+- Stubbed: `game`, `book_comic`, `album_music_project`
 
-Stub formats (`game`, `book_comic`, `album_music_project`) are in the registry but not yet implemented. Use `formats --all` to see them.
+Use `formats` to view stable formats and `formats --all` to include stubs.
 
 ## Install
 ```bash
@@ -80,11 +82,11 @@ npm install
 ```
 
 ## Quick Start
-1. Pick a sample canon or create your own canon YAML/JSON file.
-2. Run a generate command for the target format.
-3. Inspect the generated package under `output/<project-slug>`.
-4. Publish the generated `site/` folder into `deploy/<project-slug>-site`.
-5. Serve that deploy folder locally or upload it to your static host.
+1. Install dependencies with `npm install`.
+2. Generate the sample TV package with `npm run generate:example`.
+3. Preview the sample site with `npm run publish:tv` and `python3 -m http.server 4173 --directory deploy/neon-aftercare-site`.
+4. Try hydration with `npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --field canon.logline`.
+5. Launch Studio with `npm run studio:dev`.
 
 ## Run
 Generate the sample TV package:
@@ -267,6 +269,17 @@ Studio provides six local views:
 - Assets gallery for images and prompt metadata
 - Ops view for validation and placeholder-fix workflows
 
+## Environment Variables
+- Use `.env.example` as the single reference for LLM, image, hydration, and Studio config.
+- Only set the providers you plan to use.
+- AI and image features are opt-in and never run silently.
+
+## Contributing
+- Run `npm run check`, `npm test`, and `npm run test:integration` before committing cross-cutting changes.
+- Run `npm run check:studio` and `npm run build:studio` when changing the frontend.
+- Do not commit secrets or API keys.
+- Preserve locked canon fields and protected manual-edit regions when extending the tool.
+
 ## Canon Model
 - Input format: YAML or JSON
 - Required canon sections include title, logline, format, genre, tone, audience, comps, duration/count, themes, world/setting, assumptions, publication flags, characters, and episodes.
@@ -343,6 +356,9 @@ Generated packages are meant to behave like working project repos:
 ## Docs
 - `docs/architecture.md`
 - `docs/roadmap.md`
+- `docs/ai-hydration.md`
+- `docs/creative-assets.md`
+- `docs/studio-ui.md`
 
 ## Example
 Sample canons live at:
@@ -353,6 +369,6 @@ Sample canons live at:
 
 ## Notes
 - Outputs stay human-editable as Markdown, YAML, JSON, and HTML.
-- Validation is intentionally basic in V1.
+- Validation remains intentionally lightweight and file-oriented.
 - Game, book/comic, and album/music formats are still stubbed.
 - Stubbed formats are registry placeholders only; they are listed by the CLI but will fail generation until their packs are implemented.

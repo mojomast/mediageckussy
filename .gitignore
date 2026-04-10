@@ -3,3 +3,4 @@ dist/
 output/
 studio/node_modules/
 studio/dist/
+dist-studio/

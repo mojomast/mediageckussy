@@ -1,6 +1,6 @@
 {
   "name": "media-package-generator",
-  "version": "0.1.0",
+  "version": "2.0.0",
   "type": "module",
   "main": "dist/cli/index.js",
   "bin": {
@@ -29,9 +29,13 @@
     "publish:podcast": "tsx src/cli/publish-site.ts output/signal-and-bone deploy/signal-and-bone-site",
     "publish:web": "tsx src/cli/publish-site.ts output/soft-launch deploy/soft-launch-site",
     "test:regions": "vitest run src/utils/protectedRegions.test.ts",
-    "studio": "node dist/server/index.js",
+    "studio": "node ./dist/server/index.js",
     "studio:dev": "concurrently \"npx tsx watch src/server/index.ts\" \"vite studio/ --port 5173\"",
-    "build:studio": "cd studio && vite build --outDir ../dist-studio"
+    "build:studio": "vite build --config studio/vite.config.ts",
+    "check:studio": "tsc -p studio/tsconfig.json --noEmit",
+    "hydrate:tv": "tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --mode bulk",
+    "assets:tv": "tsx src/cli/index.ts assets generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --all",
+    "test:integration": "vitest run --reporter=verbose src/__tests__/**/*.integration.test.ts"
   },
   "keywords": [
     "media",

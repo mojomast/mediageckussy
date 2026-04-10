@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Build Studio UI
+        run: MPG_STUDIO_BASE=/studio/ npm run build:studio -- --outDir gh-pages-root/studio
+
       - name: Generate and publish example sites
         run: |
           npm run generate:example
@@ -68,6 +71,7 @@ jobs:
                 <li><a href="./glass-harbor/">Glass Harbor (Feature Film)</a></li>
                 <li><a href="./signal-and-bone/">Signal and Bone (Podcast)</a></li>
                 <li><a href="./soft-launch/">Soft Launch (Web Series)</a></li>
+                <li><a href="./studio/">Studio UI</a></li>
               </ul>
             </body>
           </html>
