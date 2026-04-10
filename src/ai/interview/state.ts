@@ -17,6 +17,7 @@ export interface InterviewState {
   updatedAt: string;
   provider?: string;
   model?: string;
+  totalQuestions?: number;
 }
 
 export function createSession(): InterviewState {
@@ -31,6 +32,7 @@ export function createSession(): InterviewState {
     messages: [],
     startedAt: timestamp,
     updatedAt: timestamp,
+    totalQuestions: 15,
   };
 }
 

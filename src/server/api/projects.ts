@@ -8,6 +8,10 @@ import { generateAsset } from "../../ai/assetGenerator.js";
 import { hydrateDocument } from "../../ai/hydrators/docHydrator.js";
 import { hydrateField } from "../../ai/hydrators/fieldHydrator.js";
 import { hydratePackage } from "../../ai/hydrators/bulkHydrator.js";
+import { buildCanonFromAnswers } from "../../ai/interview/canonBuilder.js";
+import { getNextQuestion } from "../../ai/interview/questions.js";
+import { runInterviewTurn } from "../../ai/interview/runner.js";
+import { createSession } from "../../ai/interview/state.js";
 import { resolveImageProvider } from "../../ai/image/index.js";
 import { resolveProvider } from "../../ai/providers/index.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
@@ -26,6 +30,99 @@ import {
 } from "../workspace.js";
 
 export function registerProjectRoutes(app: Express) {
+  app.post("/api/interview/start", async (req, res) => {
+    try {
+      const state = createSession();
+      state.provider = req.body?.provider ?? process.env.MEDIAGECKUSSY_LLM_PROVIDER ?? "openrouter";
+      state.model = req.body?.model;
+      const firstQuestion = getNextQuestion(state);
+      if (!firstQuestion) {
+        throw new Error("Interview question list is empty");
+      }
+      state.messages.push({ role: "interviewer", content: firstQuestion.prompt, timestamp: new Date().toISOString() });
+      state.questionIndex = firstQuestion.index;
+      await saveInterviewState(state);
+      return ok(res, {
+        sessionId: state.sessionId,
+        message: firstQuestion.prompt,
+        phase: state.phase,
+        questionIndex: firstQuestion.index,
+        totalQuestions: 15,
+      });
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.post("/api/interview/turn", async (req, res) => {
+    try {
+      const sessionId = String(req.body?.sessionId ?? "");
+      const message = String(req.body?.message ?? "");
+      if (!sessionId || !message) {
+        return fail(res, new Error("sessionId and message are required"), 400);
+      }
+
+      const state = await loadInterviewState(sessionId);
+      const provider = resolveProvider(state.provider ?? process.env.MEDIAGECKUSSY_LLM_PROVIDER ?? "openrouter", { model: state.model });
+      const result = await runInterviewTurn(state, message, provider);
+      await saveInterviewState(result.updatedState);
+      return ok(res, {
+        message: result.response,
+        phase: result.updatedState.phase,
+        questionIndex: result.updatedState.questionIndex,
+        complete: result.complete,
+      });
+    } catch (error) {
+      if (error instanceof Error && /Interview session not found/.test(error.message)) {
+        return fail(res, error, 404);
+      }
+      return fail(res, error);
+    }
+  });
+
+  app.post("/api/interview/complete", async (req, res) => streamJob(res, async (send) => {
+    const sessionId = String(req.body?.sessionId ?? "");
+    if (!sessionId) {
+      throw new Error("sessionId is required");
+    }
+
+    const state = await loadInterviewState(sessionId);
+    send("started", { step: "build-canon" });
+    const canon = buildCanonFromAnswers(state);
+
+    const project = await createHostedProject({
+      title: req.body?.title ?? canon.canon.title.value,
+      mediaType: canon.canon.format.value,
+      packageTier: canon.package_tier,
+      canonYaml: JSON.stringify(canon, null, 2),
+      provider: state.provider,
+      model: state.model,
+    });
+
+    state.slug = project.slug;
+    state.updatedAt = new Date().toISOString();
+    send("progress", { step: "create-project", slug: project.slug });
+    const outputDir = projectDir(project.slug);
+    const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
+
+    send("progress", { step: "generate", message: "Generating package..." });
+    const generated = await generatePackage({ canonPath, outputDir, mediaType: canon.canon.format.value });
+
+    send("progress", { step: "hydrate", message: "Hydrating with AI..." });
+    const provider = resolveProvider(state.provider ?? process.env.MEDIAGECKUSSY_LLM_PROVIDER ?? "openrouter", { model: state.model });
+    await hydratePackage(canonPath, outputDir, provider, { minConfidence: 0.7 });
+
+    const finalSuggestions = await loadSuggestions(outputDir);
+    await fs.writeJson(path.join(outputDir, "interview_state.json"), state, { spaces: 2 });
+    await fs.remove(interviewDir(sessionId));
+
+    send("done", {
+      slug: project.slug,
+      suggestionCount: finalSuggestions.filter((item) => item.status === "pending").length,
+      completenessScore: generated.validation.completenessScore,
+    });
+  }));
+
   app.get("/api/studio/options", (_req, res) => ok(res, {
     providers: availableDemoProviders(),
     formats: availableStableFormats(),
@@ -280,6 +377,24 @@ export function registerProjectRoutes(app: Express) {
     }
   });
 
+}
+
+function interviewDir(sessionId: string) {
+  return path.join(projectWorkspace("_interviews"), sessionId);
+}
+
+async function saveInterviewState(state: Awaited<ReturnType<typeof loadInterviewState>> | ReturnType<typeof createSession>) {
+  const dir = interviewDir(state.sessionId);
+  await fs.ensureDir(dir);
+  await fs.writeJson(path.join(dir, "state.json"), state, { spaces: 2 });
+}
+
+async function loadInterviewState(sessionId: string) {
+  const statePath = path.join(interviewDir(sessionId), "state.json");
+  if (!(await fs.pathExists(statePath))) {
+    throw new Error(`Interview session not found: ${sessionId}`);
+  }
+  return fs.readJson(statePath) as Promise<ReturnType<typeof createSession>>;
 }
 
 async function listProjects() {
