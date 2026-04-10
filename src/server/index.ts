@@ -1,3 +1,4 @@
+import "dotenv/config";
 import fs from "fs-extra";
 import path from "node:path";
 import express from "express";
