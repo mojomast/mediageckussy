@@ -41,8 +41,10 @@
   "license": "ISC",
   "description": "Canon-first media package generator for TV-first repo-native creative packages.",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.87.0",
     "fs-extra": "^11.3.2",
     "handlebars": "^4.7.8",
+    "openai": "^6.34.0",
     "yaml": "^2.8.1",
     "zod": "^4.1.12"
   },
