@@ -1,3 +1,5 @@
+<!-- GECK TECHNICAL MANUAL // mediageckussy v2 -->
+
 # Creative Assets
 
 ## Overview

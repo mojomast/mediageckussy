@@ -1,8 +1,12 @@
-# media-package-generator
+# ◈ mediageckussy
 
-![CI](https://img.shields.io/github/actions/workflow/status/mojomast/mediageckussy/validate.yml?branch=main)
-![Version](https://img.shields.io/badge/version-2.0.0-01696f)
-![License](https://img.shields.io/badge/license-ISC-lightgrey)
+> *"Everything you need to establish a viable media project
+> in the post-development wasteland."*
+> - Future-Tec Division, G.E.C.K. v2 Technical Manual
+
+![CI](https://img.shields.io/github/actions/workflow/status/mojomast/mediageckussy/validate.yml?branch=main&color=39ff14&labelColor=0d110d)
+![Version](https://img.shields.io/badge/version-2.0.0-39ff14?labelColor=0d110d)
+![License](https://img.shields.io/badge/license-ISC-39ff14?labelColor=0d110d)
 
 Canon-first media package generation for TV series first, with an extensible path toward film, podcasts, games, books/comics, albums, and web series.
 

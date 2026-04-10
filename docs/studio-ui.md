@@ -1,4 +1,13 @@
-# Studio UI
+<!-- GECK TECHNICAL MANUAL // mediageckussy v2 -->
+
+# ◈ G.E.C.K. TECHNICAL MANUAL
+### MEDIA PACKAGE GENERATOR // v2.0.0 // FUTURE-TEC DIVISION
+
+> This document constitutes the complete technical reference for the
+> Garden of Eden Creation Kit - Media Package Generator. Keep it
+> accessible. The wasteland doesn't debug itself.
+
+## Studio UI
 
 ## Overview
 Studio is now usable as a hosted demo shell over the generator, hydration tools, validation output, and creative asset pipeline. The current implementation is still filesystem-backed, but the browser now works through server-owned project workspaces instead of asking the client for direct output paths.

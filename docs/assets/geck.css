@@ -1,0 +1,103 @@
+/* G.E.C.K. Docs - Technical Manual Theme */
+@import url('https://fonts.googleapis.com/css2?family=Atomic+Age&family=Share+Tech+Mono&display=swap');
+
+:root {
+  --doc-bg: #080a08;
+  --doc-surface: #0d110d;
+  --doc-border: #1f2b1f;
+  --doc-text: #c8e6c0;
+  --doc-text-dim: #6b8f68;
+  --doc-phosphor: #39ff14;
+  --doc-amber: #ffb000;
+  --doc-font-head: 'Atomic Age', sans-serif;
+  --doc-font-body: 'Share Tech Mono', monospace;
+}
+
+body {
+  background: var(--doc-bg);
+  color: var(--doc-text);
+  font-family: var(--doc-font-body);
+  line-height: 1.7;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--doc-font-head);
+  letter-spacing: 0.08em;
+  color: var(--doc-phosphor);
+  text-shadow: 0 0 12px rgba(57,255,20,0.4);
+  margin: 2.5rem 0 1rem;
+}
+
+h1::before { content: '◈ '; opacity: 0.6; }
+h2::before {
+  content: '// ';
+  font-family: var(--doc-font-body);
+  font-size: 0.7em;
+  opacity: 0.5;
+}
+
+code,
+pre {
+  background: var(--doc-surface);
+  border: 1px solid var(--doc-border);
+  font-family: var(--doc-font-body);
+  color: var(--doc-phosphor);
+  padding: 0.15em 0.4em;
+}
+
+pre {
+  padding: 1.5rem;
+  overflow-x: auto;
+}
+
+pre code {
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+a {
+  color: var(--doc-phosphor);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(57,255,20,0.3);
+}
+
+a:hover { text-shadow: 0 0 8px rgba(57,255,20,0.5); }
+
+blockquote {
+  border-left: 3px solid var(--doc-amber);
+  padding-left: 1rem;
+  color: var(--doc-amber);
+  margin: 1.5rem 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+th {
+  text-align: left;
+  border-bottom: 1px solid var(--doc-phosphor);
+  color: var(--doc-phosphor);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.5rem;
+}
+
+td {
+  border-bottom: 1px solid var(--doc-border);
+  padding: 0.5rem;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--doc-border);
+  margin: 2rem 0;
+}
