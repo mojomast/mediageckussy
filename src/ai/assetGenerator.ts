@@ -57,7 +57,7 @@ export async function generateAsset(
     assetType,
     prompt,
     model: result.model,
-    provider: provider.id,
+    provider: result.provider,
     generatedAt: new Date().toISOString(),
     canonFingerprint: fingerprintCanon(canon),
   }, { spaces: 2 });
@@ -65,7 +65,7 @@ export async function generateAsset(
   await registerAsset(outputDir, {
     type: assetType,
     path: relativeAssetPath,
-    provider: provider.id,
+    provider: result.provider,
     model: result.model,
     prompt,
     canonFingerprint: fingerprintCanon(canon),

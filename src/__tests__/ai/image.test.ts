@@ -3,7 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { describe, expect, test } from "vitest";
 import { generateAsset } from "../../ai/assetGenerator.js";
-import { MockImageProvider } from "../../ai/image/index.js";
+import { MockImageProvider, resolveImageProviderWithMetadata } from "../../ai/image/index.js";
 import { generateMoodBoard } from "../../ai/moodboard.js";
 import { registerAsset, readManifest } from "../../core/manifest.js";
 import { buildManifest, writeManifest } from "../../core/manifest.js";
@@ -76,6 +76,21 @@ describe("image tools", () => {
 
     const manifest = await readManifest(outputDir);
     expect(manifest.generatedAssets).toHaveLength(1);
+  });
+
+  test("resolveImageProviderWithMetadata falls back to stub when provider is unavailable", async () => {
+    delete process.env.MEDIAGECKUSSY_OPENAI_API_KEY;
+
+    const { provider, resolution } = await resolveImageProviderWithMetadata("openai-dalle3");
+
+    expect(provider.id).toBe("stub");
+    expect(resolution.fallbackUsed).toBe(true);
+    expect(resolution.resolvedId).toBe("stub");
+  });
+
+  test("resolveImageProviderWithMetadata maps legacy provider aliases", async () => {
+    const { resolution } = await resolveImageProviderWithMetadata("flux");
+    expect(resolution.requestedId).toBe("flux");
   });
 
   test("generateMoodBoard with panelCount=4 produces 4 panels and composite", async () => {
