@@ -1,5 +1,13 @@
 import crypto from "node:crypto";
-import type { CanonProject } from "../../core/types.js";
+import type {
+  CanonProject,
+  FactionEntry,
+  LocationEntry,
+  MotifEntry,
+  StorylineEntry,
+  ThemeEntry,
+  WorldLoreEntry,
+} from "../../core/types.js";
 import type { LLMProvider } from "../providers/types.js";
 import { analyzeCanonCompleteness } from "./completeness.js";
 import { buildIterationContext, buildIterationSnapshot } from "./context.js";
@@ -11,6 +19,16 @@ import type {
   IterationRun,
   IterationSession,
 } from "./types.js";
+
+const OPTIONAL_CANON_ARRAY_FIELDS = new Set([
+  "storylines",
+  "locations",
+  "world_lore",
+  "motifs",
+  "themes_structured",
+  "factions",
+  "structure",
+]);
 
 export async function runIterationStep(
   session: IterationSession,
@@ -402,6 +420,110 @@ function normalizeProposalValue(proposal: IterationProposal) {
     };
   }
 
+  if (proposal.field === "canon.storylines" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      title: String(v.title ?? ""),
+      logline: String(v.logline ?? ""),
+      episodes: Array.isArray(v.episodes) ? v.episodes.map(String) : [],
+      characters: Array.isArray(v.characters) ? v.characters.map(String) : [],
+      theme_connection: String(v.theme_connection ?? ""),
+      arc_shape: Array.isArray(v.arc_shape) ? v.arc_shape.map(String) : [],
+      visibility: v.visibility === "public" ? "public" : "internal",
+    } satisfies StorylineEntry;
+  }
+
+  if (proposal.field === "canon.locations" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      name: String(v.name ?? ""),
+      description: String(v.description ?? ""),
+      atmosphere: String(v.atmosphere ?? ""),
+      frequent_characters: Array.isArray(v.frequent_characters) ? v.frequent_characters.map(String) : [],
+      visibility: v.visibility === "public" ? "public" : "internal",
+    } satisfies LocationEntry;
+  }
+
+  if (proposal.field === "canon.world_lore" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      fact: String(v.fact ?? ""),
+      narrative_implication: String(v.narrative_implication ?? ""),
+    } satisfies WorldLoreEntry;
+  }
+
+  if (proposal.field === "canon.motifs" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      description: String(v.description ?? ""),
+      theme_connection: v.theme_connection ? String(v.theme_connection) : undefined,
+    } satisfies MotifEntry;
+  }
+
+  if (proposal.field === "canon.themes_structured" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      label: String(v.label ?? v.theme ?? ""),
+      theme_expression: v.theme_expression ? String(v.theme_expression) : undefined,
+      motif: v.motif ? String(v.motif) : undefined,
+    } satisfies ThemeEntry;
+  }
+
+  if (proposal.field === "canon.factions" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      id: String(v.id ?? crypto.randomUUID()),
+      name: String(v.name ?? ""),
+      description: String(v.description ?? ""),
+      allegiance: v.allegiance ? String(v.allegiance) : undefined,
+      members: Array.isArray(v.members) ? v.members.map(String) : [],
+      visibility: v.visibility === "public" ? "public" : "internal",
+    } satisfies FactionEntry;
+  }
+
+  if (/^canon\.characters\[.+\]\.backstory$/.test(proposal.field) && proposal.value != null) {
+    return Array.isArray(proposal.value)
+      ? proposal.value.map(String)
+      : [String(proposal.value)];
+  }
+
+  if (
+    /^canon\.characters\[.+\]\.initial_relationships$/.test(proposal.field)
+    && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)
+  ) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      characterId: String(v.characterId ?? v.character_id ?? ""),
+      dynamic: String(v.dynamic ?? ""),
+    };
+  }
+
+  if (/^canon\.characters\[.+\]\.episode_hooks$/.test(proposal.field) && proposal.value != null) {
+    return String(proposal.value);
+  }
+
+  if (
+    /^canon\.episodes\[.+\]\.scenes$/.test(proposal.field)
+    && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)
+  ) {
+    const v = proposal.value as Record<string, unknown>;
+    return {
+      scene_number: typeof v.scene_number === "number" ? v.scene_number : 1,
+      location: String(v.location ?? ""),
+      characters: Array.isArray(v.characters) ? v.characters.map(String) : [],
+      beat: String(v.beat ?? ""),
+    };
+  }
+
+  if (/^canon\.episodes\[.+\]\.featured_characters$/.test(proposal.field) && proposal.value != null) {
+    return String(proposal.value);
+  }
+
   return proposal.value;
 }
 
@@ -412,6 +534,7 @@ function resolveParent(root: Record<string, unknown>, fieldPath: string) {
   }
 
   let cursor: unknown = root;
+  let canonFieldUnwrapped = false;
 
   for (let index = 0; index < segments.length - 1; index += 1) {
     const segment = segments[index];
@@ -419,17 +542,40 @@ function resolveParent(root: Record<string, unknown>, fieldPath: string) {
       throw new Error(`Unknown canon field path: ${fieldPath}`);
     }
 
+    if (!canonFieldUnwrapped && isCanonField(cursor) && index > 0) {
+      cursor = (cursor as { value: unknown }).value;
+      canonFieldUnwrapped = true;
+      index -= 1;
+      continue;
+    }
+
     const objectCursor = cursor as Record<string, unknown>;
     if (!(segment.key in objectCursor)) {
-      objectCursor[segment.key] = index === 0 ? {} : [];
+      if (index === 0) {
+        objectCursor[segment.key] = {};
+      } else if (index === 1 && OPTIONAL_CANON_ARRAY_FIELDS.has(segment.key)) {
+        objectCursor[segment.key] = {
+          value: [],
+          status: "draft",
+          owner: "agent",
+          updated_at: new Date().toISOString(),
+          confidence: 0,
+          downstream_dependencies: [],
+          visibility: "internal",
+        };
+      } else {
+        objectCursor[segment.key] = [];
+      }
     }
 
     cursor = objectCursor[segment.key];
-    if (index > 0 && isCanonField(cursor) && segments[index + 1]) {
-      cursor = cursor.value;
-    }
+    canonFieldUnwrapped = false;
 
     if (segment.selector != null) {
+      if (isCanonField(cursor)) {
+        cursor = (cursor as { value: unknown }).value;
+      }
+
       if (!Array.isArray(cursor)) {
         throw new Error(`Field path does not resolve to an array: ${fieldPath}`);
       }
