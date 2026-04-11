@@ -32,7 +32,7 @@ describe("full pipeline integration", () => {
     await generatePackage({ canonPath: path.join(outputDir, "00_admin/canon_lock.yaml"), outputDir });
 
     const seriesBible = await fs.readFile(path.join(outputDir, "01_development/series_bible.md"), "utf8");
-    expect(seriesBible).toContain("MANUAL_EDIT_START");
+    expect(seriesBible).toContain("MANUAL_EDIT_START: tv.series-bible.logline");
 
     const fixturePng = path.join(outputDir, "mock.png");
     await sharp({ create: { width: 16, height: 16, channels: 3, background: "#335577" } }).png().toFile(fixturePng);
@@ -75,6 +75,7 @@ describe("full pipeline integration", () => {
     expect(handoff).toContain("Generated:");
     expect(handoff).not.toContain("{{date generatedAt}}");
     expect(worldGuide).toContain("Aftercare Crew");
+    expect(websiteContent).toContain("Storyline Hooks");
     expect(websiteContent).toContain("The Moonlight Economy");
     expect(websiteContent).toContain("Dock Nine Quarantine Slip");
   });

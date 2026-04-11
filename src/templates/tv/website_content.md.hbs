@@ -41,6 +41,18 @@
 {{/if}}
 {{/each}}
 
+{{#if publicCanon.storylines}}
+***
+
+## Storyline Hooks
+
+{{#each publicCanon.storylines}}
+**{{this.title}}**
+{{this.logline}}
+
+{{/each}}
+{{/if}}
+
 ***
 
 ## Themes
