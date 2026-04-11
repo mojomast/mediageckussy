@@ -93,7 +93,7 @@ describe("InterviewView", () => {
   test("shows completion card after complete response", async () => {
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "Final question", phase: 4, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "That gives me a strong foundation.", phase: "complete", questionIndex: 14, complete: true });
-    apiState.completeInterview.mockImplementation(async (_sessionId: string, onEvent: (event: string, data: unknown) => void) => {
+    apiState.completeInterview.mockImplementation(async (_sessionId: string, _opts: unknown, onEvent: (event: string, data: unknown) => void) => {
       onEvent("progress", { step: "generate" });
       onEvent("done", { slug: "signal-harbor", suggestionCount: 14, completenessScore: 72 });
     });
@@ -112,7 +112,7 @@ describe("InterviewView", () => {
     const onProjectReady = vi.fn();
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "Final question", phase: 4, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "That gives me a strong foundation.", phase: "complete", questionIndex: 14, complete: true });
-    apiState.completeInterview.mockImplementation(async (_sessionId: string, onEvent: (event: string, data: unknown) => void) => {
+    apiState.completeInterview.mockImplementation(async (_sessionId: string, _opts: unknown, onEvent: (event: string, data: unknown) => void) => {
       onEvent("done", { slug: "signal-harbor", suggestionCount: 14, completenessScore: 72 });
     });
 
@@ -132,7 +132,7 @@ describe("InterviewView", () => {
   test("shows interview build error when completion stream emits error", async () => {
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "Final question", phase: 4, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "That gives me a strong foundation.", phase: "complete", questionIndex: 14, complete: true });
-    apiState.completeInterview.mockImplementation(async (_sessionId: string, onEvent: (event: string, data: unknown) => void) => {
+    apiState.completeInterview.mockImplementation(async (_sessionId: string, _opts: unknown, onEvent: (event: string, data: unknown) => void) => {
       onEvent("error", { message: "OpenRouter API key missing." });
     });
 

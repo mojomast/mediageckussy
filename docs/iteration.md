@@ -1,57 +1,85 @@
-# ◈ Canon Iteration Engine
+# Canon Iteration
 
 ## Overview
-The iteration engine grows your media canon through structured AI
-loops. Each run proposes additions to the canon — new characters,
-episodes, storylines, factions, world details, and thematic depth.
-You control the pace.
+
+The iteration engine expands a hosted project canon through proposal-based AI runs. The model never mutates canon directly. Each run creates proposals, and accepted changes are written back to canon and recorded in history.
 
 ## Modes
+
 | Mode | Behavior |
-|------|----------|
-| Gated | Pauses after every run for human review |
-| Autonomous | Runs to max iterations, auto-accepts high-confidence proposals |
-| Confidence | Pauses only when a run's confidence score falls below your threshold |
+| --- | --- |
+| `gated` | Pause after every run for review |
+| `autonomous` | Continue until the configured max runs |
+| `confidence` | Continue until a run falls below the confidence threshold |
 
-## Starting an Iteration Session
-1. Open a project in Studio
-2. Go to ITERATE in the nav
-3. Choose a directive type and write your instruction
-4. Set mode + max runs
-5. Choose a planner strategy
-6. In coverage mode, set section targets for characters, episodes, storylines, themes, and world
-5. Click BEGIN ITERATION
+## Starting from Studio
 
-## Planner Strategies
-- Coverage: pushes the loop across canon sections until the configured coverage targets are met
-- Adaptive: follows canon gaps and recent run history with lighter structural pressure
+1. Open a project
+2. Go to `Iterate`
+3. Choose a directive type
+4. Write the instruction
+5. Set run mode, max runs, and planner strategy
+6. Start the session
 
-Coverage mode uses controller-side planning to avoid repeating the same canon section for too many runs in a row. It can move from character work into episodes, then into storylines, themes, world expansion, or factions so the canon grows as a connected package.
+You can also enter iteration from:
 
-## Steering Mid-Loop
-In any mode, you can queue a steering note that will be injected
-into the next run's context without interrupting the current one.
-In gated mode, you can also override the next directive entirely
-during review.
+- onboarding quick AI draft
+- dashboard suggested iteration shortcuts
+- canon section shortcuts
+- ops suggested directives
 
-## Canon Completeness
-The Ops view shows a completeness score across 5 dimensions and
-suggests the highest-value next iteration steps based on structural
-gaps in the canon.
+## Planner strategies
 
-The completeness engine reads both raw `canon.themes` and structured
-`canon.themes_structured`, and can suggest follow-up work for:
-- shallow or missing storyline arcs
-- unstructured themes and missing motifs
-- missing locations and world lore
-- missing factions or allegiances when character networks are present
+- `coverage`: push work across canon sections to fill structural gaps
+- `adaptive`: follow the strongest next opportunity with lighter structural pressure
 
-## Architecture Notes
-- The LLM never writes directly to canon — all output is staged as
-  proposals and requires explicit acceptance
-- Proposal application normalizes accepted entities to the canon schema before saving
-- Each run stores a full canon snapshot so any change is auditable
-- Context is compressed to ~2500 tokens per run to prevent drift
-  across long sessions
-- The loop is externally controlled — max iterations is always
-  enforced as a hard cap
+Coverage mode uses section targets and recent-run avoidance to prevent narrow looping.
+
+## Review flow
+
+In gated or paused confidence sessions you can:
+
+- accept or reject proposals
+- add a steering note
+- override the next directive
+- continue the session
+- stop the session
+
+## History and auditability
+
+Accepted iteration changes create canon snapshots in `00_admin/canon-history.jsonl`.
+
+Each snapshot includes:
+
+- `snapshotId`
+- `projectSlug`
+- `createdAt`
+- `trigger`
+- `runId` when applicable
+- field-level before/after changes
+- `authorKind`
+
+The Canon view exposes recent history and allows revert.
+
+## CLI
+
+Run a short iteration from the command line:
+
+```bash
+mediageck iterate <slug> --instruction "Suggest the highest-value next canon expansion"
+```
+
+Useful companion commands:
+
+```bash
+mediageck status <slug>
+mediageck canon show <slug>
+mediageck generate <slug>
+```
+
+## Related outputs
+
+- Canon lock: `00_admin/canon_lock.yaml`
+- Sessions: `iterations/<sessionId>/`
+- Validation report: `16_ops/validation_report.json`
+- History log: `00_admin/canon-history.jsonl`

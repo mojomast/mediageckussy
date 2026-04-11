@@ -1,420 +1,153 @@
-# ◈ mediageckussy
+# mediageckussy
 
-> *"Everything you need to establish a viable media project
-> in the post-development wasteland."*
-> - Future-Tec Division, G.E.C.K. v2 Technical Manual
+Canon-first media package generation for TV series, feature films, podcasts, and web series.
 
-![CI](https://img.shields.io/github/actions/workflow/status/mojomast/mediageckussy/validate.yml?branch=main&color=39ff14&labelColor=0d110d)
-![Version](https://img.shields.io/badge/version-2.0.0-39ff14?labelColor=0d110d)
-![License](https://img.shields.io/badge/license-ISC-39ff14?labelColor=0d110d)
+`mediageckussy` turns one hosted project canon into a working package workspace: canon, internal docs, outward-facing materials, generated assets, a static site, iteration history, export bundles, and public share links.
 
-Canon-first media package generation for TV series first, with an extensible path toward film, podcasts, games, books/comics, albums, and web series.
+## What ships now
 
-`media-package-generator` turns a structured canon file into a repo-native creative package: internal docs, ops controls, audience-facing materials, and a static website that all stay aligned to the same source of truth.
+- Hosted Studio workflow over `output/<slug>` workspaces
+- Guided onboarding with format selection, quick facts, and start mode
+- Interview-based project creation
+- Quick AI draft path that seeds a project and runs a short iteration pass
+- Canon editor with AI suggestions, revertable history, and completeness signals
+- Iteration engine with gated, autonomous, and confidence modes
+- File workspace editing, ZIP export, and folder manifests
+- Public read-only share links for selected bundles
+- Project lifecycle operations: rename, duplicate, archive, unarchive, delete
+- CLI workflow through `mediageck`
 
-## What It Is For
-- Packaging media projects as coherent, navigable repositories instead of scattered documents
-- Keeping creative, business, legal, press, and public-facing materials aligned to one canon model
-- Generating repeatable package structures for different media formats
-- Producing human-editable outputs that teams can review, extend, and ship
+## Supported formats
 
-## Core Capabilities
-- Canon-first generation from YAML or JSON
-- Field-level provenance and lock metadata
-- Manifest-driven package inventory
-- Department- and audience-oriented deliverables
-- Static website export from approved public fields
-- Validation for required files, placeholders, manifest drift, and stale markdown outputs
-- Partial regeneration by file, department, or whole package
-- Filesystem-first deployment for any static host
-
-## One-Line Setup And Onboarding
-TV example:
-
-```bash
-npm install && npm run generate:example && npm run publish:tv && python3 -m http.server 4173 --directory deploy/neon-aftercare-site
-```
-
-Film example:
-
-```bash
-npm install && npm run generate:film && npm run publish:film && python3 -m http.server 4173 --directory deploy/glass-harbor-site
-```
-
-Podcast example:
-
-```bash
-npm install && npm run generate:podcast && npm run publish:podcast && python3 -m http.server 4173 --directory deploy/signal-and-bone-site
-```
-
-Web series example:
-
-```bash
-npm install && npm run generate:web && npm run publish:web && python3 -m http.server 4173 --directory deploy/soft-launch-site
-```
-
-Then open `http://localhost:4173`.
-
-## Repo Name
-This implementation uses `media-package-generator` as the sibling tool repo.
-
-## What It Does
-- Reads a machine-readable canon file with field-level lock metadata
-- Selects a format pack and template set
-- Scaffolds a repo-like package structure
-- Generates markdown ops/docs deliverables and a static website export
-- Emits a manifest, canon lock file, handoff doc, and validation report
-- Supports whole-package, department, or file-level regeneration
-
-## Supported Use Cases
-- TV series pitch and production packages
-- Feature film development and partner packages
-- Podcast launch and sponsor packages
-- Web series audience, sponsor, and platform packages
-
-Current supported outputs are intentionally scaffold-first: they give you a consistent baseline package with lock metadata, ops controls, and public export, while leaving room for human writing and review.
-
-## Supported Formats
-- Stable: `tv_series`, `feature_film`, `podcast`, `web_series`
-- Stubbed: `game`, `book_comic`, `album_music_project`
-
-Use `formats` to view stable formats and `formats --all` to include stubs.
+- `tv_series`
+- `feature_film`
+- `podcast`
+- `web_series`
 
 ## Install
+
 ```bash
 npm install
 ```
 
-## Quick Start
-1. Install dependencies with `npm install`.
-2. Generate the sample TV package with `npm run generate:example`.
-3. Preview the sample site with `npm run publish:tv` and `python3 -m http.server 4173 --directory deploy/neon-aftercare-site`.
-4. Try hydration with `npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --field canon.logline`.
-5. Launch Studio with `npm run studio:dev`.
+## Studio
 
-## Run
-Generate the sample TV package:
-
-```bash
-npx tsx src/cli/index.ts generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare
-```
-
-Generate the sample feature film package:
-
-```bash
-npx tsx src/cli/index.ts generate --canon examples/sample-film/canon.yaml --out output/glass-harbor
-```
-
-Generate the sample podcast package:
-
-```bash
-npx tsx src/cli/index.ts generate --canon examples/sample-podcast/canon.yaml --out output/signal-and-bone
-```
-
-Generate the sample web series package:
-
-```bash
-npx tsx src/cli/index.ts generate --canon examples/sample-web-series/canon.yaml --out output/soft-launch
-```
-
-Regenerate only website files:
-
-```bash
-npx tsx src/cli/index.ts regenerate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --department website
-```
-
-Regenerate one file:
-
-```bash
-npx tsx src/cli/index.ts regenerate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --file site/press.html
-```
-
-List format packs:
-
-```bash
-npx tsx src/cli/index.ts formats
-```
-
-Show stable and stubbed formats:
-
-```bash
-npx tsx src/cli/index.ts formats --all
-```
-
-Print onboarding steps for a sample package:
-
-```bash
-npm run onboard:tv
-npm run onboard:film
-npm run onboard:podcast
-npm run onboard:web
-```
-
-Publish a generated static site into a deployable folder:
-
-```bash
-npm run publish:tv
-npm run publish:film
-npm run publish:podcast
-npm run publish:web
-```
-
-## Using Your Own Project
-Create a canon file modeled after the examples in `examples/`, then run:
-
-```bash
-npx tsx src/cli/index.ts generate --canon path/to/your-canon.yaml --out output/your-project-slug
-```
-
-To publish the generated site into a deploy folder:
-
-```bash
-npx tsx src/cli/publish-site.ts output/your-project-slug deploy/your-project-site
-```
-
-To preview locally:
-
-```bash
-python3 -m http.server 4173 --directory deploy/your-project-site
-```
-
-## Regeneration Rules
-- `generate` and `regenerate` both render files from canon in the MVP; `regenerate` is the same engine used in a narrower scope.
-- Valid current `--department` values are `root`, `ops`, `development`, `story`, `press`, and `website`.
-- Additional current department values include `scripts`, `story_design`, `episode_design`, `host_talent`, `distribution`, `business_dev`, `finance`, `legal`, and `release_prep` depending on format.
-- `--file` must match a generated output path exactly, such as `site/press.html` or `06_press_kit/press_kit.md`.
-- Scoped regeneration still refreshes `00_admin/canon_lock.yaml`, `00_admin/package_manifest.json`, and `16_ops/validation_report.json`.
-
-## Manual Edits
-Generated files can preserve human-authored content inside protected regions.
-
-For Markdown, HTML, and plain text templates use:
-
-```html
-<!-- MANUAL_EDIT_START: region-id -->
-Your human-maintained content here.
-<!-- MANUAL_EDIT_END: region-id -->
-```
-
-For YAML-style comment files use:
-
-```yaml
-# MANUAL_EDIT_START: region-id
-# MANUAL_EDIT_END: region-id
-```
-
-During regeneration the generator will:
-1. read the existing file
-2. extract region content by `region-id`
-3. regenerate the file
-4. reapply the saved content into matching regions
-
-Use stable region IDs in custom templates. Nested markers are not supported, and mismatched start/end markers will produce a warning in `16_ops/validation_report.json`.
-
-## Validation
-- Validation runs automatically after every generate or regenerate command.
-- Report path: `16_ops/validation_report.json`
-- Report fields:
-  - `ok`: whether blocking errors were found
-  - `issues`: warnings and errors
-  - `completenessScore`: simple score derived from issue severity
-- Current checks:
-  - required files exist
-  - manifest references existing generated files
-  - missing required canon fields
-  - unresolved placeholder markers such as `TODO`, `TBD`, and raw handlebars tags
-  - stale-output warnings using canon fingerprint matching
-- Deferred checks:
-  - deep conflict detection between locked fields
-  - tone drift analysis
-  - protected human-edit block preservation
-  - bundle redaction validation
-
-## AI Hydration
-- AI hydration is opt-in and never runs silently during generation.
-- Providers are configured via environment variables in `.env.example`.
-- Field hydration stores pending suggestions in `00_admin/ai_suggestions.yaml`.
-- Document hydration fills placeholders in generated docs while respecting protected manual-edit regions.
-- Bulk hydration writes a summary to `00_admin/hydration_report.yaml`.
-
-## ◈ Canon Iteration
-
-Grow your media package through AI iteration loops. Start with a
-character, let the engine develop them across episodes. Add storylines.
-Expand the world. Define factions. Steer it whenever you want.
-
-```bash
-npm run studio:dev
-# ITERATE tab → choose a directive → BEGIN ITERATION
-```
-
-Three modes: **Gated** (review every run), **Autonomous** (hands-off
-to max iterations), **Confidence** (auto-run until confidence drops).
-Planner strategies: **Coverage** (force cross-section canon growth with configurable targets) and **Adaptive** (lighter structural guidance).
-See [docs/iteration.md](docs/iteration.md) for full details.
-
-Examples:
-
-```bash
-npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --field canon.logline
-npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --file 06_press_kit/press_kit.md
-npx tsx src/cli/index.ts hydrate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --mode bulk
-npx tsx src/cli/index.ts hydrate status --out output/neon-aftercare
-```
-
-## Creative Asset Tools
-- Creative assets are opt-in image generations tied to canon context.
-- Generated files land under `site/assets/generated/` so they publish with the static site.
-- Each image also writes a `.prompt.json` sidecar with prompt and model metadata.
-
-Examples:
-
-```bash
-npx tsx src/cli/index.ts assets generate --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --type poster
-npx tsx src/cli/index.ts assets moodboard --canon examples/sample-tv/canon.yaml --out output/neon-aftercare --panels 6
-npx tsx src/cli/index.ts assets list --out output/neon-aftercare
-```
-
-## Studio UI
+Run the Studio app locally:
 
 ```bash
 npm run studio:dev
 ```
 
-Studio now runs as a hosted-demo shell over server-managed workspaces in `output/`.
+Main views:
 
-The current Studio flow is:
-- start from the Dashboard or the guided interview
-- create a hosted project with a starter canon or interview-built canon
-- choose built-in inference through OpenRouter or Z.AI
-- iterate on canon fields and generated files with prompt-guided hydration
-- review pending AI suggestions in the Canon view
-- preview the generated site and assets through safe backend routes
-- export the full package as a downloadable archive
+- Dashboard: project list, progress bars, quick actions, settings panel
+- Onboarding: media type, quick facts, interview / quick AI / blank start
+- Interview: guided intake that builds a hosted project
+- Canon: field editing, AI suggestions, completeness ribbon, history panel
+- Iterate: controlled canon growth loops with HITL review
+- Files: workspace browser, editor, export tools, share links
+- Site: live hosted site preview
+- Assets: generated media asset gallery
+- Ops: validation and completeness summary
 
-Studio provides six main workspace views plus the interview flow:
-- Dashboard for project creation, project cards, and quick actions
-- Interview for guided project onboarding and package generation
-- Canon for field editing, provider settings, and AI suggestion review
-- Files for generated package browsing, editing, and archive download
-- Site for hosted static preview
-- Assets for generated images and prompt metadata
-- Ops for validation, completeness tracking, bulk placeholder fixes, and export
+## CLI
 
-Recommended hosted demo inference defaults:
-- OpenRouter with `google/gemini-2.5-flash-lite` for low-latency iteration
-- Z.AI with `glm-4.5-flash` as an alternate built-in backend
-- keep provider API keys server-side only
+The primary binary is now `mediageck`.
 
-## Environment Variables
-- Use `.env.example` as the single reference for LLM, image, hydration, and Studio config.
-- Only set the providers you plan to use.
-- AI and image features are opt-in and never run silently.
-- For hosted demos, keep all inference keys server-side and expose only your app API to the browser.
-
-## Contributing
-- Run `npm run check`, `npm test`, and `npm run test:integration` before committing cross-cutting changes.
-- Run `npm run check:studio` and `npm run build:studio` when changing the frontend.
-- Do not commit secrets or API keys.
-- Preserve locked canon fields and protected manual-edit regions when extending the tool.
-
-## Canon Model
-- Input format: YAML or JSON
-- Required canon sections include title, logline, format, genre, tone, audience, comps, duration/count, themes, world/setting, assumptions, publication flags, characters, and episodes.
-- Every canon field carries provenance metadata:
-  - `status`: `draft`, `approved`, `locked`, or `deprecated`
-  - `owner`: who owns the field state
-  - `updated_at`: ISO timestamp
-  - `confidence`: 0-1 confidence value
-  - `downstream_dependencies`: files likely affected by changes
-  - `visibility`: public/internal/private gate for publication
-- Website export uses only approved public-facing slices of canon data.
-
-## Package Tiers
-- `light`: root docs plus website pages
-- `standard`: light plus development, story, press, and website scaffolds
-- `full`: current sample package level; TV, feature-film, podcast, and web-series packs all use this tier in the included examples
-
-## Deploying Generated Sites
-- Generate a package into `output/<project-slug>`.
-- Publish the static site into `deploy/<project-slug>-site` with the `publish:*` scripts.
-- Serve that folder locally with `python3 -m http.server` or copy it to any static host.
-- The deploy step is a filesystem copy, so it works with nginx, GitHub Pages, Netlify static uploads, S3-style buckets, or any plain web root.
-
-## Hosted Demo Notes
-- The current hosted-demo implementation is server-owned workspace hosting, not full multi-tenant SaaS auth.
-- Browser users create projects inside managed workspaces under the server's `output/` root.
-- File access, site preview, asset preview, and archive download all go through server routes rather than raw filesystem paths.
-- Built-in inference is configured server-side and selected per project in Studio settings.
-- For production SaaS hardening, add authentication, tenant scoping, rate limiting, background jobs, and object storage-backed exports.
-
-## Deploy to GitHub Pages
-This repo includes a GitHub Actions workflow that generates and publishes all four sample demo sites to GitHub Pages on every push to `main` and on manual dispatch. It builds each sample package, copies the published static sites into a single Pages artifact, and serves them under separate subdirectories.
-
-To enable it:
-1. Open the repository Settings on GitHub.
-2. Go to Pages.
-3. Set the source to GitHub Actions.
-
-The included workflow is a demo deployment for the sample canon files. For your own real projects, fork the workflow and replace the sample generate/publish commands with your own canon paths and publish targets.
-
-## Deploy to Netlify
-You can deploy a generated static site to Netlify with a simple build config such as:
-
-```toml
-[build]
-  command = "npm ci && npm run generate:example && npm run publish:tv"
-  publish = "deploy/neon-aftercare-site"
+```bash
+mediageck init
+mediageck list
+mediageck status <slug>
+mediageck canon show <slug>
+mediageck canon set <slug> --field canon.logline.value --value "New logline"
+mediageck generate <slug>
+mediageck iterate <slug> --instruction "Suggest the highest-value next canon expansion"
+mediageck export <slug> --include docs,site,canon --visibility public
+mediageck serve <slug>
 ```
 
-Replace the command and publish path with the format and project you actually want to deploy.
+`mpg` remains as an alias to the same binary.
 
-## Output Structure
-- `00_admin/`: canon lock + manifest
-- `01_development/`: TV bibles or film overview/treatment
-- `02_scripts/`: screenplay or episodic script scaffolds
-- `02_episode_design/`: podcast episode format and guide
-- `03_story_room/` or `03_story_design/`: episode guide or film story/visual materials
-- `02_episode_guides/`: web-series episode guide
-- `03_series_structure/`: web-series arc and continuity material
-- `06_press_kit/`: press kit
-- `08_host_talent/`: podcast host/talent materials
-- `08_creators_and_talent/`: web-series creator/talent materials
-- `13_release_prep/`: podcast release prep such as trailer scripts
-- `14_distribution/`: platform or festival strategy
-- `14_platform_distribution/`: web-series release plan
-- `15_business_dev/`: sponsor/ad inventory or broader business development
-- `15_sponsors_and_partnerships/`: web-series sponsor materials
-- `07_website/`: website content scaffold
-- `16_ops/`: missing items, QA, approval workflow, validation report
-- `site/`: static HTML export
+## Project lifecycle
 
-## Repository-Native Design
-Generated packages are meant to behave like working project repos:
-- `README.md` acts as the package index
-- `HANDOFF.md` explains how to pick up the project operationally
-- `00_admin/canon_lock.yaml` is the source-of-truth canon snapshot
-- `00_admin/package_manifest.json` tracks generated inventory
-- `16_ops/` contains QA, approval, missing-items, and validation outputs
-- `site/` contains the public-facing static export
+Hosted projects live in `output/<slug>`.
 
-## Docs
-- `docs/architecture.md`
-- `docs/roadmap.md`
-- `docs/ai-hydration.md`
-- `docs/iteration.md`
-- `docs/creative-assets.md`
-- `docs/studio-ui.md`
+- Active projects: `output/<slug>`
+- Archived projects: `output/_archived/<slug>`
+- Canon lock: `00_admin/canon_lock.yaml`
+- Canon history: `00_admin/canon-history.jsonl`
+- Manifest: `00_admin/package_manifest.json`
+- Validation report: `16_ops/validation_report.json`
 
-## Example
-Sample canons live at:
-- `examples/sample-tv/canon.yaml`
-- `examples/sample-film/canon.yaml`
-- `examples/sample-podcast/canon.yaml`
-- `examples/sample-web-series/canon.yaml`
+Supported operations:
 
-## Notes
-- Outputs stay human-editable as Markdown, YAML, JSON, and HTML.
-- Validation remains intentionally lightweight and file-oriented.
-- Game, book/comic, and album/music formats are still stubbed.
-- Stubbed formats are registry placeholders only; they are listed by the CLI but will fail generation until their packs are implemented.
+- rename
+- duplicate
+- archive / unarchive
+- delete with explicit confirmation
+
+## Export and sharing
+
+Studio and the API support:
+
+- ZIP exports
+- Folder manifest exports
+- Include filters: `docs`, `site`, `canon`, `assets`
+- Visibility filters: `public`, `internal`, `all`
+- `canon.json` export at bundle root
+- Public share tokens stored in `output/share-tokens.json`
+
+Relevant endpoints:
+
+- `POST /api/projects/:slug/export`
+- `POST /api/projects/:slug/share`
+- `GET /api/share/:shareToken`
+- `GET /api/share/:shareToken/files/:filename`
+
+## Canon history
+
+Canon changes are snapshotted to `canon-history.jsonl`.
+
+Triggers currently recorded:
+
+- manual canon edits
+- accepted hydration suggestions
+- accepted iteration proposals
+- snapshot-based revert actions
+
+Studio exposes recent snapshots in the Canon view and supports revert.
+
+## Iteration
+
+The iteration engine grows canon through proposal-based runs.
+
+- Gated: pause every run for review
+- Autonomous: continue until max runs
+- Confidence: pause when confidence falls below threshold
+
+See `docs/iteration.md` for the full workflow.
+
+## Validation and editing
+
+- Generation writes a package manifest and validation report every run
+- Protected regions are reapplied during file saves and regeneration
+- AI hydration is opt-in
+- Locked canon fields cannot be overwritten through normal canon save routes
+
+## Development
+
+Recommended verification before shipping:
+
+```bash
+npm test
+npm run build
+npm run build:studio
+mediageck status --help
+```
+
+Additional checks:
+
+```bash
+npm run check
+npm run check:studio
+```
