@@ -44,6 +44,8 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedField, setSelectedField] = useState<string>("title");
   const [promptHint, setPromptHint] = useState("Tighten the idea while keeping the current tone and format constraints.");
+  const [iterationCount, setIterationCount] = useState(2);
+  const [refinementGoals, setRefinementGoals] = useState("specificity, canon consistency, voice");
   const [hydrationState, setHydrationState] = useState<HydrationState | null>(null);
 
   async function loadState() {
@@ -156,6 +158,14 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
           <textarea className="hint-area" value={promptHint} onChange={(event) => setPromptHint(event.target.value)} />
         </label>
         <label>
+          <span>Iterations</span>
+          <input type="number" min={1} max={5} value={iterationCount} onChange={(event) => setIterationCount(Number(event.target.value) || 1)} />
+        </label>
+        <label>
+          <span>Refine these areas</span>
+          <input value={refinementGoals} onChange={(event) => setRefinementGoals(event.target.value)} placeholder="specificity, canon consistency, voice" />
+        </label>
+        <label>
           <span>Provider</span>
           <input value={projectSettings?.llmProvider ?? ""} onChange={(event) => onProjectSettingsChange({ llmProvider: event.target.value, llmModel: projectSettings?.llmModel ?? "" })} />
         </label>
@@ -225,13 +235,15 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
     setStatus(`Hydrating canon.${selectedField}...`);
 
     try {
-      await api.runHydrate(slug, {
-        field: `canon.${selectedField}`,
-        provider: projectSettings?.llmProvider,
-        model: projectSettings?.llmModel,
-        promptHint,
-        force: true,
-      }, async (event) => {
+        await api.runHydrate(slug, {
+          field: `canon.${selectedField}`,
+          provider: projectSettings?.llmProvider,
+          model: projectSettings?.llmModel,
+          promptHint,
+          iterations: iterationCount,
+          refinementGoals: splitRefinementGoals(refinementGoals),
+          force: true,
+        }, async (event) => {
         if (event.event === "started") {
           setHydrationState({
             mode,
@@ -301,6 +313,10 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
       setStatus(error instanceof Error ? error.message : "Accept failed.");
     }
   }
+}
+
+function splitRefinementGoals(value: string) {
+  return value.split(",").map((entry) => entry.trim()).filter(Boolean);
 }
 
 function formatConfidence(value: number | undefined) {

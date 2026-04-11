@@ -15,6 +15,7 @@ export interface HydrationReport {
   fieldSuggestions: number;
   documentReplacements: number;
   skipped: string[];
+  iterations: number;
 }
 
 export async function hydratePackage(
@@ -26,6 +27,8 @@ export async function hydratePackage(
     dryRun?: boolean;
     minConfidence?: number;
     promptHint?: string;
+    iterations?: number;
+    refinementGoals?: string[];
   },
 ): Promise<HydrationReport> {
   const canon = await loadCanon(canonPath);
@@ -38,7 +41,12 @@ export async function hydratePackage(
   let documentReplacements = 0;
 
   for (const fieldPath of fieldPaths) {
-    const result = await hydrateField(canon, fieldPath, outputDir, provider, { dryRun: options.dryRun, promptHint: options.promptHint });
+    const result = await hydrateField(canon, fieldPath, outputDir, provider, {
+      dryRun: options.dryRun,
+      promptHint: options.promptHint,
+      iterations: options.iterations,
+      refinementGoals: options.refinementGoals,
+    });
     if (result.skipped) {
       skipped.push(result.reason ?? fieldPath);
       continue;
@@ -59,7 +67,12 @@ export async function hydratePackage(
       continue;
     }
 
-    const result = await hydrateDocument(canon, absolutePath, provider, { dryRun: options.dryRun, promptHint: options.promptHint });
+    const result = await hydrateDocument(canon, absolutePath, provider, {
+      dryRun: options.dryRun,
+      promptHint: options.promptHint,
+      iterations: options.iterations,
+      refinementGoals: options.refinementGoals,
+    });
     documentReplacements += result.replacements;
     skipped.push(...result.skipped);
   }
@@ -71,6 +84,7 @@ export async function hydratePackage(
     fieldSuggestions: options.dryRun ? fieldPaths.length : (await loadSuggestions(outputDir)).filter((item) => item.status === "pending" && item.confidence >= minConfidence).length,
     documentReplacements,
     skipped,
+    iterations: options.iterations ?? 1,
   };
 
   if (!options.dryRun) {

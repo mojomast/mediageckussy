@@ -9,6 +9,9 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
   const [content, setContent] = useState("");
   const [editing, setEditing] = useState(false);
   const [promptHint, setPromptHint] = useState("Replace placeholders with polished draft copy that matches the canon tone.");
+  const [iterationCount, setIterationCount] = useState(2);
+  const [refinementGoals, setRefinementGoals] = useState("clarity, canon consistency, audience fit");
+  const [hydrationProgress, setHydrationProgress] = useState<{ step: string; progress: number } | null>(null);
 
   async function refreshFiles() {
     const response = await api.getFiles(slug);
@@ -46,10 +49,28 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
           <button onClick={() => setEditing(!editing)}>{editing ? "Preview" : "Edit"}</button>
           {selected && <button onClick={async () => {
             setStatus(`Hydrating ${selected}...`);
-            await api.runHydrate(slug, { file: selected, promptHint }, () => undefined);
+            setHydrationProgress({ step: `Preparing ${selected}...`, progress: 15 });
+            await api.runHydrate(slug, {
+              file: selected,
+              promptHint,
+              iterations: iterationCount,
+              refinementGoals: splitGoals(refinementGoals),
+            }, (event) => {
+              if (event.event === "progress" && typeof event.data === "object" && event.data) {
+                const data = event.data as { message?: string; progress?: number };
+                setHydrationProgress({ step: String(data.message ?? "Hydrating file..."), progress: Number(data.progress ?? 50) });
+              }
+              if (event.event === "started") {
+                setHydrationProgress({ step: `Submitting ${selected} for AI fill...`, progress: 35 });
+              }
+              if (event.event === "done") {
+                setHydrationProgress({ step: `${selected} updated.`, progress: 100 });
+              }
+            });
             const refreshed = await api.getFile(slug, selected);
             setContent(refreshed.data.content);
             setStatus(`Updated ${selected}.`);
+            setTimeout(() => setHydrationProgress(null), 800);
           }}>AI Fill</button>}
           {editing && selected && <button onClick={async () => {
             await api.saveFile(slug, selected, content);
@@ -60,9 +81,35 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
           <span>Prompt hint</span>
           <textarea className="hint-area compact" value={promptHint} onChange={(event) => setPromptHint(event.target.value)} />
         </label>
+        <div className="form-grid">
+          <label>
+            <span>Iterations</span>
+            <input type="number" min={1} max={5} value={iterationCount} onChange={(event) => setIterationCount(Number(event.target.value) || 1)} />
+          </label>
+          <label>
+            <span>Refine these areas</span>
+            <input value={refinementGoals} onChange={(event) => setRefinementGoals(event.target.value)} placeholder="clarity, canon consistency, audience fit" />
+          </label>
+        </div>
+        {hydrationProgress && (
+          <div className="hydration-inline-status">
+            <div className="row between wrap">
+              <span className="section-label">Document Hydration</span>
+              <span>{hydrationProgress.progress}%</span>
+            </div>
+            <div className="progress-bar" aria-label="Document hydration progress">
+              <div className="progress-bar__fill" style={{ width: `${hydrationProgress.progress}%` }} />
+            </div>
+            <p className="muted">{hydrationProgress.step}</p>
+          </div>
+        )}
         <p className="status-inline">{status}</p>
         {editing ? <Editor height="70vh" defaultLanguage="markdown" value={content} onChange={(value) => setContent(value ?? "")} /> : <ReactMarkdown>{content}</ReactMarkdown>}
       </section>
     </div>
   );
+}
+
+function splitGoals(value: string) {
+  return value.split(",").map((entry) => entry.trim()).filter(Boolean);
 }

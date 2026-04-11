@@ -5,6 +5,7 @@ import type { Express, Response } from "express";
 import { generatePackage } from "../../core/generator.js";
 import { readManifest } from "../../core/manifest.js";
 import { generateAsset } from "../../ai/assetGenerator.js";
+import { planArtifactRequest } from "../../ai/artifactPlanner.js";
 import { hydrateDocument } from "../../ai/hydrators/docHydrator.js";
 import { hydrateField } from "../../ai/hydrators/fieldHydrator.js";
 import { hydratePackage } from "../../ai/hydrators/bulkHydrator.js";
@@ -227,14 +228,20 @@ export function registerProjectRoutes(app: Express) {
     });
     send("started", { step: "hydrate" });
     if (req.body?.mode === "bulk") {
+      send("progress", { step: "context", message: "Collecting canon context bundle...", progress: 15 });
+      send("progress", { step: "iterate", message: `Running ${Math.max(1, Math.min(Number(req.body?.iterations ?? 1), 5))} hydration pass(es)...`, progress: 45 });
       send("done", await hydratePackage(canonPath, outputDir, provider, req.body ?? {}));
       return;
     }
     if (req.body?.field) {
+      send("progress", { step: "context", message: `Grounding ${req.body.field} against canon context...`, progress: 20 });
+      send("progress", { step: "iterate", message: `Refining ${req.body.field} across ${Math.max(1, Math.min(Number(req.body?.iterations ?? 1), 5))} pass(es)...`, progress: 55 });
       send("done", await hydrateField(canon, req.body.field, outputDir, provider, req.body ?? {}));
       return;
     }
     if (req.body?.file) {
+      send("progress", { step: "context", message: `Reading canon and file context for ${req.body.file}...`, progress: 20 });
+      send("progress", { step: "iterate", message: `Refining ${req.body.file} across ${Math.max(1, Math.min(Number(req.body?.iterations ?? 1), 5))} pass(es)...`, progress: 55 });
       send("done", await hydrateDocument(canon, path.join(outputDir, req.body.file), provider, req.body ?? {}));
       return;
     }
@@ -352,9 +359,26 @@ export function registerProjectRoutes(app: Express) {
   app.post("/api/projects/:slug/assets/generate", async (req, res) => streamJob(res, async (send) => {
     const outputDir = projectDir(req.params.slug);
     const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
+    const project = await readHostedProject(req.params.slug);
     const provider = resolveImageProvider(req.body?.provider);
     send("started", { step: "asset" });
-    send("done", await generateAsset(canon, outputDir, req.body.type, provider, req.body ?? {}));
+    let assetRequest = req.body ?? {};
+    if (typeof req.body?.request === "string" && req.body.request.trim()) {
+      send("progress", { step: "plan", message: "Planning requested artifact from canon...", progress: 20 });
+      const llmProvider = resolveProvider(req.body?.llmProvider ?? project.settings.llmProvider, {
+        model: req.body?.llmModel ?? project.settings.llmModel,
+      });
+      const plan = await planArtifactRequest(canon, llmProvider, req.body.request);
+      assetRequest = {
+        ...req.body,
+        type: plan.assetType,
+        promptOverride: plan.promptOverride,
+        characterId: plan.characterId,
+      };
+      send("progress", { step: "plan", message: plan.rationale, progress: 45 });
+    }
+    send("progress", { step: "render", message: `Generating ${assetRequest.type}...`, progress: 75 });
+    send("done", await generateAsset(canon, outputDir, assetRequest.type, provider, assetRequest));
   }));
 
   app.get(/^\/api\/projects\/([^/]+)\/assets-file\/(.+)$/, async (req, res) => {
