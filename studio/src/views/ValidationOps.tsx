@@ -1,17 +1,69 @@
-import { useEffect, useState } from "react";
-import { api } from "../lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { api, type CanonCompletenessReport, type IterationDirective } from "../lib/api";
 
-export function ValidationOps({ slug, setStatus }: { slug: string; setStatus: (value: string) => void }) {
+export function ValidationOps({ slug, setStatus, onIterateNow }: { slug: string; setStatus: (value: string) => void; onIterateNow: (directive: IterationDirective) => Promise<void> }) {
   const [validation, setValidation] = useState<any>(null);
+  const [completeness, setCompleteness] = useState<CanonCompletenessReport | null>(null);
+
+  const dimensions = useMemo(() => completeness ? [
+    { key: "characters", label: "Characters", max: 25, ...completeness.dimensions.characters },
+    { key: "episodes", label: "Episodes", max: 25, ...completeness.dimensions.episodes },
+    { key: "themes", label: "Themes", max: 20, ...completeness.dimensions.themes },
+    { key: "world", label: "World", max: 15, ...completeness.dimensions.world },
+    { key: "storylines", label: "Storylines", max: 15, ...completeness.dimensions.storylines },
+  ] : [], [completeness]);
 
   useEffect(() => {
-    api.getValidation(slug).then((response) => setValidation(response.data));
+    void Promise.all([
+      api.getValidation(slug),
+      api.getCompleteness(slug),
+    ]).then(([validationResponse, completenessResponse]) => {
+      setValidation(validationResponse.data);
+      setCompleteness(completenessResponse);
+    });
   }, [slug]);
 
-  if (!validation) return <div className="panel">Loading validation...</div>;
+  if (!validation || !completeness) return <div className="panel">Loading validation...</div>;
 
   return (
     <section className="panel ops-list">
+      <div className="dossier iteration-panel card--glow">
+        <div className="dossier__header">
+          <span>Canon Completeness</span>
+          <span>{completeness.score}/100</span>
+        </div>
+        <div className="dossier__body iteration-panel__body">
+          {dimensions.map((dimension) => (
+            <div key={dimension.key} className="iteration-review-summary">
+              <div className="row between wrap">
+                <strong>{dimension.label}</strong>
+                <span>{dimension.score}/{dimension.max} pts</span>
+              </div>
+              <div className="progress-bar" aria-label={`${dimension.label} completeness`}>
+                <div className="progress-bar__fill" style={{ width: `${(dimension.score / dimension.max) * 100}%` }} />
+              </div>
+              {dimension.gaps[0] && <p className="muted">{dimension.gaps[0]}</p>}
+            </div>
+          ))}
+
+          <div className="section-label">Suggested Next Actions</div>
+          <div className="iteration-proposal-list">
+            {completeness.suggestedDirectives.slice(0, 3).map((directive, index) => (
+              <article key={`${directive.type}-${index}`} className="dossier iteration-proposal-card">
+                <div className="dossier__header">
+                  <span>{directive.type.replace(/_/g, " ").toUpperCase()}</span>
+                  <span>{directive.targetId ?? "GENERAL"}</span>
+                </div>
+                <div className="dossier__body iteration-proposal-card__body">
+                  <p>{directive.instruction}</p>
+                  <button className="btn btn--primary" onClick={() => void onIterateNow(directive)}>◈ Iterate Now</button>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="row between">
         <strong>Completeness</strong>
         <span>{validation.completenessScore}</span>

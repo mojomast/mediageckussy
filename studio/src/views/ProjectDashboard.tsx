@@ -6,10 +6,11 @@ type Props = {
   status: string;
   onOpen: (slug: string) => void;
   onContinueIterating: (slug: string) => void;
+  onIterateSuggested: (slug: string) => Promise<void>;
   onStartInterview: () => void;
 };
 
-export function ProjectDashboard({ projects, status, onOpen, onContinueIterating, onStartInterview }: Props) {
+export function ProjectDashboard({ projects, status, onOpen, onContinueIterating, onIterateSuggested, onStartInterview }: Props) {
   const hasProjects = projects.length > 0;
   const [iterationMeta, setIterationMeta] = useState<Record<string, { label: string; hasSession: boolean }>>({});
 
@@ -111,6 +112,7 @@ export function ProjectDashboard({ projects, status, onOpen, onContinueIterating
                     <p className="project-dossier__meta">{iterationMeta[project.slug]?.label ?? "LAST ITERATION: LOADING..."}</p>
                     <div className="row gap wrap project-dossier__actions">
                       <button className="btn btn--ghost" onClick={() => onOpen(project.slug)}>Open →</button>
+                      <button className="btn btn--ghost" onClick={() => void onIterateSuggested(project.slug)}>◈ Iterate Now</button>
                       <button className="btn btn--ghost" onClick={() => onContinueIterating(project.slug)}>◈ Continue Iterating</button>
                       <a className="btn btn--ghost" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
                     </div>

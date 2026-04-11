@@ -94,6 +94,18 @@ export type IterationSession = {
   pendingSteeringNote?: string;
 };
 
+export type CanonCompletenessReport = {
+  score: number;
+  dimensions: {
+    characters: { score: number; gaps: string[] };
+    episodes: { score: number; gaps: string[] };
+    themes: { score: number; gaps: string[] };
+    world: { score: number; gaps: string[] };
+    storylines: { score: number; gaps: string[] };
+  };
+  suggestedDirectives: IterationDirective[];
+};
+
 export type SSEvent = { event: string; data: unknown };
 
 export type InterviewStartResponse = {
@@ -126,6 +138,10 @@ export const api = {
   saveFile: (slug: string, filePath: string, content: string) => fetchJson(`/api/projects/${slug}/files/${encodePath(filePath)}`, { method: "PUT", body: JSON.stringify({ content }) }),
   getAssets: (slug: string) => fetchJson(`/api/projects/${slug}/assets`),
   getValidation: (slug: string) => fetchJson(`/api/projects/${slug}/validation`),
+  getCompleteness: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/completeness`);
+    return response.data as CanonCompletenessReport;
+  },
   listIterationSessions: async (slug: string) => {
     const response = await fetchJson(`/api/projects/${slug}/iterations`);
     return response.data as IterationSession[];

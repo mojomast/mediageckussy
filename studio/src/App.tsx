@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { AppShell, type WorkspaceTab } from "./components/AppShell";
-import { api, type ProjectSummary, type StudioOptions } from "./lib/api";
+import { api, type IterationDirective, type ProjectSummary, type StudioOptions } from "./lib/api";
 import { AssetGallery } from "./views/AssetGallery";
 import { CanonEditor } from "./views/CanonEditor";
 import { InterviewView } from "./views/InterviewView";
@@ -11,6 +11,11 @@ import { ValidationOps } from "./views/ValidationOps";
 
 type Tab = Exclude<WorkspaceTab, "Interview">;
 type View = { kind: "workspace"; tab: Tab } | { kind: "interview" };
+type IterationPrefill = {
+  slug: string;
+  directive: IterationDirective;
+  nonce: number;
+};
 
 export function App() {
   const [view, setView] = useState<View>(resolveViewFromPath());
@@ -19,6 +24,7 @@ export function App() {
   const [options, setOptions] = useState<StudioOptions | null>(null);
   const [status, setStatus] = useState("Ready to create or continue a hosted demo project.");
   const [projectSettings, setProjectSettings] = useState<{ llmProvider: string; llmModel: string } | null>(null);
+  const [iterationPrefill, setIterationPrefill] = useState<IterationPrefill | null>(null);
 
   const tab = view.kind === "workspace" ? view.tab : "Dashboard";
   const inInterview = view.kind === "interview";
@@ -120,6 +126,18 @@ export function App() {
           setView({ kind: "workspace", tab: "Iterate" });
           setStatus(`Opened iteration workspace for ${slug}.`);
         }}
+        onIterateSuggested={async (slug) => {
+          const report = await api.getCompleteness(slug);
+          const directive = report.suggestedDirectives[0];
+          if (!directive) {
+            setStatus(`No suggested iteration action available for ${slug}.`);
+            return;
+          }
+          setIterationPrefill({ slug, directive, nonce: Date.now() });
+          setSelectedSlug(slug);
+          setView({ kind: "workspace", tab: "Iterate" });
+          setStatus(`Loaded suggested iteration for ${slug}.`);
+        }}
       />}
 
       {inInterview && <InterviewView options={options} onProjectReady={(slug) => {
@@ -133,11 +151,15 @@ export function App() {
       }} />}
 
       {!inInterview && tab === "Canon" && selectedSlug && <CanonEditor slug={selectedSlug} projectSettings={projectSettings} onProjectSettingsChange={setProjectSettings} status={status} setStatus={setStatus} />}
-      {!inInterview && tab === "Iterate" && selectedSlug && <IterationView slug={selectedSlug} projectSettings={projectSettings} setStatus={setStatus} />}
+      {!inInterview && tab === "Iterate" && selectedSlug && <IterationView slug={selectedSlug} projectSettings={projectSettings} setStatus={setStatus} prefill={iterationPrefill && iterationPrefill.slug === selectedSlug ? iterationPrefill : null} />}
       {!inInterview && tab === "Files" && selectedSlug && <PackagePreview slug={selectedSlug} status={status} setStatus={setStatus} />}
       {!inInterview && tab === "Site" && selectedSlug && <iframe className="site-frame" src={api.siteUrl(selectedSlug)} title="Site Preview" />}
       {!inInterview && tab === "Assets" && selectedSlug && <AssetGallery slug={selectedSlug} setStatus={setStatus} />}
-      {!inInterview && tab === "Ops" && selectedSlug && <ValidationOps slug={selectedSlug} setStatus={setStatus} />}
+      {!inInterview && tab === "Ops" && selectedSlug && <ValidationOps slug={selectedSlug} setStatus={setStatus} onIterateNow={async (directive) => {
+        setIterationPrefill({ slug: selectedSlug, directive, nonce: Date.now() });
+        setView({ kind: "workspace", tab: "Iterate" });
+        setStatus(`Loaded suggested iteration for ${selectedSlug}.`);
+      }} />}
     </AppShell>
   );
 }

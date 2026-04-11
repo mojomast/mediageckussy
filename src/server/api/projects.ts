@@ -17,6 +17,7 @@ import { resolveImageProvider } from "../../ai/image/index.js";
 import { resolveProvider } from "../../ai/providers/index.js";
 import { applyProposals, buildNextDirective, runIterationStep, shouldPauseForHITL } from "../../ai/iteration/runner.js";
 import { createIterationSession, listIterationSessions, loadIterationSession, saveIterationSession } from "../../ai/iteration/session.js";
+import { analyzeCanonCompleteness } from "../../ai/iteration/completeness.js";
 import type { IterationDirective, IterationMode, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
 import { loadCanon, saveCanon, diffLockedFields } from "../../utils/canon.js";
@@ -553,6 +554,15 @@ export function registerProjectRoutes(app: Express) {
   app.get("/api/projects/:slug/validation", async (req, res) => {
     try {
       return ok(res, await fs.readJson(path.join(projectDir(req.params.slug), "16_ops/validation_report.json")));
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.get("/api/projects/:slug/completeness", async (req, res) => {
+    try {
+      const canon = await loadCanon(path.join(projectDir(req.params.slug), "00_admin/canon_lock.yaml"));
+      return ok(res, analyzeCanonCompleteness(canon));
     } catch (error) {
       return fail(res, error);
     }

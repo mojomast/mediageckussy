@@ -27,6 +27,11 @@ type Props = {
   slug: string;
   projectSettings: { llmProvider: string; llmModel: string } | null;
   setStatus: (value: string) => void;
+  prefill?: {
+    slug: string;
+    directive: IterationDirective;
+    nonce: number;
+  } | null;
 };
 
 const DIRECTIVE_OPTIONS: Array<{ value: IterationDirectiveType; label: string }> = [
@@ -41,7 +46,7 @@ const DIRECTIVE_OPTIONS: Array<{ value: IterationDirectiveType; label: string }>
   { value: "custom", label: "Custom Directive" },
 ];
 
-export function IterationView({ slug, projectSettings, setStatus }: Props) {
+export function IterationView({ slug, projectSettings, setStatus, prefill }: Props) {
   const [canon, setCanon] = useState<CanonState | null>(null);
   const [sessions, setSessions] = useState<IterationSession[]>([]);
   const [session, setSession] = useState<IterationSession | null>(null);
@@ -86,6 +91,20 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
   useEffect(() => {
     void loadState();
   }, [slug]);
+
+  useEffect(() => {
+    if (!prefill || prefill.slug !== slug) {
+      return;
+    }
+    setViewMode("current");
+    setDirectiveType(prefill.directive.type);
+    setInstruction(prefill.directive.instruction);
+    setTargetId(prefill.directive.targetId ?? "");
+    setConstraints((prefill.directive.constraints ?? []).join("\n"));
+    if (!isActive) {
+      setSession(null);
+    }
+  }, [isActive, prefill, slug]);
 
   useEffect(() => {
     if (!pausedRun) {
