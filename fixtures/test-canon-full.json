@@ -1,0 +1,372 @@
+{
+  "id": "neon-aftercare-full",
+  "slug": "neon-aftercare-full",
+  "package_tier": "full",
+  "outputs": {
+    "website": { "enabled": true },
+    "press_bundle": { "enabled": true },
+    "partner_bundle": { "enabled": true }
+  },
+  "canon": {
+    "title": {
+      "value": "Neon Aftercare",
+      "status": "locked",
+      "owner": "user",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 1,
+      "downstream_dependencies": ["README.md", "06_press_kit/press_kit.md", "site/index.html"],
+      "visibility": "public"
+    },
+    "logline": {
+      "value": "After a catastrophic biotech launch, a night-shift cleanup crew turns crisis management into a secret second business while trying to stay ahead of regulators, influencers, and each other.",
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.93,
+      "downstream_dependencies": ["README.md", "01_development/series_bible.md", "06_press_kit/press_kit.md", "site/index.html"],
+      "visibility": "public"
+    },
+    "format": {
+      "value": "tv_series",
+      "status": "locked",
+      "owner": "user",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 1,
+      "downstream_dependencies": ["README.md", "HANDOFF.md"],
+      "visibility": "public"
+    },
+    "genre": {
+      "value": "sci-fi workplace dramedy",
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.9,
+      "downstream_dependencies": ["README.md", "06_press_kit/press_kit.md", "site/index.html"],
+      "visibility": "public"
+    },
+    "tone": {
+      "value": ["tense", "funny", "humane", "procedural with neon paranoia"],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.9,
+      "downstream_dependencies": ["01_development/series_bible.md", "site/about.html"],
+      "visibility": "public"
+    },
+    "audience": {
+      "value": ["genre-streaming audience", "premium TV viewers", "festival and partner readers"],
+      "status": "approved",
+      "owner": "producer",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.88,
+      "downstream_dependencies": ["README.md"],
+      "visibility": "internal"
+    },
+    "comps": {
+      "value": ["Severance", "Station Eleven", "Better Off Ted"],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.76,
+      "downstream_dependencies": ["06_press_kit/press_kit.md", "site/press.html"],
+      "visibility": "public"
+    },
+    "duration_count": {
+      "value": "8 x 45 min episodes",
+      "status": "approved",
+      "owner": "producer",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.95,
+      "downstream_dependencies": ["README.md", "01_development/series_bible.md", "site/index.html"],
+      "visibility": "public"
+    },
+    "themes": {
+      "value": ["cleanup labor as invisible heroism", "monetizing disaster", "loyalty under regulatory pressure", "reinventing family in crisis"],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.84,
+      "downstream_dependencies": ["01_development/series_bible.md", "07_website/website_content.md", "site/about.html"],
+      "visibility": "public"
+    },
+    "world_setting": {
+      "value": "The series unfolds in a near-future waterfront district where biotech startups lease converted shipping terminals and every public health failure is also a branding problem.",
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.91,
+      "downstream_dependencies": ["01_development/series_bible.md", "site/about.html"],
+      "visibility": "public"
+    },
+    "production_assumptions": {
+      "value": ["contained night locations", "ensemble cast with recurring guest regulators", "practical effects supported by light VFX cleanup"],
+      "status": "draft",
+      "owner": "producer",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.74,
+      "downstream_dependencies": ["01_development/series_bible.md"],
+      "visibility": "internal"
+    },
+    "business_assumptions": {
+      "value": ["premium genre positioning for streamers and festival labs", "partner deck should emphasize scalable season engine"],
+      "status": "draft",
+      "owner": "producer",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.67,
+      "downstream_dependencies": ["16_ops/missing_items_report.md"],
+      "visibility": "internal"
+    },
+    "legal_assumptions": {
+      "value": ["biotech terminology requires legal and scientific review", "public claims must avoid implying real company affiliation"],
+      "status": "draft",
+      "owner": "legal",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.7,
+      "downstream_dependencies": ["16_ops/missing_items_report.md"],
+      "visibility": "internal"
+    },
+    "publication_flags": {
+      "value": {
+        "site_enabled": true,
+        "partner_bundle_enabled": true,
+        "press_bundle_enabled": true
+      },
+      "status": "approved",
+      "owner": "producer",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.95,
+      "downstream_dependencies": ["HANDOFF.md", "16_ops/approval_workflow.md"],
+      "visibility": "internal"
+    },
+    "characters": {
+      "value": [
+        {
+          "id": "mara-vale",
+          "name": "Mara Vale",
+          "role": "crew lead",
+          "description": "An unflappable former harbor medic who can neutralize a contamination event faster than she can process her own grief.",
+          "visibility": "public",
+          "kind": "character",
+          "backstory": ["Mara ran triage during the district's last major infrastructure failure.", "She still owes favors to harbor workers who covered for her family during the collapse."],
+          "initial_relationships": [
+            { "characterId": "jonah-quill", "dynamic": "Needs his shortcuts but distrusts his motives." },
+            { "characterId": "ines-rho", "dynamic": "Relies on Ines publicly and resents her privately." }
+          ],
+          "episode_hooks": ["Forced to choose between helping victims and protecting the crew's secret revenue stream.", "Faces an old medic contact who knows her real reasons for leaving harbor service."],
+          "arc_notes": "Mara's authority erodes as the side business starts to look more necessary than ethical."
+        },
+        {
+          "id": "jonah-quill",
+          "name": "Jonah Quill",
+          "role": "systems broker",
+          "description": "A compliance dropout who treats every emergency as a puzzle in incentives, leverage, and plausible deniability.",
+          "visibility": "public",
+          "kind": "character",
+          "backstory": ["Jonah washed out of a regulator fellowship after selling internal playbooks to a startup founder.", "He knows which district failures were quietly priced into insurance models."],
+          "initial_relationships": [
+            { "characterId": "mara-vale", "dynamic": "Admires her competence and keeps testing her moral limit." },
+            { "characterId": "ines-rho", "dynamic": "Competes with her to control the story after each incident." }
+          ],
+          "episode_hooks": ["Tries to recruit a junior regulator as an inside source.", "Finds evidence that the cleanup crew's contracts are being used to launder liability."],
+          "arc_notes": "Jonah starts as a useful fixer and becomes the person most tempted to professionalize the scam."
+        },
+        {
+          "id": "ines-rho",
+          "name": "Ines Rho",
+          "role": "brand salvage specialist",
+          "description": "A crisis storyteller who can rewrite a scandal overnight, provided nobody asks whether the new version is true.",
+          "visibility": "public",
+          "kind": "character",
+          "backstory": ["Ines once ghost-wrote apology campaigns for a biotech founder whose product harmed her own neighborhood.", "She joined the crew because cleanup work let her stay close to the fallout she couldn't fix in PR."],
+          "initial_relationships": [
+            { "characterId": "mara-vale", "dynamic": "Protective of Mara's image, often at the expense of Mara's trust." },
+            { "characterId": "jonah-quill", "dynamic": "Sees him as both her sharpest ally and most dangerous rival." }
+          ],
+          "episode_hooks": ["Builds a cover story so good the crew starts believing it.", "Must decide whether to leak the truth or preserve the one narrative keeping them employable."],
+          "arc_notes": "Ines evolves from spin doctor to accidental whistleblower without ever losing her instinct to frame the room."
+        }
+      ],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.92,
+      "downstream_dependencies": ["README.md", "01_development/character_bible.md", "06_press_kit/press_kit.md", "site/index.html", "site/characters.html"],
+      "visibility": "public"
+    },
+    "episodes": {
+      "value": [
+        {
+          "code": "S01E01",
+          "title": "False Positive",
+          "logline": "The cleanup team lands a side contract after discovering the startup behind the disaster needs quieter operators than its lawyers can provide.",
+          "status": "approved",
+          "visibility": "public",
+          "featured_characters": ["Mara Vale", "Jonah Quill", "Ines Rho"],
+          "story_function": "Launches the moonlighting business and establishes the moral framework of the crew.",
+          "scenes": [
+            { "scene_number": 1, "location": "Dock Nine Quarantine Slip", "characters": ["Mara Vale", "Jonah Quill"], "beat": "Mara realizes the official cleanup order is missing the most dangerous cargo." },
+            { "scene_number": 2, "location": "Aftercare Van", "characters": ["Mara Vale", "Jonah Quill", "Ines Rho"], "beat": "The crew decides to accept an off-book retainer in exchange for controlling the fallout." }
+          ],
+          "episode_end": "The crew gets paid twice for the same disaster and understands that someone expected them to say yes."
+        },
+        {
+          "code": "S01E02",
+          "title": "Vapor Containment",
+          "logline": "A chemical leak becomes a branding exercise when the crew is hired to stage competence for investors during an active emergency.",
+          "status": "approved",
+          "visibility": "public",
+          "featured_characters": ["Mara Vale", "Ines Rho"],
+          "story_function": "Shows how image management and public safety have fused in the district.",
+          "scenes": [
+            { "scene_number": 1, "location": "Halo Biologics Atrium", "characters": ["Ines Rho", "Mara Vale"], "beat": "Ines scripts a live apology while Mara keeps actual contamination from reaching the investor tour." },
+            { "scene_number": 2, "location": "Observation Deck", "characters": ["Jonah Quill"], "beat": "Jonah records which executives knew the leak was inevitable." }
+          ],
+          "episode_end": "The staged victory reel goes viral just as the crew realizes the leak map was altered before they arrived."
+        },
+        {
+          "code": "S01E03",
+          "title": "Tender Offer",
+          "logline": "Jonah turns a regulator's informal warning into leverage, forcing the team to decide how corrupt they are willing to look in private.",
+          "status": "approved",
+          "visibility": "public",
+          "featured_characters": ["Jonah Quill", "Mara Vale"],
+          "story_function": "Pushes the crew from reactive cleanup into intentional leverage.",
+          "scenes": [
+            { "scene_number": 1, "location": "Harbor Compliance Archive", "characters": ["Jonah Quill"], "beat": "Jonah uncovers a buried inspection note that could bankrupt three clients at once." },
+            { "scene_number": 2, "location": "Waterfront Clinic Roof", "characters": ["Mara Vale", "Jonah Quill"], "beat": "Mara warns Jonah that leverage without a line becomes extortion." }
+          ],
+          "episode_end": "Jonah makes the call anyway and drags the crew into a more profitable version of their own nightmare."
+        }
+      ],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.94,
+      "downstream_dependencies": ["README.md", "03_story_room/episode_guide.md", "07_website/website_content.md", "site/index.html", "site/episodes.html"],
+      "visibility": "public"
+    },
+    "structure": {
+      "value": [
+        { "id": "setup", "title": "Setup - Quiet Operators", "summary": "The crew discovers that startups need unofficial cleanup as much as official response.", "visibility": "public" },
+        { "id": "expansion", "title": "Expansion - Paid Silence", "summary": "Every solved emergency makes the side business more indispensable and more dangerous.", "visibility": "public" },
+        { "id": "exposure", "title": "Exposure - Public Contagion", "summary": "The district learns the crew has been monetizing the very failures they were trusted to contain.", "visibility": "public" }
+      ],
+      "status": "approved",
+      "owner": "editor",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.9,
+      "downstream_dependencies": ["README.md", "01_development/series_bible.md", "03_story_room/episode_guide.md", "site/story.html"],
+      "visibility": "public"
+    },
+    "storylines": {
+      "value": [
+        {
+          "id": "moonlight-economy",
+          "title": "The Moonlight Economy",
+          "logline": "The cleanup crew turns off-book crisis work into a business and slowly becomes the infrastructure the city deserves but should never need.",
+          "episodes": ["S01E01", "S01E02", "S01E03"],
+          "characters": ["Mara Vale", "Jonah Quill", "Ines Rho"],
+          "theme_connection": "monetizing disaster",
+          "arc_shape": ["A secret retainer turns emergency work into freelance leverage.", "The crew discovers clients now prefer their silence to public accountability.", "Their profitability makes honest rescue harder to recognize."],
+          "visibility": "public"
+        },
+        {
+          "id": "mara-harbor-debt",
+          "title": "Mara's Harbor Debt",
+          "logline": "Mara's history with the district's last collapse keeps resurfacing, threatening her authority and forcing her to choose who cleanup is really for.",
+          "episodes": ["S01E01", "S01E03"],
+          "characters": ["Mara Vale", "Jonah Quill"],
+          "theme_connection": "cleanup labor as invisible heroism",
+          "arc_shape": ["Mara hides how personally tied she is to the district's failures.", "Jonah weaponizes the same history to justify pushing further.", "Mara must decide whether truth destroys the crew or finally gives it a purpose."],
+          "visibility": "public"
+        }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.88,
+      "downstream_dependencies": ["creative/storyline_arc_document.md", "03_story_room/episode_guide.md", "07_website/website_content.md"],
+      "visibility": "public"
+    },
+    "locations": {
+      "value": [
+        {
+          "id": "dock-nine",
+          "name": "Dock Nine Quarantine Slip",
+          "description": "A floodlit berth for contaminated cargo where every mistake becomes visible from the skyline.",
+          "atmosphere": "industrial, wet, overexposed",
+          "frequent_characters": ["Mara Vale", "Jonah Quill"],
+          "visibility": "public"
+        },
+        {
+          "id": "halo-atrium",
+          "name": "Halo Biologics Atrium",
+          "description": "A pristine investor lobby designed to look antiseptic even while the building quietly vents panic.",
+          "atmosphere": "sterile, expensive, performative",
+          "frequent_characters": ["Ines Rho", "Mara Vale"],
+          "visibility": "public"
+        }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.86,
+      "downstream_dependencies": ["creative/world_guide.md", "01_development/series_bible.md", "07_website/website_content.md"],
+      "visibility": "public"
+    },
+    "world_lore": {
+      "value": [
+        { "id": "salvage-tier", "fact": "District responders are privately ranked by how quickly they can keep an incident off social feeds.", "narrative_implication": "The crew's unofficial labor is rewarded precisely when democratic oversight is weakest." },
+        { "id": "harbor-amnesty", "fact": "A failed harbor amnesty program let biotech landlords absorb public infrastructure debt without inheriting public duty.", "narrative_implication": "Every current emergency is linked to a past civic decision disguised as redevelopment." }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.85,
+      "downstream_dependencies": ["creative/world_guide.md", "01_development/series_bible.md"],
+      "visibility": "internal"
+    },
+    "motifs": {
+      "value": [
+        { "id": "neon-foam", "description": "Chemical runoff glowing brighter after every attempted cleanup", "theme_connection": "monetizing disaster" },
+        { "id": "sealed-badges", "description": "Access badges laminated after contamination events", "theme_connection": "loyalty under regulatory pressure" }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.82,
+      "downstream_dependencies": ["01_development/series_bible.md", "creative/world_guide.md"],
+      "visibility": "internal"
+    },
+    "themes_structured": {
+      "value": [
+        { "id": "cleanup-labor", "label": "Cleanup Labor", "theme_expression": "The people who prevent catastrophe rarely own the story of survival.", "motif": "neon foam" },
+        { "id": "profitable-crisis", "label": "Profitable Crisis", "theme_expression": "Institutions learn to budget for harm faster than they learn to stop causing it.", "motif": "sealed badges" }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.84,
+      "downstream_dependencies": ["01_development/series_bible.md", "07_website/website_content.md"],
+      "visibility": "public"
+    },
+    "factions": {
+      "value": [
+        {
+          "id": "aftercare-crew",
+          "name": "Aftercare Crew",
+          "description": "A night-shift remediation outfit that doubles as an unofficial crisis concierge service.",
+          "allegiance": "each other, until money intervenes",
+          "members": ["Mara Vale", "Jonah Quill", "Ines Rho"],
+          "visibility": "public"
+        }
+      ],
+      "status": "approved",
+      "owner": "agent",
+      "updated_at": "2026-04-10T00:00:00.000Z",
+      "confidence": 0.8,
+      "downstream_dependencies": ["creative/world_guide.md", "01_development/character_bible.md"],
+      "visibility": "public"
+    }
+  }
+}

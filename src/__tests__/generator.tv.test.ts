@@ -31,4 +31,33 @@ describe("TV generator", () => {
     const indexHtml = await fs.readFile(path.join(outputDir, "site/index.html"), "utf8");
     expect(indexHtml).toContain("Neon Aftercare");
   });
+
+  test("renders enriched canon documents and website content from full fixture", async () => {
+    const canonPath = fixturePath("fixtures/test-canon-full.json");
+    const { outputDir } = await generateFixture(canonPath, "mpg-tv-full");
+
+    const expectedFiles = [
+      "creative/storyline_arc_document.md",
+      "creative/world_guide.md",
+      "01_development/character_bible.md",
+      "07_website/website_content.md",
+    ];
+
+    for (const relativePath of expectedFiles) {
+      await expect(fs.pathExists(path.join(outputDir, relativePath))).resolves.toBe(true);
+    }
+
+    const seriesBible = await fs.readFile(path.join(outputDir, "01_development/series_bible.md"), "utf8");
+    expect(seriesBible).toContain("The Moonlight Economy");
+    expect(seriesBible).toContain("Dock Nine Quarantine Slip");
+    expect(seriesBible).toContain("Aftercare Crew");
+
+    const storylineDoc = await fs.readFile(path.join(outputDir, "creative/storyline_arc_document.md"), "utf8");
+    expect(storylineDoc).toContain("Arc 1: The Moonlight Economy");
+    expect(storylineDoc).not.toContain("{{@index_plus_1}}");
+
+    const websiteContent = await fs.readFile(path.join(outputDir, "07_website/website_content.md"), "utf8");
+    expect(websiteContent).toContain("Storyline Hooks");
+    expect(websiteContent).toContain("Dock Nine Quarantine Slip");
+  });
 });

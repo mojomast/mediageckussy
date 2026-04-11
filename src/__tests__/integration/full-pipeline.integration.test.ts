@@ -60,4 +60,22 @@ describe("full pipeline integration", () => {
     expect(response.body.ok).toBe(true);
     expect(response.body.data.some((project: { slug: string }) => project.slug === "integration-tv")).toBe(true);
   });
+
+  test("full enriched fixture generates helper-driven docs without raw placeholders", async () => {
+    const outputDir = path.resolve("output/integration-tv-full");
+    await fs.remove(outputDir);
+
+    const canonPath = fixturePath("fixtures/test-canon-full.json");
+    await generatePackage({ canonPath, outputDir });
+
+    const handoff = await fs.readFile(path.join(outputDir, "HANDOFF.md"), "utf8");
+    const worldGuide = await fs.readFile(path.join(outputDir, "creative/world_guide.md"), "utf8");
+    const websiteContent = await fs.readFile(path.join(outputDir, "07_website/website_content.md"), "utf8");
+
+    expect(handoff).toContain("Generated:");
+    expect(handoff).not.toContain("{{date generatedAt}}");
+    expect(worldGuide).toContain("Aftercare Crew");
+    expect(websiteContent).toContain("The Moonlight Economy");
+    expect(websiteContent).toContain("Dock Nine Quarantine Slip");
+  });
 });

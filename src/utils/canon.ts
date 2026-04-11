@@ -47,6 +47,9 @@ export function publicCanonSlice(canon: CanonProject) {
     characters: canon.canon.characters.value.filter((item) => item.visibility === "public"),
     episodes: canon.canon.episodes.value.filter((item) => item.visibility === "public" && item.status === "approved"),
     structure: (canon.canon.structure?.value ?? []).filter((item) => item.visibility === "public"),
+    storylines: (canon.canon.storylines?.value ?? []).filter((item) => item.visibility === "public"),
+    locations: (canon.canon.locations?.value ?? []).filter((item) => item.visibility === "public"),
+    factions: (canon.canon.factions?.value ?? []).filter((item) => item.visibility === "public"),
   };
 }
 
