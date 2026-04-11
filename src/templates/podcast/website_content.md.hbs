@@ -1,15 +1,33 @@
-# Website Content Scaffold
+# {{canon.title.value}} - Website Content
 
-## Home
-- Title: {{canon.title.value}}
-- Hook: {{canon.logline.value}}
+## Hero Block
+
+**Headline:** {{canon.title.value}}
+**Subheadline:** {{canon.logline.value}}
+**Tone Tags:** {{join canon.tone.value " · "}}
+
+## About the Show
+
+{{canon.world_setting.value}}
 
 ## Hosts
 {{#each publicCanon.characters}}
-- {{name}}: {{description}}
+### {{this.name}}
+*{{this.role}}*
+{{this.description}}
+
 {{/each}}
 
 ## Episodes
 {{#each publicCanon.episodes}}
-- {{code}} - {{title}}: {{logline}}
+### {{this.code}} - {{this.title}}
+{{this.logline}}
+
 {{/each}}
+
+{{#if publicCanon.storylines}}
+## Season Arc
+{{#each publicCanon.storylines}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}

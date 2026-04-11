@@ -1,4 +1,4 @@
-# Visual Approach Lookbook
+# {{canon.title.value}} - Visual Approach Lookbook
 
 ## Visual Logic
 {{canon.world_setting.value}}
@@ -8,6 +8,23 @@
 - {{this}}
 {{/each}}
 
+{{#if canon.locations}}
+## Location Palette
+{{#each canon.locations.value}}
+### {{this.name}}
+- Atmosphere: {{this.atmosphere}}
+- Narrative use: {{this.description}}
+
+{{/each}}
+{{/if}}
+
+{{#if canon.motifs}}
+## Recurring Visual Motifs
+{{#each canon.motifs.value}}
+- {{this.description}}{{#if this.theme_connection}} ({{this.theme_connection}}){{/if}}
+{{/each}}
+{{/if}}
+
 ## Reference Directions
-- Lighting, production design, typography, and motion references to be added by the creative team
-- This scaffold should evolve into an actual image-backed lookbook
+- Lighting, production design, costume, typography, and camera grammar should align with the canon tone list.
+- Convert each major location and motif above into image-backed references during design development.

@@ -1,8 +1,9 @@
-# Sponsor One Sheet
+# {{canon.title.value}} - Sponsor One Sheet
 
 ## Series Positioning
 - Genre: {{canon.genre.value}}
 - Format: {{canon.duration_count.value}}
+- Tone: {{join canon.tone.value ", "}}
 
 ## Sponsor Fit
 {{#each canon.business_assumptions.value}}
@@ -13,3 +14,10 @@
 {{#each canon.audience.value}}
 - {{this}}
 {{/each}}
+
+{{#if canon.storylines}}
+## Brand-Safe Narrative Hooks
+{{#each canon.storylines.value}}
+- {{this.title}}: {{this.theme_connection}}
+{{/each}}
+{{/if}}

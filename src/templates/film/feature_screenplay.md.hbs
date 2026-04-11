@@ -1,19 +1,42 @@
-# Feature Screenplay Scaffold
+# {{canon.title.value}} - Feature Screenplay Scaffold
 
 ## Title Page
 - Title: {{canon.title.value}}
 - Format: Feature film
+- Genre: {{canon.genre.value}}
+- Runtime target: {{canon.duration_count.value}}
 
 ## Principal Characters
 {{#each canon.characters.value}}
-- {{name}} - {{role}}
+- {{this.name}} - {{this.role}}
 {{/each}}
 
 ## Beat Outline
 {{#each canon.structure.value}}
-### {{title}}
-{{summary}}
+### {{this.title}}
+{{this.summary}}
+
+{{#if ../canon.storylines}}
+{{#each ../canon.storylines.value}}
+{{#if (includes this.arc_shape ../this.title)}}
+*Storyline support:* {{this.title}}
+{{/if}}
+{{/each}}
+{{/if}}
 
 Sample scene placeholder for human expansion.
+
+{{/each}}
+
+{{#each canon.episodes.value}}
+### Set Piece Reference: {{this.code}} - {{this.title}}
+> {{this.logline}}
+
+{{#if this.scenes}}
+{{#each this.scenes}}
+{{this.scene_number}}. **{{this.location}}** - {{join this.characters ", "}}
+   {{this.beat}}
+{{/each}}
+{{/if}}
 
 {{/each}}

@@ -1,19 +1,47 @@
-# Press Kit
+# {{canon.title.value}}
 
-## Project Snapshot
-- Title: {{canon.title.value}}
-- Format: {{canon.format.value}}
-- Genre: {{canon.genre.value}}
+**{{canon.format.value}}** | {{canon.genre.value}} | {{canon.duration_count.value}}
+
+***
 
 ## Logline
+
 {{canon.logline.value}}
 
-## Characters
+***
+
+## The World
+
+{{canon.world_setting.value}}
+
+***
+
+## Key Characters
+
 {{#each canon.characters.value}}
-- {{name}}: {{description}}
+{{#if (eq this.visibility "public")}}
+**{{this.name}}** - {{this.role}}
+{{this.description}}
+
+{{/if}}
 {{/each}}
 
-## Comparable Projects
-{{#each canon.comps.value}}
-- {{this}}
+***
+
+{{#if canon.storylines}}
+## Storyline Hooks
+
+{{#each canon.storylines.value}}
+{{#if (eq this.visibility "public")}}
+**{{this.title}}** - {{this.logline}}
+{{/if}}
 {{/each}}
+
+***
+{{/if}}
+
+## Tone & Comps
+
+*Tone:* {{join canon.tone.value " · "}}
+
+*If you like:* {{join canon.comps.value ", "}}

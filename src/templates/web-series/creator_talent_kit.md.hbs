@@ -1,8 +1,22 @@
-# Creator And Talent Kit
+# {{canon.title.value}} - Creator And Talent Kit
 
 {{#each canon.characters.value}}
-## {{name}}
-- Role: {{role}}
-- Description: {{description}}
+## {{this.name}}
+- Role: {{this.role}}
+- Description: {{this.description}}
+
+{{#if this.backstory}}
+### Background Notes
+{{#each this.backstory}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if this.initial_relationships}}
+### Ensemble Dynamics
+{{#each this.initial_relationships}}
+- {{this.characterId}}: {{this.dynamic}}
+{{/each}}
+{{/if}}
 
 {{/each}}

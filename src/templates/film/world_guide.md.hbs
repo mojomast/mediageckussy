@@ -1,0 +1,41 @@
+# {{canon.title.value}} - World Guide
+
+## World Overview
+
+{{canon.world_setting.value}}
+
+{{#if canon.locations}}
+## Locations
+
+{{#each canon.locations.value}}
+### {{this.name}}
+{{this.description}}
+
+*Atmosphere:* {{this.atmosphere}}
+{{#if this.frequent_characters}}*Frequented by:* {{join this.frequent_characters ", "}}{{/if}}
+
+{{/each}}
+{{/if}}
+
+{{#if canon.world_lore}}
+## World Lore
+
+{{#each canon.world_lore.value}}
+### {{this.fact}}
+{{this.narrative_implication}}
+
+{{/each}}
+{{/if}}
+
+{{#if canon.factions}}
+## Factions & Organizations
+
+{{#each canon.factions.value}}
+### {{this.name}}
+{{this.description}}
+
+{{#if this.allegiance}}*Allegiance:* {{this.allegiance}}{{/if}}
+{{#if this.members}}*Members:* {{join this.members ", "}}{{/if}}
+
+{{/each}}
+{{/if}}

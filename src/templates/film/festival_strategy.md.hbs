@@ -1,8 +1,9 @@
-# Festival Strategy
+# {{canon.title.value}} - Festival Strategy
 
 ## Positioning
 - Genre: {{canon.genre.value}}
 - Runtime: {{canon.duration_count.value}}
+- Tone: {{join canon.tone.value ", "}}
 
 ## Audience And Market Read
 {{#each canon.audience.value}}
@@ -13,3 +14,15 @@
 {{#each canon.comps.value}}
 - {{this}}
 {{/each}}
+
+## Festival Narrative Hooks
+{{#each canon.themes.value}}
+- {{this}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Awards / Press Angles
+{{#each canon.storylines.value}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}

@@ -1,10 +1,23 @@
-# Feature Budget Top Sheet
+# {{canon.title.value}} - Feature Budget Top Sheet
 
 ## Assumption Summary
 {{#each canon.production_assumptions.value}}
 - {{this}}
 {{/each}}
 
+## Creative Cost Drivers
+{{#if canon.locations}}
+- Key locations: {{canon.locations.value.length}}
+{{/if}}
+- Principal characters: {{canon.characters.value.length}}
+- Story beats: {{canon.structure.value.length}}
+
 ## Budget Frame
-- Replace this scaffold with actual department totals and contingency lines
-- Budget readiness depends on updated production assumptions and schedule modeling
+- Above-the-line: cast, director, producers, writers
+- Production: locations, art, camera, sound, transport
+- Post: editorial, music, color, sound mix, delivery
+- Contingency and completion reserve to be set by finance
+
+## Readiness Notes
+- Replace this scaffold with actual department totals.
+- Revisit after story structure, location count, or production assumptions materially change.

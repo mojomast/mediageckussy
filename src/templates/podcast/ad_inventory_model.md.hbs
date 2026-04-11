@@ -1,4 +1,4 @@
-# Ad Inventory Model
+# {{canon.title.value}} - Ad Inventory Model
 
 ## Sponsor Positioning
 {{#each canon.business_assumptions.value}}
@@ -9,6 +9,12 @@
 {{#each canon.audience.value}}
 - {{this}}
 {{/each}}
+
+## Show Fit
+- Genre: {{canon.genre.value}}
+- Cadence: {{canon.duration_count.value}}
+{{#if canon.themes_structured}}- Themes advertisers can align with: {{join canon.themes.value ", "}}
+{{/if}}
 
 ## Inventory Scaffold
 - Pre-roll slot

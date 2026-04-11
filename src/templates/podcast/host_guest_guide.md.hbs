@@ -1,27 +1,20 @@
-# {{canon.title.value}} - Host Talent Kit
+# {{canon.title.value}} - Host / Guest Guide
 
 {{#each canon.characters.value}}
 ## {{this.name}}
-- Role: {{this.role}}
-- Type: {{this.kind}}
-- Bio: {{this.description}}
+**Role:** {{this.role}}
 
-{{#if this.backstory}}
-### Background Notes
-{{#each this.backstory}}
-- {{this}}
-{{/each}}
-{{/if}}
+{{this.description}}
 
 {{#if this.initial_relationships}}
-### On-Mic Dynamic
+### Conversation Dynamics
 {{#each this.initial_relationships}}
 - {{this.characterId}}: {{this.dynamic}}
 {{/each}}
 {{/if}}
 
 {{#if this.episode_hooks}}
-### Repeatable Episode Hooks
+### Reliable Talking Points
 {{#each this.episode_hooks}}
 - {{this}}
 {{/each}}

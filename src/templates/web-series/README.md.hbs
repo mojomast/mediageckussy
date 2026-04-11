@@ -1,7 +1,7 @@
 # {{canon.title.value}}
 
 ## Purpose
-Index the generated web-series package for creators, platform partners, sponsors, press, and operators.
+Index the generated web-series package so creators, platform teams, sponsors, press, and operators can move from canon to release planning quickly.
 
 ## Package Summary
 {{canon.logline.value}}
@@ -10,6 +10,8 @@ Index the generated web-series package for creators, platform partners, sponsors
 - Format: `{{canon.format.value}}`
 - Genre: `{{canon.genre.value}}`
 - Episode pattern: `{{canon.duration_count.value}}`
+- Tone: `{{join canon.tone.value ", "}}`
+- Audience: `{{join canon.audience.value ", "}}`
 - Package tier: `{{project.package_tier}}`
 
 ## Primary Files
@@ -18,7 +20,26 @@ Index the generated web-series package for creators, platform partners, sponsors
 - `02_episode_guides/episode_guide.md`
 - `03_series_structure/arc_and_continuity.md`
 - `05_marketing/audience_strategy.md`
+- `05_marketing/social_content_plan.md`
 - `08_creators_and_talent/creator_talent_kit.md`
 - `14_platform_distribution/platform_release_plan.md`
 - `15_sponsors_and_partnerships/sponsor_one_sheet.md`
+- `07_website/website_content.md`
 - `site/index.html`
+
+## Cast / Talent
+{{#each canon.characters.value}}
+- `{{this.name}}` - {{this.role}}
+{{/each}}
+
+## Episode Slate
+{{#each canon.episodes.value}}
+- `{{this.code}}` - {{this.title}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Continuity Arcs
+{{#each canon.storylines.value}}
+- `{{this.title}}` - {{this.theme_connection}}
+{{/each}}
+{{/if}}

@@ -1,19 +1,40 @@
-# One-Page Film Overview
+# {{canon.title.value}} - One-Page Film Overview
 
-## Logline
+## Hook
 {{canon.logline.value}}
 
 ## Format
-- {{canon.format.value}}
-- {{canon.duration_count.value}}
-- {{canon.genre.value}}
+- Type: {{canon.format.value}}
+- Runtime: {{canon.duration_count.value}}
+- Genre: {{canon.genre.value}}
+- Tone: {{join canon.tone.value ", "}}
 
-## Tone
-{{#each canon.tone.value}}
+## Audience
+{{#each canon.audience.value}}
 - {{this}}
 {{/each}}
 
-## Comps
+## Comparable Projects
 {{#each canon.comps.value}}
 - {{this}}
 {{/each}}
+
+## World Frame
+{{canon.world_setting.value}}
+
+## Core Characters
+{{#each canon.characters.value}}
+- **{{this.name}}** ({{this.role}}): {{this.description}}
+{{/each}}
+
+## Story Engine
+{{#each canon.structure.value}}
+- **{{this.title}}**: {{this.summary}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Commercial / Narrative Arcs
+{{#each canon.storylines.value}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}

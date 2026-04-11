@@ -1,15 +1,47 @@
-# Website Content Scaffold
+# {{canon.title.value}} - Website Content
 
-## Home
-- Title: {{canon.title.value}}
-- Logline: {{canon.logline.value}}
+## Hero Block
+
+**Headline:** {{canon.title.value}}
+**Subheadline:** {{canon.logline.value}}
+**Tone Tags:** {{join canon.tone.value " · "}}
+
+## About the Film
+
+{{canon.world_setting.value}}
+
+**Format:** {{canon.format.value}} | **Genre:** {{canon.genre.value}}
 
 ## Story
 {{#each publicCanon.structure}}
-- {{title}}: {{summary}}
+### {{this.title}}
+{{this.summary}}
+
 {{/each}}
 
 ## Characters
 {{#each publicCanon.characters}}
-- {{name}}: {{description}}
+### {{this.name}}
+*{{this.role}}*
+{{this.description}}
+
 {{/each}}
+
+{{#if publicCanon.storylines}}
+## Storyline Hooks
+{{#each publicCanon.storylines}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}
+
+## Themes
+{{#each canon.themes.value}}
+- {{this}}
+{{/each}}
+
+{{#if publicCanon.locations}}
+## Locations
+{{#each publicCanon.locations}}
+- **{{this.name}}**: {{this.description}}
+{{/each}}
+{{/if}}

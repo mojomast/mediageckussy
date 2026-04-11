@@ -1,0 +1,15 @@
+# {{canon.title.value}} - Episode Descriptions
+
+{{#each canon.episodes.value}}
+## {{this.code}} - {{this.title}}
+{{this.logline}}
+
+{{#if this.story_function}}
+*Story function:* {{this.story_function}}
+{{/if}}
+
+{{#if this.featured_characters}}
+*Featured voices:* {{join this.featured_characters ", "}}
+{{/if}}
+
+{{/each}}

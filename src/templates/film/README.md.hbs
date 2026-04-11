@@ -1,7 +1,7 @@
 # {{canon.title.value}}
 
 ## Purpose
-Index the generated feature film package for creative, finance, legal, press, partner, and ops readers.
+Index the generated feature-film package so development, production, finance, legal, distribution, press, and ops collaborators can move from canon to execution quickly.
 
 ## Package Summary
 {{canon.logline.value}}
@@ -10,14 +10,18 @@ Index the generated feature film package for creative, finance, legal, press, pa
 - Format: `{{canon.format.value}}`
 - Genre: `{{canon.genre.value}}`
 - Duration / Count: `{{canon.duration_count.value}}`
+- Tone: `{{join canon.tone.value ", "}}`
+- Audience: `{{join canon.audience.value ", "}}`
 - Package tier: `{{project.package_tier}}`
 - Canon fingerprint: `{{meta.canonFingerprint}}`
 
 ## Audience Index
 
-### Creative
+### Creative / Development
 - `01_development/one_page_film_overview.md`
 - `01_development/feature_treatment.md`
+- `01_development/storyline_arc_document.md`
+- `01_development/world_guide.md`
 - `02_scripts/feature_screenplay.md`
 - `03_story_design/visual_approach_lookbook.md`
 
@@ -39,7 +43,27 @@ Index the generated feature film package for creative, finance, legal, press, pa
 - `16_ops/qa_checklists.md`
 - `16_ops/approval_workflow.md`
 
-## Story Beats
-{{#each canon.structure.value}}
-- `{{title}}` - {{summary}}
+## Principal Characters
+{{#each canon.characters.value}}
+- `{{this.name}}` - {{this.role}}
 {{/each}}
+
+{{#if canon.storylines}}
+## Storylines
+{{#each canon.storylines.value}}
+- `{{this.title}}` - {{this.theme_connection}}
+{{/each}}
+{{/if}}
+
+## Story Structure
+{{#each canon.structure.value}}
+- `{{this.title}}` - {{this.summary}}
+{{/each}}
+
+## Public Website
+- `site/index.html`
+- `site/about.html`
+- `site/story.html`
+- `site/characters.html`
+- `site/press.html`
+- `site/partners.html`

@@ -1,4 +1,4 @@
-# Episode Format
+# {{canon.title.value}} - Episode Format
 
 ## Runtime And Cadence
 - {{canon.duration_count.value}}
@@ -12,3 +12,17 @@
 {{#each canon.tone.value}}
 - {{this}}
 {{/each}}
+
+## Segment Guidance
+- Cold open / show hook
+- Host setup and scene framing
+- Main conversation or narrative block
+- Mid-roll / sponsor position when applicable
+- Closing takeaway and next-episode hook
+
+{{#if canon.themes_structured}}
+## Thematic Targets
+{{#each canon.themes_structured.value}}
+- {{this.label}}
+{{/each}}
+{{/if}}

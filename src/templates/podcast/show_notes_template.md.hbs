@@ -1,0 +1,20 @@
+# {{canon.title.value}} - Show Notes Template
+
+## Standard Fields
+- Episode code / title
+- Episode logline
+- Featured voices
+- Key links
+- Sponsor copy approval
+
+## Canon-Aligned Pull Quotes
+{{#each canon.themes.value}}
+- Theme anchor: {{this}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Ongoing Arc Reminder
+{{#each canon.storylines.value}}
+- {{this.title}}
+{{/each}}
+{{/if}}

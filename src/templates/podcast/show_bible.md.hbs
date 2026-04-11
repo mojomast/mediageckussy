@@ -1,4 +1,4 @@
-# Show Bible
+# {{canon.title.value}} - Show Bible
 
 ## Premise
 {{canon.logline.value}}
@@ -15,3 +15,37 @@
 {{#each canon.themes.value}}
 - {{this}}
 {{/each}}
+
+{{#if canon.themes_structured}}
+### Thematic Lens
+{{#each canon.themes_structured.value}}
+- **{{this.label}}**{{#if this.theme_expression}}: {{this.theme_expression}}{{/if}}{{#if this.motif}} (Motif: {{this.motif}}){{/if}}
+{{/each}}
+{{/if}}
+
+## Hosts / Contributors
+{{#each canon.characters.value}}
+### {{this.name}}
+*{{this.role}}*
+
+{{this.description}}
+
+{{#if this.backstory}}
+{{#each this.backstory}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{/each}}
+
+{{#if canon.storylines}}
+## Seasonal / Franchise Arcs
+{{#each canon.storylines.value}}
+### {{this.title}}
+{{this.logline}}
+
+**Episodes:** {{join this.episodes ", "}}
+**Theme Connection:** {{this.theme_connection}}
+
+{{/each}}
+{{/if}}

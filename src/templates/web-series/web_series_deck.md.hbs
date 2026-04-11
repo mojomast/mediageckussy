@@ -1,4 +1,4 @@
-# Web Series Deck
+# {{canon.title.value}} - Web Series Deck
 
 ## Hook
 {{canon.logline.value}}
@@ -6,6 +6,7 @@
 ## Positioning
 - Genre: {{canon.genre.value}}
 - Episode pattern: {{canon.duration_count.value}}
+- Tone: {{join canon.tone.value ", "}}
 
 ## Audience
 {{#each canon.audience.value}}
@@ -16,3 +17,15 @@
 {{#each canon.comps.value}}
 - {{this}}
 {{/each}}
+
+## Cast / Creator Selling Points
+{{#each canon.characters.value}}
+- **{{this.name}}** ({{this.role}}): {{this.description}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Serialized Hook
+{{#each canon.storylines.value}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}

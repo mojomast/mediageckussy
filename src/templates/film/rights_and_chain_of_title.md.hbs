@@ -1,9 +1,19 @@
-# Rights And Chain Of Title
+# {{canon.title.value}} - Rights And Chain Of Title
 
 ## Current Assumptions
 {{#each canon.legal_assumptions.value}}
 - {{this}}
 {{/each}}
+
+## Canon Elements To Clear
+- Title and subtitle usage
+- Character names and likeness-sensitive references
+{{#if canon.locations}}
+- Location depictions and any trademarked venue references
+{{/if}}
+{{#if canon.factions}}
+- Organization and faction naming for conflict checks
+{{/if}}
 
 ## Notice
 This generated document is an internal scaffold and not legal advice.

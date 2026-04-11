@@ -1,4 +1,4 @@
-# Platform Strategy
+# {{canon.title.value}} - Platform Strategy
 
 ## Audience Fit
 {{#each canon.audience.value}}
@@ -9,3 +9,15 @@
 {{#each canon.business_assumptions.value}}
 - {{this}}
 {{/each}}
+
+## Show Attributes
+- Genre: {{canon.genre.value}}
+- Cadence: {{canon.duration_count.value}}
+- Tone: {{join canon.tone.value ", "}}
+
+{{#if canon.storylines}}
+## Retention Hooks
+{{#each canon.storylines.value}}
+- {{this.title}}: {{this.logline}}
+{{/each}}
+{{/if}}

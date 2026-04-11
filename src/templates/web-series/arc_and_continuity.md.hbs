@@ -1,10 +1,28 @@
-# Arc And Continuity
+# {{canon.title.value}} - Arc And Continuity
 
+## Story Structure
 {{#each canon.structure.value}}
-## {{title}}
-{{summary}}
+### {{this.title}}
+{{this.summary}}
 
 {{/each}}
+
+{{#if canon.storylines}}
+## Storyline Arcs
+{{#each canon.storylines.value}}
+### {{this.title}}
+{{this.logline}}
+
+**Episodes:** {{join this.episodes " -> "}}
+**Characters:** {{join this.characters ", "}}
+**Theme:** {{this.theme_connection}}
+
+{{#each this.arc_shape}}
+{{@index_plus_1}}. {{this}}
+{{/each}}
+
+{{/each}}
+{{/if}}
 
 ## Themes To Preserve
 {{#each canon.themes.value}}

@@ -1,4 +1,4 @@
-# Trailer Script Scaffold
+# {{canon.title.value}} - Trailer Script Scaffold
 
 ## Cold Open
 Introduce `{{canon.title.value}}` in one sentence.
@@ -8,8 +8,15 @@ Introduce `{{canon.title.value}}` in one sentence.
 
 ## Host Beats
 {{#each canon.characters.value}}
-- {{name}} voice beat
+- {{this.name}} voice beat
 {{/each}}
+
+{{#if canon.storylines}}
+## Serialized Hook
+{{#each canon.storylines.value}}
+- {{this.title}}: {{this.logline}}
+{{/each}}
+{{/if}}
 
 ## CTA
 Subscribe and follow for launch updates.

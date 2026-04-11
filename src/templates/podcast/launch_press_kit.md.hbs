@@ -1,17 +1,29 @@
-# Launch Press Kit
+# {{canon.title.value}} - Launch Press Kit
 
 ## Project Snapshot
 - Title: {{canon.title.value}}
 - Format: {{canon.format.value}}
 - Genre: {{canon.genre.value}}
+- Cadence: {{canon.duration_count.value}}
 
 ## Logline
 {{canon.logline.value}}
 
-## Hosts
+## Hosts / Featured Talent
 {{#each canon.characters.value}}
-- {{name}}: {{description}}
+{{#if (eq this.visibility "public")}}
+- **{{this.name}}**: {{this.description}}
+{{/if}}
 {{/each}}
+
+{{#if canon.storylines}}
+## Launch Narrative
+{{#each canon.storylines.value}}
+{{#if (eq this.visibility "public")}}
+- **{{this.title}}**: {{this.logline}}
+{{/if}}
+{{/each}}
+{{/if}}
 
 ## Comps
 {{#each canon.comps.value}}

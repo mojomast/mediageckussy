@@ -1,15 +1,40 @@
-# Website Content Scaffold
+# {{canon.title.value}} - Website Content
 
-## Home
-- Title: {{canon.title.value}}
-- Hook: {{canon.logline.value}}
+## Hero Block
+
+**Headline:** {{canon.title.value}}
+**Subheadline:** {{canon.logline.value}}
+**Tone Tags:** {{join canon.tone.value " · "}}
+
+## About the Series
+
+{{canon.world_setting.value}}
 
 ## Episodes
 {{#each publicCanon.episodes}}
-- {{code}} - {{title}}: {{logline}}
+### {{this.code}} - {{this.title}}
+{{this.logline}}
+
 {{/each}}
 
 ## Talent
 {{#each publicCanon.characters}}
-- {{name}}: {{description}}
+### {{this.name}}
+*{{this.role}}*
+{{this.description}}
+
 {{/each}}
+
+{{#if publicCanon.storylines}}
+## Continuity Hooks
+{{#each publicCanon.storylines}}
+- **{{this.title}}**: {{this.logline}}
+{{/each}}
+{{/if}}
+
+{{#if publicCanon.locations}}
+## Locations
+{{#each publicCanon.locations}}
+- **{{this.name}}**: {{this.description}}
+{{/each}}
+{{/if}}

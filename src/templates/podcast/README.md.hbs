@@ -1,7 +1,7 @@
 # {{canon.title.value}}
 
 ## Purpose
-Index the generated podcast package for hosts, producers, distributors, sponsors, press, and operators.
+Index the generated podcast package so hosts, producers, editors, distributors, sponsors, press, and operators can move from show canon to release materials quickly.
 
 ## Package Summary
 {{canon.logline.value}}
@@ -10,6 +10,8 @@ Index the generated podcast package for hosts, producers, distributors, sponsors
 - Format: `{{canon.format.value}}`
 - Genre: `{{canon.genre.value}}`
 - Episode pattern: `{{canon.duration_count.value}}`
+- Tone: `{{join canon.tone.value ", "}}`
+- Audience: `{{join canon.audience.value ", "}}`
 - Package tier: `{{project.package_tier}}`
 - Canon fingerprint: `{{meta.canonFingerprint}}`
 
@@ -17,8 +19,28 @@ Index the generated podcast package for hosts, producers, distributors, sponsors
 - Show framing: `01_development/show_bible.md`
 - Episode system: `02_episode_design/episode_format.md`
 - Episode slate: `02_episode_design/episode_guide.md`
-- Hosts: `08_host_talent/host_talent_kit.md`
+- Episode descriptions: `02_episode_design/episode_descriptions.md`
+- Show notes template: `02_episode_design/show_notes_template.md`
+- Host / guest guide: `08_host_talent/host_guest_guide.md`
+- Host talent kit: `08_host_talent/host_talent_kit.md`
 - Distribution: `14_distribution/platform_strategy.md`
 - Sponsors: `15_business_dev/ad_inventory_model.md`
 - Press: `06_press_kit/launch_press_kit.md`
 - Website: `site/index.html`
+
+## On-Air Voices
+{{#each canon.characters.value}}
+- `{{this.name}}` - {{this.role}}
+{{/each}}
+
+## Episode Slate
+{{#each canon.episodes.value}}
+- `{{this.code}}` - {{this.title}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Narrative / Seasonal Arcs
+{{#each canon.storylines.value}}
+- `{{this.title}}` - {{this.theme_connection}}
+{{/each}}
+{{/if}}

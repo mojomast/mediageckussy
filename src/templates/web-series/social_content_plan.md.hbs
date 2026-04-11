@@ -1,0 +1,19 @@
+# {{canon.title.value}} - Social Content Plan
+
+## Core Pillars
+- Episode launch clips
+- Character / talent spotlights
+- World / location reveals
+- Serialized arc teases
+
+## Canon Anchors
+{{#each canon.themes.value}}
+- Theme pillar: {{this}}
+{{/each}}
+
+{{#if canon.storylines}}
+## Arc-Based Tease Cadence
+{{#each canon.storylines.value}}
+- {{this.title}}: tease across {{join this.episodes ", "}}
+{{/each}}
+{{/if}}

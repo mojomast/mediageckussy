@@ -1,18 +1,48 @@
-# HANDOFF
+# {{canon.title.value}} - Production Handoff
 
-## Status
-- Generated podcast package for `{{canon.title.value}}`
-- Website export enabled: `{{project.outputs.website.enabled}}`
+**Generated:** {{date generatedAt}}
+**Package Tier:** {{packageTier}}
+**Website Export:** {{project.outputs.website.enabled}}
+
+***
+
+## Canon Summary
+
+| Field | Status | Confidence | Owner |
+|-------|--------|------------|-------|
+| Title | {{upper canon.title.status}} | {{canon.title.confidence}} | {{canon.title.owner}} |
+| Logline | {{upper canon.logline.status}} | {{canon.logline.confidence}} | {{canon.logline.owner}} |
+| Characters ({{canon.characters.value.length}}) | {{upper canon.characters.status}} | {{canon.characters.confidence}} | {{canon.characters.owner}} |
+| Episodes ({{canon.episodes.value.length}}) | {{upper canon.episodes.status}} | {{canon.episodes.confidence}} | {{canon.episodes.owner}} |
+{{#if canon.storylines}}| Storylines ({{canon.storylines.value.length}}) | {{upper canon.storylines.status}} | {{canon.storylines.confidence}} | {{canon.storylines.owner}} |
+{{/if}}
 
 ## First Files To Read
 - `README.md`
-- `00_admin/canon_lock.yaml`
 - `01_development/show_bible.md`
+- `02_episode_design/episode_format.md`
 - `02_episode_design/episode_guide.md`
+- `02_episode_design/show_notes_template.md`
+- `08_host_talent/host_guest_guide.md`
 - `14_distribution/platform_strategy.md`
-- `16_ops/validation_report.json`
+
+## Open Items
+{{#each canon.characters.value}}
+{{#unless this.backstory}}
+- [ ] HOST / TALENT: {{this.name}} - no backstory or host bio notes defined
+{{/unless}}
+{{/each}}
+
+{{#each canon.episodes.value}}
+{{#unless this.story_function}}
+- [ ] EPISODE: {{this.code}} - no audience-facing story function defined
+{{/unless}}
+{{/each}}
+
+{{#unless canon.storylines}}
+- [ ] STORYLINES - no season or series arc document defined yet
+{{/unless}}
 
 ## Operator Notes
-- Public website is derived from approved public fields only
-- Episode guide doubles as public and internal slate in this MVP
-- Sponsor and platform docs are scaffolds, not final sales materials
+- Public website and press copy should remain limited to approved public canon.
+- Sponsor inventory, platform strategy, and press materials still require human commercial review.

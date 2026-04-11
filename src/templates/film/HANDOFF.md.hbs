@@ -1,19 +1,54 @@
-# HANDOFF
+# {{canon.title.value}} - Production Handoff
 
-## Status
-- Generated feature-film package for `{{canon.title.value}}`
-- Package tier: `{{project.package_tier}}`
-- Website export enabled: `{{project.outputs.website.enabled}}`
+**Generated:** {{date generatedAt}}
+**Package Tier:** {{packageTier}}
+**Website Export:** {{project.outputs.website.enabled}}
+
+***
+
+## Canon Summary
+
+| Field | Status | Confidence | Owner |
+|-------|--------|------------|-------|
+| Title | {{upper canon.title.status}} | {{canon.title.confidence}} | {{canon.title.owner}} |
+| Logline | {{upper canon.logline.status}} | {{canon.logline.confidence}} | {{canon.logline.owner}} |
+| Structure ({{canon.structure.value.length}} beats) | {{upper canon.structure.status}} | {{canon.structure.confidence}} | {{canon.structure.owner}} |
+| Characters ({{canon.characters.value.length}}) | {{upper canon.characters.status}} | {{canon.characters.confidence}} | {{canon.characters.owner}} |
+{{#if canon.storylines}}| Storylines ({{canon.storylines.value.length}}) | {{upper canon.storylines.status}} | {{canon.storylines.confidence}} | {{canon.storylines.owner}} |
+{{/if}}{{#if canon.locations}}| Locations ({{canon.locations.value.length}}) | {{upper canon.locations.status}} | {{canon.locations.confidence}} | {{canon.locations.owner}} |
+{{/if}}
+
+***
 
 ## First Files To Read
 - `README.md`
-- `00_admin/canon_lock.yaml`
+- `01_development/one_page_film_overview.md`
 - `01_development/feature_treatment.md`
+- `01_development/storyline_arc_document.md`
+- `01_development/world_guide.md`
 - `02_scripts/feature_screenplay.md`
 - `10_finance/financing_memo.md`
-- `16_ops/validation_report.json`
+- `11_legal/rights_and_chain_of_title.md`
+
+## Open Items
+
+{{#each canon.characters.value}}
+{{#unless this.backstory}}
+- [ ] CHARACTER: {{this.name}} - no backstory defined
+{{/unless}}
+{{#unless this.arc_notes}}
+- [ ] CHARACTER: {{this.name}} - no arc notes defined
+{{/unless}}
+{{/each}}
+
+{{#unless canon.storylines}}
+- [ ] STORYLINES - no feature arc document defined yet
+{{/unless}}
+{{#unless canon.locations}}
+- [ ] WORLD - no key locations defined yet
+{{/unless}}
 
 ## Operator Notes
-- Story structure replaces episodic scaffolds in this format pack
-- Public pages use approved public canon only
-- Rights, finance, and festival docs are scaffolds and still require human review
+- Public-facing materials should use approved public canon only.
+- Legal, finance, and festival materials remain human-review documents even when canon completeness is high.
+- If story structure changes, regenerate treatment, screenplay scaffold, festival strategy, and website copy together.

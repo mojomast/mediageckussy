@@ -1,4 +1,4 @@
-# Audience Strategy
+# {{canon.title.value}} - Audience Strategy
 
 ## Target Audiences
 {{#each canon.audience.value}}
@@ -14,3 +14,12 @@
 {{#each canon.comps.value}}
 - {{this}}
 {{/each}}
+
+## Serialized Retention Hooks
+{{#if canon.storylines}}
+{{#each canon.storylines.value}}
+- {{this.title}}: {{this.logline}}
+{{/each}}
+{{else}}
+- Episodic retention hooks still need to be defined.
+{{/if}}

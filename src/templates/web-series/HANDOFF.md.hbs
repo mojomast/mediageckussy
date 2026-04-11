@@ -1,13 +1,43 @@
-# HANDOFF
+# {{canon.title.value}} - Production Handoff
 
-## Status
-- Generated web-series package for `{{canon.title.value}}`
-- Website export enabled: `{{project.outputs.website.enabled}}`
+**Generated:** {{date generatedAt}}
+**Package Tier:** {{packageTier}}
+**Website Export:** {{project.outputs.website.enabled}}
+
+***
+
+## Canon Summary
+
+| Field | Status | Confidence | Owner |
+|-------|--------|------------|-------|
+| Title | {{upper canon.title.status}} | {{canon.title.confidence}} | {{canon.title.owner}} |
+| Logline | {{upper canon.logline.status}} | {{canon.logline.confidence}} | {{canon.logline.owner}} |
+| Characters ({{canon.characters.value.length}}) | {{upper canon.characters.status}} | {{canon.characters.confidence}} | {{canon.characters.owner}} |
+| Episodes ({{canon.episodes.value.length}}) | {{upper canon.episodes.status}} | {{canon.episodes.confidence}} | {{canon.episodes.owner}} |
+{{#if canon.storylines}}| Storylines ({{canon.storylines.value.length}}) | {{upper canon.storylines.status}} | {{canon.storylines.confidence}} | {{canon.storylines.owner}} |
+{{/if}}{{#if canon.locations}}| Locations ({{canon.locations.value.length}}) | {{upper canon.locations.status}} | {{canon.locations.confidence}} | {{canon.locations.owner}} |
+{{/if}}
 
 ## First Files To Read
 - `README.md`
-- `00_admin/canon_lock.yaml`
 - `01_development/web_series_deck.md`
+- `01_development/series_overview.md`
 - `02_episode_guides/episode_guide.md`
+- `03_series_structure/arc_and_continuity.md`
+- `05_marketing/social_content_plan.md`
 - `14_platform_distribution/platform_release_plan.md`
-- `16_ops/validation_report.json`
+
+## Open Items
+{{#each canon.episodes.value}}
+{{#unless this.scenes}}
+- [ ] EPISODE: {{this.code}} - no scene / beat breakdown
+{{/unless}}
+{{/each}}
+
+{{#unless canon.storylines}}
+- [ ] STORYLINES - no continuity arcs defined yet
+{{/unless}}
+
+## Operator Notes
+- Release planning, social rollout, and sponsor materials should be regenerated together when the episode slate changes.
+- Public-facing site pages should use approved public canon only.

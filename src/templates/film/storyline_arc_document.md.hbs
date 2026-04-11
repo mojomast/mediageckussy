@@ -1,0 +1,22 @@
+# {{canon.title.value}} - Storyline Arcs
+
+{{#if canon.storylines}}
+{{#each canon.storylines.value}}
+## Arc {{@index_plus_1}}: {{this.title}}
+
+> {{this.logline}}
+
+**Characters:** {{join this.characters ", "}}
+**Theme Connection:** {{this.theme_connection}}
+
+### Arc Shape
+{{#each this.arc_shape}}
+{{@index_plus_1}}. {{this}}
+{{/each}}
+
+***
+
+{{/each}}
+{{else}}
+*No storyline arcs have been defined yet.*
+{{/if}}

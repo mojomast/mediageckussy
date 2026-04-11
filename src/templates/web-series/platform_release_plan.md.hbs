@@ -1,4 +1,4 @@
-# Platform Release Plan
+# {{canon.title.value}} - Platform Release Plan
 
 ## Release Frame
 - {{canon.duration_count.value}}
@@ -12,3 +12,10 @@
 {{#each canon.audience.value}}
 - {{this}}
 {{/each}}
+
+{{#if canon.storylines}}
+## Weekly / Drop Hooks
+{{#each canon.storylines.value}}
+- {{this.title}}
+{{/each}}
+{{/if}}

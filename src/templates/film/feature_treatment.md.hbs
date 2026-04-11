@@ -1,4 +1,4 @@
-# Feature Treatment
+# {{canon.title.value}} - Feature Treatment
 
 ## Premise
 <!-- MANUAL_EDIT_START: film.treatment.premise -->
@@ -8,16 +8,57 @@
 ## World
 {{canon.world_setting.value}}
 
+{{#if canon.locations}}
+### Key Locations
+{{#each canon.locations.value}}
+- **{{this.name}}**: {{this.description}}
+{{/each}}
+{{/if}}
+
 ## Themes
 {{#each canon.themes.value}}
 - {{this}}
 {{/each}}
 
-## Story Structure
-{{#each canon.structure.value}}
-### {{title}}
-<!-- MANUAL_EDIT_START: film.treatment.{{id}} -->
-{{summary}}
-<!-- MANUAL_EDIT_END: film.treatment.{{id}} -->
+{{#if canon.themes_structured}}
+### Thematic Lens
+{{#each canon.themes_structured.value}}
+- **{{this.label}}**{{#if this.theme_expression}}: {{this.theme_expression}}{{/if}}{{#if this.motif}} (Motif: {{this.motif}}){{/if}}
+{{/each}}
+{{/if}}
+
+## Character Spine
+{{#each canon.characters.value}}
+### {{this.name}}
+{{this.description}}
+
+{{#if this.arc_notes}}
+*Arc notes:* {{this.arc_notes}}
+{{/if}}
 
 {{/each}}
+
+## Story Structure
+{{#each canon.structure.value}}
+### {{this.title}}
+<!-- MANUAL_EDIT_START: film.treatment.{{this.id}} -->
+{{this.summary}}
+<!-- MANUAL_EDIT_END: film.treatment.{{this.id}} -->
+
+{{/each}}
+
+{{#if canon.storylines}}
+## Cross-Cut Storylines
+{{#each canon.storylines.value}}
+### {{this.title}}
+{{this.logline}}
+
+**Characters:** {{join this.characters ", "}}
+**Theme Connection:** {{this.theme_connection}}
+
+{{#each this.arc_shape}}
+{{@index_plus_1}}. {{this}}
+{{/each}}
+
+{{/each}}
+{{/if}}

@@ -1,6 +1,6 @@
-# Financing Memo
+# {{canon.title.value}} - Financing Memo
 
-## Positioning
+## Market Positioning
 {{#each canon.business_assumptions.value}}
 - {{this}}
 {{/each}}
@@ -14,3 +14,15 @@
 {{#each canon.comps.value}}
 - {{this}}
 {{/each}}
+
+## Story / Package Strengths
+- Genre: {{canon.genre.value}}
+- Tone: {{join canon.tone.value ", "}}
+- Characters with defined canon: {{canon.characters.value.length}}
+{{#if canon.storylines}}- Storylines with defined canon: {{canon.storylines.value.length}}
+{{/if}}
+
+## Risks Requiring Human Review
+- Rights status and chain-of-title assumptions
+- Final budget and financing stack
+- Distribution timing relative to festival strategy

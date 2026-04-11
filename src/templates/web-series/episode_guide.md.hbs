@@ -1,8 +1,28 @@
-# Episode Guide
+# {{canon.title.value}} - Episode Guide
+
+**Format:** {{canon.format.value}} | **Episodes:** {{canon.duration_count.value}}
 
 {{#each canon.episodes.value}}
-## {{code}} - {{title}}
-- Logline: {{logline}}
-- Status: {{status}}
+## {{this.code}} - {{this.title}}
+**Status:** {{upper this.status}}
+{{#if this.featured_characters}}**Characters:** {{join this.featured_characters ", "}}{{/if}}
+
+> {{this.logline}}
+
+{{#if this.story_function}}
+**Story Function:** {{this.story_function}}
+{{/if}}
+
+{{#if this.scenes}}
+### Beat Breakdown
+{{#each this.scenes}}
+{{this.scene_number}}. **{{this.location}}** - {{join this.characters ", "}}
+   {{this.beat}}
+{{/each}}
+{{/if}}
+
+{{#if this.episode_end}}
+**Episode End:** {{this.episode_end}}
+{{/if}}
 
 {{/each}}
