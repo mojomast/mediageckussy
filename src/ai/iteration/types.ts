@@ -4,6 +4,7 @@ export type IterationDirectiveType =
   | "develop_character"
   | "develop_episode"
   | "new_storyline"
+  | "new_faction"
   | "develop_themes"
   | "world_expansion"
   | "suggest_next"

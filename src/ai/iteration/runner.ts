@@ -291,6 +291,8 @@ function sectionForDirective(type: IterationDirective["type"]): IterationCanonSe
       return "episodes";
     case "new_storyline":
       return "storylines";
+    case "new_faction":
+      return "world";
     case "develop_themes":
       return "themes";
     case "world_expansion":

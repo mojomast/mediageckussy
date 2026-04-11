@@ -118,34 +118,81 @@ Escalate one of the existing themes
 
 Have a clear beginning, complication, and resolution shape
 
-Propose: a new entry for canon.storylines (create array if absent)
-with id, title, logline, episodes (array of codes), characters (ids),
-theme_connection, and arc_shape (3 bullet points).`;
+Propose: a new entry for canon.storylines with:
+
+id (slugified title)
+
+title
+
+logline (2 sentences)
+
+episodes: array of episode codes from existing episodes
+
+characters: array of character ids involved
+
+theme_connection: which existing theme this arc expresses
+
+arc_shape: exactly 3 strings — setup, complication, resolution
+
+visibility: "internal"
+
+Field path: canon.storylines (operation: "add")`;
+    case "new_faction":
+      return `Using the canon context below, define a new faction, organization, or
+allegiance group within this project's world.
+
+Propose: a new entry for canon.factions (operation: "add") with:
+
+id (slugified name)
+
+name
+
+description (2-3 sentences)
+
+allegiance: what they stand for or against
+
+members: array of existing character ids who belong to this group
+
+visibility: "internal"
+
+The faction should create meaningful narrative tension with at least
+one other faction or character allegiance.`;
     case "develop_themes":
       return `Using the canon context below, deepen the thematic layer of this
 project. Propose:
 
-Expanded theme descriptions: for each existing theme, add a
-theme_expression entry explaining HOW it manifests in the world
-and character behavior
+For each existing theme in the project's themes list, propose:
 
-1-2 new sub-themes that emerge naturally from the existing material
+A new entry in canon.themes_structured (operation: "add") with:
 
-A motif: a recurring image, sound, or object that could represent
-the central theme across episodes
+id: slugified theme label
 
-Propose updates to canon.themes (as structured objects if currently
-strings) and a new canon.motifs array.`;
+label: the theme text
+
+theme_expression: 2-3 sentences on how this theme manifests in
+the world and character behavior
+
+motif: a recurring physical image, sound, or object that
+represents this theme across episodes
+
+One entry in canon.motifs (operation: "add") for the strongest
+unifying motif across all themes:
+
+id, description, theme_connection
+
+Do NOT modify canon.themes (the raw string array) — write only to
+canon.themes_structured and canon.motifs.`;
     case "world_expansion":
       return `Using the canon context below, expand the world of this project.
 Propose:
 
-2-3 new locations: canon.locations array entries with id, name,
-description (2 sentences), atmosphere, and which characters
-frequent it
+2-3 new canon.locations entries (operation: "add" each) with:
+id, name, description (2 sentences), atmosphere, frequent_characters
 
-1 new world rule or lore fact: canon.world_lore array entry with
-id, fact, and narrative_implication`;
+1-2 new canon.world_lore entries (operation: "add" each) with:
+id, fact, narrative_implication
+
+Use exact field paths: canon.locations and canon.world_lore`;
     case "suggest_next":
       return `Using the canon context below, analyze the current state of this
 project and suggest the 3 most valuable next iteration steps.

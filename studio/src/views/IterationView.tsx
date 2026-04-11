@@ -42,6 +42,7 @@ const DIRECTIVE_OPTIONS: Array<{ value: IterationDirectiveType; label: string }>
   { value: "new_episode", label: "New Episode" },
   { value: "develop_episode", label: "Develop Episode" },
   { value: "new_storyline", label: "New Storyline" },
+  { value: "new_faction", label: "New Faction / Organization" },
   { value: "develop_themes", label: "Develop Themes" },
   { value: "world_expansion", label: "World Expansion" },
   { value: "suggest_next", label: "Let AI Suggest Next" },
