@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   api,
+  type IterationCanonSection,
   type IterationDirective,
   type IterationDirectiveType,
+  type IterationPlannerConfig,
   type IterationProposal,
   type IterationRun,
   type IterationSession,
@@ -46,6 +48,15 @@ const DIRECTIVE_OPTIONS: Array<{ value: IterationDirectiveType; label: string }>
   { value: "custom", label: "Custom Directive" },
 ];
 
+const SECTION_LABELS: Record<IterationCanonSection, string> = {
+  characters: "Characters",
+  episodes: "Episodes",
+  storylines: "Storylines",
+  themes: "Themes",
+  world: "World",
+  meta: "Meta",
+};
+
 export function IterationView({ slug, projectSettings, setStatus, prefill }: Props) {
   const [canon, setCanon] = useState<CanonState | null>(null);
   const [sessions, setSessions] = useState<IterationSession[]>([]);
@@ -60,6 +71,15 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
   const [mode, setMode] = useState<IterationSession["mode"]>("gated");
   const [maxRuns, setMaxRuns] = useState(5);
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.75);
+  const [plannerStrategy, setPlannerStrategy] = useState<IterationPlannerConfig["strategy"]>("coverage");
+  const [avoidRecentWindow, setAvoidRecentWindow] = useState(2);
+  const [sectionTargets, setSectionTargets] = useState<Partial<Record<IterationCanonSection, number>>>({
+    characters: 1,
+    episodes: 1,
+    storylines: 1,
+    themes: 1,
+    world: 1,
+  });
   const [provider, setProvider] = useState(projectSettings?.llmProvider ?? "openrouter");
   const [model, setModel] = useState(projectSettings?.llmModel ?? "");
   const [steeringDraft, setSteeringDraft] = useState("");
@@ -150,6 +170,7 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
                 <div>
                   <div className="section-label">Session {selectedHistorySession.sessionId}</div>
                   <p>{formatDateOnly(selectedHistorySession.startedAt)} // Mode: {selectedHistorySession.mode}</p>
+                  <p className="muted">Planner: {selectedHistorySession.planner.strategy} // Avoid recent: {selectedHistorySession.planner.avoidRecentWindow}</p>
                 </div>
                 <div className="row gap wrap">
                   {selectedHistorySession.status !== "complete" && selectedHistorySession.status !== "stopped" && (
@@ -275,6 +296,36 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
                 <span>Model</span>
                 <input value={model} onChange={(event) => setModel(event.target.value)} />
               </label>
+              <label>
+                <span>Planner Strategy</span>
+                <select value={plannerStrategy} onChange={(event) => setPlannerStrategy(event.target.value as IterationPlannerConfig["strategy"])}>
+                  <option value="coverage">Coverage</option>
+                  <option value="adaptive">Adaptive</option>
+                </select>
+              </label>
+              <label>
+                <span>Avoid Recent Window</span>
+                <input type="number" min={1} max={5} value={avoidRecentWindow} onChange={(event) => setAvoidRecentWindow(Math.max(1, Math.min(5, Number(event.target.value) || 1)))} />
+              </label>
+              {plannerStrategy === "coverage" && (
+                <div className="iteration-settings-grid__full iteration-target-grid">
+                  {((Object.keys(SECTION_LABELS) as IterationCanonSection[]).filter((section) => section !== "meta")).map((section) => (
+                    <label key={section}>
+                      <span>{SECTION_LABELS[section]} Target</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={maxRuns}
+                        value={sectionTargets[section] ?? 0}
+                        onChange={(event) => setSectionTargets((current) => ({
+                          ...current,
+                          [section]: Math.max(0, Math.min(maxRuns, Number(event.target.value) || 0)),
+                        }))}
+                      />
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="row gap wrap">
@@ -295,8 +346,20 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
           <div className="dossier__body iteration-panel__body">
             <div className="row between wrap">
               <div className="iteration-status-line">SESSION: {session.sessionId}</div>
+              <div className="iteration-status-line">PLANNER: {session.planner.strategy} // AVOID RECENT: {session.planner.avoidRecentWindow}</div>
               <button className="btn btn--danger" disabled={isStopping} onClick={() => void stopSession()}>Stop</button>
             </div>
+
+            {session.planner.strategy === "coverage" && (
+              <div className="iteration-coverage-row">
+                {renderCoverage(session).map((entry) => (
+                  <div key={entry.section} className="iteration-coverage-pill">
+                    <span>{SECTION_LABELS[entry.section]}</span>
+                    <span>{entry.completed}/{entry.target}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="iteration-run-list">
               {buildRunCards(session).map((entry) => (
@@ -458,6 +521,11 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
         mode,
         maxRuns,
         confidenceThreshold,
+        planner: {
+          strategy: plannerStrategy,
+          avoidRecentWindow,
+          sectionTargets,
+        },
         provider,
         model,
         firstDirective: {
@@ -577,6 +645,43 @@ export function IterationView({ slug, projectSettings, setStatus, prefill }: Pro
       instruction: buildDefaultInstruction(overrideType, overrideTargetId),
       targetId: overrideTargetId || undefined,
     };
+  }
+}
+
+function renderCoverage(session: IterationSession) {
+  const counts = session.runs.reduce<Partial<Record<IterationCanonSection, number>>>((current, run) => {
+    const section = sectionForDirective(run.directive.type);
+    current[section] = (current[section] ?? 0) + 1;
+    return current;
+  }, {});
+
+  return (Object.entries(session.planner.sectionTargets) as Array<[IterationCanonSection, number | undefined]>)
+    .filter((entry): entry is [IterationCanonSection, number] => typeof entry[1] === "number" && entry[1] > 0)
+    .map(([section, target]) => ({
+      section,
+      target,
+      completed: counts[section] ?? 0,
+    }));
+}
+
+function sectionForDirective(type: IterationDirectiveType): IterationCanonSection {
+  switch (type) {
+    case "new_character":
+    case "develop_character":
+      return "characters";
+    case "new_episode":
+    case "develop_episode":
+      return "episodes";
+    case "new_storyline":
+      return "storylines";
+    case "develop_themes":
+      return "themes";
+    case "world_expansion":
+      return "world";
+    case "custom":
+    case "suggest_next":
+    default:
+      return "meta";
   }
 }
 

@@ -102,6 +102,42 @@ describe("iteration API", () => {
     expect(sessions.body.data[0].completedRuns).toBe(1);
   });
 
+  test("POST /api/projects/:slug/iterations persists planner configuration", async () => {
+    providerState.responses.push(JSON.stringify({
+      summary: "Adds Vera Moss as a compromised handler.",
+      confidence: 0.82,
+      proposals: [],
+      suggestedNextDirectives: [],
+    }));
+
+    await request(app)
+      .post("/api/projects/iteration-demo/iterations")
+      .send({
+        mode: "gated",
+        maxRuns: 3,
+        planner: {
+          strategy: "coverage",
+          avoidRecentWindow: 3,
+          sectionTargets: {
+            characters: 1,
+            episodes: 2,
+            themes: 1,
+          },
+        },
+        firstDirective: {
+          type: "new_character",
+          instruction: "Add a morally ambiguous handler.",
+        },
+      })
+      .buffer(true)
+      .parse(parseSSEBody);
+
+    const sessions = await request(app).get("/api/projects/iteration-demo/iterations");
+    expect(sessions.body.data[0].planner.strategy).toBe("coverage");
+    expect(sessions.body.data[0].planner.avoidRecentWindow).toBe(3);
+    expect(sessions.body.data[0].planner.sectionTargets.episodes).toBe(2);
+  });
+
   test("POST /api/projects/:slug/iterations in autonomous mode runs to completion", async () => {
     providerState.responses.push(
       JSON.stringify({

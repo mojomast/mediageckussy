@@ -2,13 +2,14 @@ import crypto from "node:crypto";
 import path from "node:path";
 import fs from "fs-extra";
 import { projectWorkspace } from "../../server/workspace.js";
-import type { IterationMode, IterationSession } from "./types.js";
+import type { IterationMode, IterationPlannerConfig, IterationSession } from "./types.js";
 
 export function createIterationSession(opts: {
   projectSlug: string;
   mode: IterationMode;
   maxRuns: number;
   confidenceThreshold?: number;
+  planner?: Partial<IterationPlannerConfig>;
   provider?: string;
   model?: string;
 }): IterationSession {
@@ -20,6 +21,11 @@ export function createIterationSession(opts: {
     mode: opts.mode,
     maxRuns: opts.maxRuns,
     confidenceThreshold: opts.confidenceThreshold ?? 0.75,
+    planner: {
+      strategy: opts.planner?.strategy ?? "coverage",
+      avoidRecentWindow: Math.max(1, opts.planner?.avoidRecentWindow ?? 2),
+      sectionTargets: opts.planner?.sectionTargets ?? {},
+    },
     completedRuns: 0,
     status: "running",
     runs: [],

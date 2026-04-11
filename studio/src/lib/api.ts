@@ -84,6 +84,7 @@ export type IterationSession = {
   mode: IterationMode;
   maxRuns: number;
   confidenceThreshold: number;
+  planner: IterationPlannerConfig;
   completedRuns: number;
   status: "running" | "paused" | "complete" | "stopped" | "error";
   runs: IterationRun[];
@@ -92,6 +93,14 @@ export type IterationSession = {
   provider?: string;
   model?: string;
   pendingSteeringNote?: string;
+};
+
+export type IterationCanonSection = "characters" | "episodes" | "storylines" | "themes" | "world" | "meta";
+
+export type IterationPlannerConfig = {
+  strategy: "adaptive" | "coverage";
+  avoidRecentWindow: number;
+  sectionTargets: Partial<Record<IterationCanonSection, number>>;
 };
 
 export type CanonCompletenessReport = {
@@ -160,6 +169,7 @@ export const api = {
       mode: IterationMode;
       maxRuns: number;
       confidenceThreshold?: number;
+      planner?: Partial<IterationPlannerConfig>;
       firstDirective: IterationDirective;
       provider?: string;
       model?: string;

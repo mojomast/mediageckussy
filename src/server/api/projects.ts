@@ -18,7 +18,7 @@ import { resolveProvider } from "../../ai/providers/index.js";
 import { applyProposals, buildNextDirective, runIterationStep, shouldPauseForHITL } from "../../ai/iteration/runner.js";
 import { createIterationSession, listIterationSessions, loadIterationSession, saveIterationSession } from "../../ai/iteration/session.js";
 import { analyzeCanonCompleteness } from "../../ai/iteration/completeness.js";
-import type { IterationDirective, IterationMode, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
+import type { IterationCanonSection, IterationDirective, IterationMode, IterationPlannerConfig, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
 import { loadCanon, saveCanon, diffLockedFields } from "../../utils/canon.js";
 import { analyzeProtectedRegions, reapplyProtectedRegions } from "../../utils/protectedRegions.js";
@@ -242,6 +242,7 @@ export function registerProjectRoutes(app: Express) {
       mode,
       maxRuns,
       confidenceThreshold: Number(req.body?.confidenceThreshold ?? 0.75),
+      planner: normalizePlanner(req.body?.planner),
       provider: req.body?.provider ?? project.settings.llmProvider,
       model: req.body?.model ?? project.settings.llmModel,
     });
@@ -336,7 +337,7 @@ export function registerProjectRoutes(app: Express) {
           ...overrideDirective,
           steeringNote: session.pendingSteeringNote,
         }
-      : buildNextDirective(session, lastRun, session.pendingSteeringNote);
+      : buildNextDirective(session, lastRun, canon, session.pendingSteeringNote);
     session.pendingSteeringNote = undefined;
 
     if (!currentDirective) {
@@ -497,6 +498,9 @@ export function registerProjectRoutes(app: Express) {
       const updated = await acceptSuggestion(projectDir(req.params.slug), field, canon);
       return ok(res, updated);
     } catch (error) {
+      if (error instanceof Error && /structured array|valid list data|Unknown canon field path|No pending suggestion found/i.test(error.message)) {
+        return fail(res, error, 400);
+      }
       return fail(res, error);
     }
   });
@@ -813,7 +817,7 @@ async function runIterationLoop(input: {
     }
 
     session.pendingSteeringNote = refreshedSession?.pendingSteeringNote;
-    currentDirective = buildNextDirective(session, run, session.pendingSteeringNote);
+    currentDirective = buildNextDirective(session, run, canon, session.pendingSteeringNote);
     session.pendingSteeringNote = undefined;
   }
 
@@ -862,5 +866,30 @@ function normalizeDirective(value: unknown): IterationDirective | undefined {
     targetId: typeof candidate.targetId === "string" ? candidate.targetId : undefined,
     constraints: Array.isArray(candidate.constraints) ? candidate.constraints.map(String) : undefined,
     steeringNote: typeof candidate.steeringNote === "string" ? candidate.steeringNote : undefined,
+  };
+}
+
+function normalizePlanner(value: unknown): Partial<IterationPlannerConfig> | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  const rawTargets = candidate.sectionTargets;
+  const sectionTargets: Partial<Record<IterationCanonSection, number>> = {};
+
+  if (rawTargets && typeof rawTargets === "object") {
+    for (const section of ["characters", "episodes", "storylines", "themes", "world", "meta"] as const) {
+      const amount = Number((rawTargets as Record<string, unknown>)[section]);
+      if (Number.isFinite(amount) && amount > 0) {
+        sectionTargets[section] = Math.floor(amount);
+      }
+    }
+  }
+
+  return {
+    strategy: candidate.strategy === "adaptive" ? "adaptive" : candidate.strategy === "coverage" ? "coverage" : undefined,
+    avoidRecentWindow: Number.isFinite(Number(candidate.avoidRecentWindow)) ? Math.max(1, Math.floor(Number(candidate.avoidRecentWindow))) : undefined,
+    sectionTargets,
   };
 }

@@ -69,6 +69,7 @@ export interface IterationSession {
   mode: IterationMode;
   maxRuns: number;
   confidenceThreshold: number;
+  planner: IterationPlannerConfig;
   completedRuns: number;
   status: "running" | "paused" | "complete" | "stopped" | "error";
   runs: IterationRun[];
@@ -77,4 +78,12 @@ export interface IterationSession {
   provider?: string;
   model?: string;
   pendingSteeringNote?: string;
+}
+
+export type IterationCanonSection = "characters" | "episodes" | "storylines" | "themes" | "world" | "meta";
+
+export interface IterationPlannerConfig {
+  strategy: "adaptive" | "coverage";
+  avoidRecentWindow: number;
+  sectionTargets: Partial<Record<IterationCanonSection, number>>;
 }

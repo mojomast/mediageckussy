@@ -881,10 +881,12 @@ textarea {
   margin: 0 auto;
   display: grid;
   gap: var(--space-4);
+  min-width: 0;
 }
 
 .iteration-panel {
   background: var(--color-panel-strong);
+  min-width: 0;
 }
 
 .iteration-panel__body,
@@ -935,9 +937,25 @@ textarea {
 .iteration-run-card__toggle {
   width: 100%;
   justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--space-2);
   padding: var(--space-3) var(--space-4);
   border: 0;
   color: inherit;
+  min-width: 0;
+}
+
+.iteration-run-card__toggle span,
+.iteration-status-line,
+.iteration-coverage-pill span,
+.iteration-history-proposal-row span,
+.iteration-diff-card p,
+.iteration-panel p,
+.iteration-panel pre {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .iteration-run-card__body {
@@ -978,6 +996,33 @@ textarea {
   gap: var(--space-3);
 }
 
+.iteration-target-grid,
+.iteration-coverage-row {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.iteration-target-grid {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.iteration-coverage-row {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.iteration-coverage-pill {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-dim);
+  font-size: var(--text-sm);
+}
+
 .iteration-view-toggle,
 .iteration-history-layout,
 .iteration-diff-list {
@@ -985,9 +1030,25 @@ textarea {
   gap: var(--space-4);
 }
 
+.iteration-history-layout {
+  grid-template-columns: minmax(0, 18rem) minmax(0, 1fr) minmax(0, 18rem);
+}
+
 .iteration-history-main,
 .iteration-diff-panel {
   min-height: 100%;
+  min-width: 0;
+}
+
+.iteration-history-layout > *,
+.iteration-panel__body > *,
+.iteration-run-list > *,
+.iteration-proposal-list > * {
+  min-width: 0;
+}
+
+.iteration-history-layout .sidebar {
+  min-width: 0;
 }
 
 .iteration-history-proposal-row {
@@ -1339,6 +1400,10 @@ textarea {
 @media (max-width: 56.25rem) {
   .three-column,
   .two-column {
+    grid-template-columns: 1fr;
+  }
+
+  .iteration-history-layout {
     grid-template-columns: 1fr;
   }
 

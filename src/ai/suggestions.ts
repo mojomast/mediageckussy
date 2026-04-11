@@ -132,6 +132,13 @@ function coerceArrayValue(fieldPath: string, rawValue: string, currentValue: unk
     return parseStructuredArray(fieldPath, rawValue, currentValue);
   }
 
+  if (fieldPath === "canon.tone") {
+    return rawValue
+      .split("\n")
+      .map((line) => line.replace(/^\s*[-*]\s*/, "").replace(/^canon\.tone\s*\[[^\]]+\]:\s*/i, "").trim())
+      .filter(Boolean);
+  }
+
   const parsedYaml = tryParseYaml(rawValue);
   if (Array.isArray(parsedYaml) && parsedYaml.every((item) => typeof item === "string")) {
     return parsedYaml.map((item) => item.trim()).filter(Boolean);
@@ -164,8 +171,14 @@ function parseStructuredArray(fieldPath: string, rawValue: string, currentValue:
 
 function tryParseYaml(rawValue: string) {
   try {
-    return YAML.parse(rawValue);
+    return YAML.parse(stripCodeFences(rawValue));
   } catch {
     return undefined;
   }
+}
+
+function stripCodeFences(rawValue: string) {
+  const trimmed = rawValue.trim();
+  const fenced = trimmed.match(/^```(?:yaml|yml|json)?\s*([\s\S]*?)\s*```$/i);
+  return fenced ? fenced[1] : rawValue;
 }

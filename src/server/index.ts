@@ -13,6 +13,9 @@ async function main() {
 
   if (process.env.NODE_ENV !== "development" && await fs.pathExists(distStudio)) {
     app.use("/", express.static(distStudio));
+    app.get(/^(?!\/api\/).*/, (_req, res) => {
+      res.sendFile(path.join(distStudio, "index.html"));
+    });
   }
 
   app.listen(port, host, () => {

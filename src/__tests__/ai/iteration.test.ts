@@ -156,6 +156,40 @@ describe("iteration engine", () => {
     expect(nextCanon.canon.logline.value).toBe("A relay station conspiracy threatens the last honest signal.");
   });
 
+  test("applyProposals normalizes iteration episode payloads to canon schema", async () => {
+    const session = createSessionWithHistory();
+    const run = baseRun({
+      proposals: [
+        {
+          proposalId: "proposal-episode",
+          runId: "run-1",
+          field: "canon.episodes",
+          operation: "add",
+          value: {
+            code: "S01E03",
+            title: "Dead Frequency",
+            logline: "Dara and Vera trace the signal to a relay station.",
+            featured_characters: ["dara-osei", "vera-moss"],
+            story_function: "Escalates the conspiracy.",
+          },
+          rationale: "Adds the next escalation.",
+          confidence: 0.88,
+          status: "pending",
+        },
+      ],
+    });
+
+    const nextCanon = await applyProposals(session, run, buildCanon(), ["proposal-episode"]);
+
+    expect(nextCanon.canon.episodes.value[2]).toEqual({
+      code: "S01E03",
+      title: "Dead Frequency",
+      logline: "Dara and Vera trace the signal to a relay station.",
+      status: "planned",
+      visibility: "internal",
+    });
+  });
+
   test("shouldPauseForHITL returns true for gated mode", () => {
     const session = createIterationSession({ projectSlug: "signal-harbor", mode: "gated", maxRuns: 5 });
     expect(shouldPauseForHITL(session, baseRun())).toBe(true);
@@ -181,7 +215,41 @@ describe("iteration engine", () => {
     const session = createIterationSession({ projectSlug: "signal-harbor", mode: "autonomous", maxRuns: 2 });
     session.completedRuns = 2;
 
-    expect(buildNextDirective(session, baseRun())).toBeNull();
+    expect(buildNextDirective(session, baseRun(), buildCanon())).toBeNull();
+  });
+
+  test("buildNextDirective prefers a different canon section so the loop builds outward", () => {
+    const session = createIterationSession({ projectSlug: "signal-harbor", mode: "autonomous", maxRuns: 6 });
+    session.completedRuns = 1;
+    session.runs = [
+      baseRun({
+        runNumber: 1,
+        directive: { type: "new_character", instruction: "Add a new character." },
+      }),
+    ];
+
+    const next = buildNextDirective(session, baseRun({
+      directive: { type: "develop_character", instruction: "Deepen Dara Osei.", targetId: "dara-osei" },
+      suggestedNextDirectives: [
+        { type: "develop_character", instruction: "Deepen Vera Moss.", targetId: "vera-moss" },
+        { type: "new_episode", instruction: "Create an episode that tests the new alliance." },
+      ],
+    }), buildCanon());
+
+    expect(["new_episode", "develop_episode"]).toContain(next?.type);
+  });
+
+  test("buildNextDirective falls back to completeness-driven adjacent work when needed", () => {
+    const session = createIterationSession({ projectSlug: "signal-harbor", mode: "autonomous", maxRuns: 6 });
+    session.completedRuns = 1;
+
+    const next = buildNextDirective(session, baseRun({
+      directive: { type: "new_character", instruction: "Add Vera Moss." },
+      suggestedNextDirectives: [],
+    }), buildCanon());
+
+    expect(next).not.toBeNull();
+    expect(next?.type).not.toBe("new_character");
   });
 
   test("createIterationSession returns a running session", () => {
@@ -190,6 +258,37 @@ describe("iteration engine", () => {
     expect(session.status).toBe("running");
     expect(session.completedRuns).toBe(0);
     expect(session.confidenceThreshold).toBe(0.75);
+    expect(session.planner.strategy).toBe("coverage");
+    expect(session.planner.avoidRecentWindow).toBe(2);
+  });
+
+  test("buildNextDirective honors coverage targets for under-covered sections", () => {
+    const session = createIterationSession({
+      projectSlug: "signal-harbor",
+      mode: "autonomous",
+      maxRuns: 6,
+      planner: {
+        strategy: "coverage",
+        avoidRecentWindow: 2,
+        sectionTargets: { characters: 1, episodes: 2, world: 1 },
+      },
+    });
+    session.completedRuns = 2;
+    session.runs = [
+      baseRun({ directive: { type: "new_character", instruction: "Add Vera Moss." } }),
+      baseRun({ directive: { type: "develop_character", instruction: "Deepen Vera Moss.", targetId: "vera-moss" }, runNumber: 2 }),
+    ];
+
+    const next = buildNextDirective(session, baseRun({
+      runNumber: 2,
+      directive: { type: "develop_character", instruction: "Deepen Vera Moss.", targetId: "vera-moss" },
+      suggestedNextDirectives: [
+        { type: "world_expansion", instruction: "Add a relay station district." },
+        { type: "new_episode", instruction: "Create an episode that uses Vera in the field." },
+      ],
+    }), buildCanon());
+
+    expect(["new_episode", "develop_episode"]).toContain(next?.type);
   });
 });
 

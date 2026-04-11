@@ -1,9 +1,11 @@
 import crypto from "node:crypto";
 import type { CanonProject } from "../../core/types.js";
 import type { LLMProvider } from "../providers/types.js";
+import { analyzeCanonCompleteness } from "./completeness.js";
 import { buildIterationContext, buildIterationSnapshot } from "./context.js";
 import { buildDirectivePrompt } from "./directives.js";
 import type {
+  IterationCanonSection,
   IterationDirective,
   IterationProposal,
   IterationRun,
@@ -140,13 +142,14 @@ export function shouldPauseForHITL(
 export function buildNextDirective(
   session: IterationSession,
   lastRun: IterationRun,
+  canon: CanonProject,
   humanSteeringNote?: string,
 ): IterationDirective | null {
   if (session.completedRuns >= session.maxRuns) {
     return null;
   }
 
-  const next = lastRun.suggestedNextDirectives?.[0];
+  const next = chooseNextDirective(session, lastRun, canon);
   if (!next) {
     return null;
   }
@@ -157,6 +160,128 @@ export function buildNextDirective(
     targetId: next.targetId,
     steeringNote: humanSteeringNote,
   };
+}
+
+function chooseNextDirective(session: IterationSession, lastRun: IterationRun, canon: CanonProject) {
+  const completeness = analyzeCanonCompleteness(canon);
+  const modelSuggestions = lastRun.suggestedNextDirectives ?? [];
+  const structuralSuggestions = completeness.suggestedDirectives;
+  const recentSections = session.runs
+    .slice(-Math.max(1, session.planner.avoidRecentWindow))
+    .map((run) => sectionForDirective(run.directive.type));
+  const preferredSections = nextSectionsFor(sectionForDirective(lastRun.directive.type));
+  const candidates = [...modelSuggestions, ...structuralSuggestions];
+  const sectionCounts = countSections(session);
+  const targetSections = underCoveredSections(session, sectionCounts);
+
+  if (candidates.length === 0) {
+    return undefined;
+  }
+
+  const scored = candidates.map((candidate, index) => {
+    const section = sectionForDirective(candidate.type);
+    let score = 0;
+
+    if (section !== sectionForDirective(lastRun.directive.type)) {
+      score += 4;
+    }
+
+    const preferredIndex = preferredSections.indexOf(section);
+    if (preferredIndex >= 0) {
+      score += preferredSections.length - preferredIndex;
+    }
+
+    if (!recentSections.includes(section)) {
+      score += 3;
+    }
+
+    if (session.planner.strategy === "coverage" && targetSections.includes(section)) {
+      score += 5;
+    }
+
+    if (session.planner.strategy === "coverage" && recentSections.includes(section)) {
+      score -= 4;
+    }
+
+    if (structuralSuggestions.some((suggestion) => directivesMatch(suggestion, candidate))) {
+      score += 2;
+    }
+
+    if (modelSuggestions.some((suggestion) => directivesMatch(suggestion, candidate))) {
+      score += 1;
+    }
+
+    score -= index * 0.01;
+    return { candidate, score };
+  });
+
+  scored.sort((left, right) => right.score - left.score);
+  return scored[0]?.candidate;
+}
+
+function countSections(session: IterationSession) {
+  return session.runs.reduce<Record<IterationCanonSection, number>>((counts, run) => {
+    const section = sectionForDirective(run.directive.type);
+    counts[section] += 1;
+    return counts;
+  }, {
+    characters: 0,
+    episodes: 0,
+    storylines: 0,
+    themes: 0,
+    world: 0,
+    meta: 0,
+  });
+}
+
+function underCoveredSections(session: IterationSession, counts: Record<IterationCanonSection, number>) {
+  return (Object.entries(session.planner.sectionTargets) as Array<[IterationCanonSection, number | undefined]>)
+    .filter((entry): entry is [IterationCanonSection, number] => typeof entry[1] === "number")
+    .filter(([section, target]) => counts[section] < target)
+    .map(([section]) => section);
+}
+
+function directivesMatch(left: { type: IterationDirective["type"]; targetId?: string; instruction: string }, right: { type: IterationDirective["type"]; targetId?: string; instruction: string }) {
+  return left.type === right.type && left.targetId === right.targetId && left.instruction === right.instruction;
+}
+
+function nextSectionsFor(section: IterationCanonSection) {
+  switch (section) {
+    case "characters":
+      return ["episodes", "themes", "world", "storylines", "meta"];
+    case "episodes":
+      return ["storylines", "characters", "world", "themes", "meta"];
+    case "storylines":
+      return ["episodes", "themes", "characters", "world", "meta"];
+    case "themes":
+      return ["world", "storylines", "episodes", "characters", "meta"];
+    case "world":
+      return ["characters", "episodes", "storylines", "themes", "meta"];
+    case "meta":
+    default:
+      return ["characters", "episodes", "storylines", "themes", "world"];
+  }
+}
+
+function sectionForDirective(type: IterationDirective["type"]): IterationCanonSection {
+  switch (type) {
+    case "new_character":
+    case "develop_character":
+      return "characters";
+    case "new_episode":
+    case "develop_episode":
+      return "episodes";
+    case "new_storyline":
+      return "storylines";
+    case "develop_themes":
+      return "themes";
+    case "world_expansion":
+      return "world";
+    case "suggest_next":
+    case "custom":
+    default:
+      return "meta";
+  }
 }
 
 function parseIterationResponse(raw: string): unknown {
@@ -217,12 +342,13 @@ function clampConfidence(value: number) {
 }
 
 function applyProposal(canon: CanonProject, proposal: IterationProposal) {
+  const normalizedValue = normalizeProposalValue(proposal);
   const { parent, key } = resolveParent(canon as unknown as Record<string, unknown>, proposal.field);
 
   if (proposal.operation === "add") {
     const current = parent[key];
     const nextArray = Array.isArray(current) ? current : [];
-    nextArray.push(proposal.value);
+    nextArray.push(normalizedValue);
     parent[key] = nextArray;
     return;
   }
@@ -235,12 +361,48 @@ function applyProposal(canon: CanonProject, proposal: IterationProposal) {
     }
 
     const nextArray = Array.isArray(current) ? current : [];
-    nextArray.push(proposal.value);
+    nextArray.push(normalizedValue);
     parent[key] = nextArray;
     return;
   }
 
-  parent[key] = proposal.value;
+  parent[key] = normalizedValue;
+}
+
+function normalizeProposalValue(proposal: IterationProposal) {
+  if (proposal.field === "canon.characters" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const value = proposal.value as Record<string, unknown>;
+    return {
+      id: String(value.id ?? ""),
+      name: String(value.name ?? ""),
+      role: String(value.role ?? ""),
+      description: String(value.description ?? ""),
+      visibility: value.visibility === "public" ? "public" : "internal",
+    };
+  }
+
+  if (proposal.field === "canon.episodes" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const value = proposal.value as Record<string, unknown>;
+    return {
+      code: String(value.code ?? ""),
+      title: String(value.title ?? ""),
+      logline: String(value.logline ?? ""),
+      status: value.status === "draft" || value.status === "approved" ? value.status : "planned",
+      visibility: value.visibility === "public" ? "public" : "internal",
+    };
+  }
+
+  if (proposal.field === "canon.structure" && proposal.value && typeof proposal.value === "object" && !Array.isArray(proposal.value)) {
+    const value = proposal.value as Record<string, unknown>;
+    return {
+      id: String(value.id ?? ""),
+      title: String(value.title ?? ""),
+      summary: String(value.summary ?? ""),
+      visibility: value.visibility === "public" ? "public" : "internal",
+    };
+  }
+
+  return proposal.value;
 }
 
 function resolveParent(root: Record<string, unknown>, fieldPath: string) {
