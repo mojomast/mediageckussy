@@ -15,6 +15,9 @@ import { runInterviewTurn } from "../../ai/interview/runner.js";
 import { createSession } from "../../ai/interview/state.js";
 import { resolveImageProvider } from "../../ai/image/index.js";
 import { resolveProvider } from "../../ai/providers/index.js";
+import { applyProposals, buildNextDirective, runIterationStep, shouldPauseForHITL } from "../../ai/iteration/runner.js";
+import { createIterationSession, listIterationSessions, loadIterationSession, saveIterationSession } from "../../ai/iteration/session.js";
+import type { IterationDirective, IterationMode, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
 import { loadCanon, saveCanon, diffLockedFields } from "../../utils/canon.js";
 import { analyzeProtectedRegions, reapplyProtectedRegions } from "../../utils/protectedRegions.js";
@@ -210,6 +213,213 @@ export function registerProjectRoutes(app: Express) {
       return fail(res, error);
     }
   });
+
+  app.post("/api/projects/:slug/iterations", async (req, res) => streamJob(res, async (send) => {
+    const mode = req.body?.mode as IterationMode | undefined;
+    const maxRuns = Number(req.body?.maxRuns ?? 0);
+    const firstDirective = req.body?.firstDirective as IterationDirective | undefined;
+    if (!mode || !["autonomous", "gated", "confidence"].includes(mode)) {
+      throw new Error("mode must be one of: autonomous, gated, confidence");
+    }
+    if (!Number.isInteger(maxRuns) || maxRuns < 1 || maxRuns > 50) {
+      throw new Error("maxRuns must be an integer between 1 and 50");
+    }
+    if (!firstDirective?.type || !firstDirective?.instruction) {
+      throw new Error("firstDirective.type and firstDirective.instruction are required");
+    }
+
+    const slug = req.params.slug;
+    const outputDir = projectDir(slug);
+    const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
+    let canon = await loadCanon(canonPath);
+    const project = await readHostedProject(slug);
+    const provider = resolveProvider(req.body?.provider ?? project.settings.llmProvider, {
+      model: req.body?.model ?? project.settings.llmModel,
+    });
+    const session = createIterationSession({
+      projectSlug: slug,
+      mode,
+      maxRuns,
+      confidenceThreshold: Number(req.body?.confidenceThreshold ?? 0.75),
+      provider: req.body?.provider ?? project.settings.llmProvider,
+      model: req.body?.model ?? project.settings.llmModel,
+    });
+
+    await saveIterationSession(slug, session);
+
+    const result = await runIterationLoop({
+      slug,
+      session,
+      canon,
+      provider,
+      currentDirective: firstDirective,
+      send,
+    });
+
+    canon = result.canon;
+    if (result.completed) {
+      send("loop_complete", {
+        sessionId: session.sessionId,
+        totalRuns: session.completedRuns,
+        acceptedProposals: countAcceptedProposals(session),
+      });
+    }
+  }));
+
+  app.get("/api/projects/:slug/iterations", async (req, res) => {
+    try {
+      return ok(res, await listIterationSessions(req.params.slug));
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.get("/api/projects/:slug/iterations/:sessionId", async (req, res) => {
+    try {
+      const session = await loadIterationSession(req.params.slug, req.params.sessionId);
+      if (!session) {
+        return fail(res, new Error(`Iteration session not found: ${req.params.sessionId}`), 404);
+      }
+      return ok(res, session);
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.get("/api/projects/:slug/iterations/:sessionId/runs/:runId", async (req, res) => {
+    try {
+      const session = await loadIterationSession(req.params.slug, req.params.sessionId);
+      if (!session) {
+        return fail(res, new Error(`Iteration session not found: ${req.params.sessionId}`), 404);
+      }
+      const run = session.runs.find((entry) => entry.runId === req.params.runId);
+      if (!run) {
+        return fail(res, new Error(`Iteration run not found: ${req.params.runId}`), 404);
+      }
+      return ok(res, run);
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.post("/api/projects/:slug/iterations/:sessionId/continue", async (req, res) => streamJob(res, async (send) => {
+    const slug = req.params.slug;
+    const session = await loadIterationSession(slug, req.params.sessionId);
+    if (!session || session.status !== "paused") {
+      res.status(404);
+      throw new Error(`Paused iteration session not found: ${req.params.sessionId}`);
+    }
+
+    const lastRun = session.runs.at(-1);
+    if (!lastRun) {
+      throw new Error("Paused session has no runs to continue from");
+    }
+
+    const outputDir = projectDir(slug);
+    const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
+    let canon = await loadCanon(canonPath);
+    const accepted = Array.isArray(req.body?.accepted) ? req.body.accepted.map(String) : [];
+    canon = await applyProposals(session, lastRun, canon, accepted);
+    updateRunStatus(lastRun);
+    await saveCanon(canonPath, canon);
+
+    session.status = "running";
+    session.pendingSteeringNote = typeof req.body?.steeringNote === "string" && req.body.steeringNote.trim()
+      ? req.body.steeringNote.trim()
+      : undefined;
+    await saveIterationSession(slug, session);
+
+    const overrideDirective = normalizeDirective(req.body?.nextDirective);
+    const currentDirective = overrideDirective
+      ? {
+          ...overrideDirective,
+          steeringNote: session.pendingSteeringNote,
+        }
+      : buildNextDirective(session, lastRun, session.pendingSteeringNote);
+    session.pendingSteeringNote = undefined;
+
+    if (!currentDirective) {
+      session.status = "complete";
+      await saveIterationSession(slug, session);
+      send("loop_complete", {
+        sessionId: session.sessionId,
+        totalRuns: session.completedRuns,
+        acceptedProposals: countAcceptedProposals(session),
+      });
+      return;
+    }
+
+    const project = await readHostedProject(slug);
+    const provider = resolveProvider(session.provider ?? project.settings.llmProvider, {
+      model: session.model ?? project.settings.llmModel,
+    });
+
+    const result = await runIterationLoop({
+      slug,
+      session,
+      canon,
+      provider,
+      currentDirective,
+      send,
+    });
+
+    if (result.completed) {
+      send("loop_complete", {
+        sessionId: session.sessionId,
+        totalRuns: session.completedRuns,
+        acceptedProposals: countAcceptedProposals(session),
+      });
+    }
+  }));
+
+  app.post("/api/projects/:slug/iterations/:sessionId/stop", async (req, res) => {
+    try {
+      const session = await loadIterationSession(req.params.slug, req.params.sessionId);
+      if (!session) {
+        return fail(res, new Error(`Iteration session not found: ${req.params.sessionId}`), 404);
+      }
+      session.status = "stopped";
+      await saveIterationSession(req.params.slug, session);
+      return ok(res, {
+        sessionId: session.sessionId,
+        completedRuns: session.completedRuns,
+        status: "stopped",
+      });
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.post("/api/projects/:slug/iterations/:sessionId/runs/:runId/accept-all", async (req, res) => streamJob(res, async (send) => {
+    const slug = req.params.slug;
+    const session = await loadIterationSession(slug, req.params.sessionId);
+    if (!session) {
+      res.status(404);
+      throw new Error(`Iteration session not found: ${req.params.sessionId}`);
+    }
+
+    const run = session.runs.find((entry) => entry.runId === req.params.runId);
+    if (!run) {
+      res.status(404);
+      throw new Error(`Iteration run not found: ${req.params.runId}`);
+    }
+
+    const minConfidence = Number(req.body?.minConfidence ?? 0);
+    const accepted = run.proposals
+      .filter((proposal) => proposal.status === "pending" && proposal.confidence >= minConfidence)
+      .map((proposal) => proposal.proposalId);
+    const outputDir = projectDir(slug);
+    const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
+    const canon = await loadCanon(canonPath);
+    const updatedCanon = await applyProposals(session, run, canon, accepted);
+    updateRunStatus(run);
+    await saveCanon(canonPath, updatedCanon);
+    await saveIterationSession(slug, session);
+
+    send("started", { step: "generate" });
+    const result = await generatePackage({ canonPath, outputDir });
+    send("done", { manifest: result.manifest, validation: result.validation });
+  }));
 
   app.post("/api/projects/:slug/generate", async (req, res) => streamJob(res, async (send) => {
     const canonPath = path.join(projectDir(req.params.slug), "00_admin/canon_lock.yaml");
@@ -491,4 +701,118 @@ async function streamJob(res: Response, run: (send: (event: string, payload: unk
   } finally {
     res.end();
   }
+}
+
+async function runIterationLoop(input: {
+  slug: string;
+  session: IterationSession;
+  canon: Awaited<ReturnType<typeof loadCanon>>;
+  provider: ReturnType<typeof resolveProvider>;
+  currentDirective: IterationDirective;
+  send: (event: string, payload: unknown) => void;
+}) {
+  const { slug, session, provider, send } = input;
+  let canon = input.canon;
+  let currentDirective: IterationDirective | null = input.currentDirective;
+  const outputDir = projectDir(slug);
+  const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
+
+  while (currentDirective && session.completedRuns < session.maxRuns) {
+    send("run_start", {
+      runNumber: session.completedRuns + 1,
+      directive: currentDirective,
+    });
+
+    const run = await runIterationStep(session, currentDirective, canon, provider);
+    session.runs.push(run);
+    session.completedRuns += 1;
+
+    const pause = shouldPauseForHITL(session, run);
+    if (pause) {
+      run.status = run.status === "error" ? "error" : "awaiting_review";
+      session.status = run.status === "error" ? "error" : "paused";
+      await saveIterationSession(slug, session);
+      send("run_complete", {
+        runId: run.runId,
+        runNumber: run.runNumber,
+        summary: run.summary,
+        confidence: run.confidence,
+        proposalCount: run.proposals.length,
+        status: run.status,
+      });
+      send("hitl_pause", {
+        runId: run.runId,
+        reason: pauseReason(session, run),
+        proposals: run.proposals,
+      });
+      return { canon, completed: false };
+    }
+
+    const accepted = run.proposals
+      .filter((proposal) => proposal.confidence >= 0.75)
+      .map((proposal) => proposal.proposalId);
+    canon = await applyProposals(session, run, canon, accepted);
+    updateRunStatus(run);
+    await saveCanon(canonPath, canon);
+    session.status = "running";
+    await saveIterationSession(slug, session);
+    send("run_complete", {
+      runId: run.runId,
+      runNumber: run.runNumber,
+      summary: run.summary,
+      confidence: run.confidence,
+      proposalCount: run.proposals.length,
+      status: run.status,
+    });
+
+    currentDirective = buildNextDirective(session, run, session.pendingSteeringNote);
+    session.pendingSteeringNote = undefined;
+  }
+
+  session.status = "complete";
+  await saveIterationSession(slug, session);
+  return { canon, completed: true };
+}
+
+function countAcceptedProposals(session: IterationSession) {
+  return session.runs.reduce((count, run) => count + run.proposals.filter((proposal) => proposal.status === "accepted").length, 0);
+}
+
+function pauseReason(session: IterationSession, run: IterationRun): "gated" | "confidence" | "error" {
+  if (run.status === "error") {
+    return "error";
+  }
+  if (session.mode === "gated") {
+    return "gated";
+  }
+  return "confidence";
+}
+
+function updateRunStatus(run: IterationRun) {
+  const accepted = run.proposals.filter((proposal) => proposal.status === "accepted").length;
+  if (run.status === "error") {
+    return;
+  }
+  if (accepted === 0) {
+    run.status = "rejected";
+    return;
+  }
+  run.status = accepted === run.proposals.length ? "accepted" : "partial";
+}
+
+function normalizeDirective(value: unknown): IterationDirective | undefined {
+  if (!value || typeof value !== "object") {
+    return undefined;
+  }
+  const candidate = value as Record<string, unknown>;
+  if (typeof candidate.type !== "string" || typeof candidate.instruction !== "string") {
+    return undefined;
+  }
+  return {
+    type: candidate.type as IterationDirective["type"],
+    instruction: candidate.instruction,
+    targetId: typeof candidate.targetId === "string" ? candidate.targetId : undefined,
+    constraints: Array.isArray(candidate.constraints) ? candidate.constraints.map(String) : undefined,
+    steeringNote: typeof candidate.steeringNote === "string" ? candidate.steeringNote : undefined,
+  };
 }
