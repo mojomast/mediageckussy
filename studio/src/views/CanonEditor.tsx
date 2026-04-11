@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { api, type CanonCompletenessReport, type IterationDirective } from "../lib/api";
+import { api, type CanonCompletenessReport, type CanonSnapshot, type IterationDirective } from "../lib/api";
 
 type CanonField = {
   value: unknown;
@@ -70,6 +70,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
   const [hydrationState, setHydrationState] = useState<HydrationState | null>(null);
   const [jsonDraft, setJsonDraft] = useState("");
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [history, setHistory] = useState<CanonSnapshot[]>([]);
 
   async function loadState() {
     const [canonResponse, suggestionResponse, completenessResponse] = await Promise.all([
@@ -81,6 +82,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
     setCanon(nextCanon);
     setSuggestions(((suggestionResponse.data ?? []) as Suggestion[]).filter((item) => item.status === "pending"));
     setCompleteness(completenessResponse);
+    setHistory(await api.getCanonHistory(slug));
   }
 
   useEffect(() => {
@@ -350,6 +352,28 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
         ) : (
           <p className="muted">No pending suggestion for this field yet.</p>
         )}
+
+        <div className="section-label">History</div>
+        <div className="canon-history-list">
+          {history.length === 0 && <p className="muted">No canon snapshots yet.</p>}
+          {history.slice(0, 8).map((entry) => (
+            <article key={entry.snapshotId} className="dossier canon-history-card">
+              <div className="dossier__header">
+                <span>{entry.trigger.replace(/_/g, " ")}</span>
+                <span>{entry.authorKind}</span>
+              </div>
+              <div className="dossier__body canon-history-card__body">
+                <p>{formatUpdatedAt(entry.createdAt)}</p>
+                <p className="muted">{entry.fieldChanges.slice(0, 2).map((change) => change.field).join(", ") || "field changes recorded"}</p>
+                <button className="btn btn--ghost" onClick={async () => {
+                  await api.revertCanonHistory(slug, entry.snapshotId);
+                  await loadState();
+                  setStatus(`Reverted to snapshot ${entry.snapshotId}.`);
+                }}>Revert</button>
+              </div>
+            </article>
+          ))}
+        </div>
       </aside>
     </div>
   );

@@ -5,7 +5,6 @@ import { c as tarCreate } from "tar";
 import type { Express, Response } from "express";
 import { generatePackage } from "../../core/generator.js";
 import { readManifest } from "../../core/manifest.js";
-import type { GeneratedFileRecord } from "../../core/types.js";
 import { generateAsset } from "../../ai/assetGenerator.js";
 import { planArtifactRequest } from "../../ai/artifactPlanner.js";
 import { hydrateDocument } from "../../ai/hydrators/docHydrator.js";
@@ -22,8 +21,18 @@ import { createIterationSession, listIterationSessions, loadIterationSession, sa
 import { analyzeCanonCompleteness } from "../../ai/iteration/completeness.js";
 import type { IterationCanonSection, IterationDirective, IterationMode, IterationPlannerConfig, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
-import { loadCanon, saveCanon, diffLockedFields, publicCanonSlice } from "../../utils/canon.js";
+import { loadCanon, saveCanon, diffLockedFields } from "../../utils/canon.js";
 import { analyzeProtectedRegions, reapplyProtectedRegions } from "../../utils/protectedRegions.js";
+import {
+  appendCanonSnapshot,
+  buildProjectExport,
+  createShareToken,
+  listCanonSnapshots,
+  normalizeExportInclude,
+  normalizeExportVisibility,
+  readShareToken,
+  revertCanonSnapshot,
+} from "../projectArtifacts.js";
 import {
   archivedProjectWorkspace,
   archiveRoot,
@@ -266,9 +275,32 @@ export function registerProjectRoutes(app: Express) {
         return fail(res, new Error(`Locked fields cannot be modified: ${changedLocked.join(", ")}`), 400);
       }
       await saveCanon(canonPath, next);
+      await appendCanonSnapshot({
+        projectSlug: req.params.slug,
+        trigger: "manual_edit",
+        before: previous,
+        after: next,
+        authorKind: "user",
+      });
       return ok(res, next);
     } catch (error) {
       return fail(res, error);
+    }
+  });
+
+  app.get("/api/projects/:slug/history", async (req, res) => {
+    try {
+      return ok(res, await listCanonSnapshots(req.params.slug));
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.post("/api/projects/:slug/history/:snapshotId/revert", async (req, res) => {
+    try {
+      return ok(res, await revertCanonSnapshot(req.params.slug, req.params.snapshotId));
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
     }
   });
 
@@ -377,10 +409,19 @@ export function registerProjectRoutes(app: Express) {
     const outputDir = projectDir(slug);
     const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
     let canon = await loadCanon(canonPath);
+    const previousCanon = structuredClone(canon);
     const accepted = Array.isArray(req.body?.accepted) ? req.body.accepted.map(String) : [];
     canon = await applyProposals(session, lastRun, canon, accepted);
     updateRunStatus(lastRun);
     await saveCanon(canonPath, canon);
+    await appendCanonSnapshot({
+      projectSlug: slug,
+      trigger: "iteration_accept",
+      before: previousCanon,
+      after: canon,
+      authorKind: "agent",
+      runId: lastRun.runId,
+    });
 
     session.status = "running";
     session.pendingSteeringNote = typeof req.body?.steeringNote === "string" && req.body.steeringNote.trim()
@@ -489,9 +530,18 @@ export function registerProjectRoutes(app: Express) {
     const outputDir = projectDir(slug);
     const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
     const canon = await loadCanon(canonPath);
+    const previousCanon = structuredClone(canon);
     const updatedCanon = await applyProposals(session, run, canon, accepted);
     updateRunStatus(run);
     await saveCanon(canonPath, updatedCanon);
+    await appendCanonSnapshot({
+      projectSlug: slug,
+      trigger: "iteration_accept",
+      before: previousCanon,
+      after: updatedCanon,
+      authorKind: "agent",
+      runId: run.runId,
+    });
     await saveIterationSession(slug, session);
 
     send("started", { step: "generate" });
@@ -552,7 +602,15 @@ export function registerProjectRoutes(app: Express) {
       }
       const canonPath = path.join(projectDir(req.params.slug), "00_admin/canon_lock.yaml");
       const canon = await loadCanon(canonPath);
+      const before = structuredClone(canon);
       const updated = await acceptSuggestion(projectDir(req.params.slug), field, canon);
+      await appendCanonSnapshot({
+        projectSlug: req.params.slug,
+        trigger: "hydration",
+        before,
+        after: updated,
+        authorKind: "agent",
+      });
       return ok(res, updated);
     } catch (error) {
       if (error instanceof Error && /structured array|valid list data|Unknown canon field path|No pending suggestion found/i.test(error.message)) {
@@ -600,12 +658,20 @@ export function registerProjectRoutes(app: Express) {
       const relativePath = req.params[1];
       const absolutePath = resolveProjectPath(slug, relativePath);
       const nextContent = String(req.body?.content ?? "");
+      const previousContent = await fs.pathExists(absolutePath) ? await fs.readFile(absolutePath, "utf8") : "";
       let contentToWrite = nextContent;
       if (await fs.pathExists(absolutePath)) {
         const existing = await fs.readFile(absolutePath, "utf8");
         contentToWrite = reapplyProtectedRegions(nextContent, analyzeProtectedRegions(existing).regions);
       }
       await fs.writeFile(absolutePath, contentToWrite, "utf8");
+      await appendCanonSnapshot({
+        projectSlug: slug,
+        trigger: "manual_edit",
+        before: { files: { [relativePath]: previousContent } },
+        after: { files: { [relativePath]: contentToWrite } },
+        authorKind: "user",
+      });
       return ok(res, { path: relativePath });
     } catch (error) {
       return fail(res, error);
@@ -718,6 +784,57 @@ export function registerProjectRoutes(app: Express) {
     }
   });
 
+  app.post("/api/projects/:slug/share", async (req, res) => {
+    try {
+      const include = normalizeExportInclude(req.body?.include ?? ["docs", "site", "canon"]);
+      const visibility = normalizeExportVisibility(req.body?.visibility ?? "public");
+      const share = await createShareToken(req.params.slug, include, visibility);
+      return ok(res, { ...share, url: `/api/share/${share.shareToken}` });
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
+  app.get("/api/share/:shareToken", async (req, res) => {
+    try {
+      const share = await readShareToken(req.params.shareToken);
+      if (!share) {
+        return fail(res, new Error("Share token not found"), 404);
+      }
+      const bundle = await buildProjectExport(share.projectSlug, share.include, share.visibility);
+      const links = bundle.entries
+        .filter((entry) => ["docs", "site", "canon"].includes(entry.kind))
+        .map((entry) => `<li><a href="/api/share/${share.shareToken}/files/${encodeURIComponent(entry.path)}">${entry.path}</a> <span>${entry.visibility}</span></li>`)
+        .join("");
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      return res.send(`<!doctype html><html><head><meta charset="utf-8"><title>${share.projectSlug} share</title><style>body{font-family:ui-monospace,monospace;background:#0b0f0c;color:#e7f3e7;padding:2rem;max-width:56rem;margin:0 auto}a{color:#7dff9f}ul{display:grid;gap:.75rem;padding-left:1rem}li span{color:#9ba89b;margin-left:.5rem}</style></head><body><h1>${share.projectSlug}</h1><p>Read-only share bundle.</p><ul>${links}</ul></body></html>`);
+    } catch (error) {
+      return fail(res, error, 404);
+    }
+  });
+
+  app.get(/^\/api\/share\/([^/]+)\/files\/(.+)$/, async (req, res) => {
+    try {
+      const shareToken = req.params[0];
+      const filePath = decodeURIComponent(req.params[1]);
+      const share = await readShareToken(shareToken);
+      if (!share) {
+        return fail(res, new Error("Share token not found"), 404);
+      }
+      const bundle = await buildProjectExport(share.projectSlug, share.include, share.visibility);
+      const entry = bundle.entries.find((item) => item.path === filePath);
+      if (!entry) {
+        return fail(res, new Error("Shared file not found"), 404);
+      }
+      if (entry.absolutePath) {
+        return res.sendFile(entry.absolutePath);
+      }
+      return res.type(path.extname(entry.path) || "json").send(entry.content ?? "");
+    } catch (error) {
+      return fail(res, error, 404);
+    }
+  });
+
   app.post("/api/projects/:slug/assets/generate", async (req, res) => streamJob(res, async (send) => {
     const outputDir = projectDir(req.params.slug);
     const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
@@ -812,149 +929,6 @@ async function listProjects(options: { includeArchived?: boolean } = {}) {
 
 function projectDir(slug: string) {
   return projectWorkspace(slug);
-}
-
-type ExportInclude = "docs" | "site" | "canon" | "assets";
-type ExportVisibility = "public" | "internal" | "all";
-
-type ProjectExportEntry = {
-  path: string;
-  kind: ExportInclude;
-  visibility: ExportVisibility | "mixed";
-  size: number;
-  absolutePath?: string;
-  content?: string;
-  metadata: Record<string, unknown>;
-};
-
-async function buildProjectExport(slug: string, include: ExportInclude[], visibility: ExportVisibility) {
-  const outputDir = projectDir(slug);
-  const manifest = await readManifest(outputDir);
-  const selected = new Set(include);
-  const entries: ProjectExportEntry[] = [];
-
-  for (const file of manifest.generatedFiles) {
-    const kind = classifyGeneratedFile(file);
-    if (!kind || !selected.has(kind) || !matchesVisibility(file.audience, visibility)) {
-      continue;
-    }
-
-    const absolutePath = resolveProjectPath(slug, file.path);
-    if (!(await fs.pathExists(absolutePath))) {
-      continue;
-    }
-
-    const stats = await fs.stat(absolutePath);
-    entries.push({
-      path: file.path,
-      kind,
-      visibility: deriveEntryVisibility(file.audience),
-      size: stats.size,
-      absolutePath,
-      metadata: {
-        templateId: file.templateId,
-        department: file.department,
-        audience: file.audience,
-        outputFormat: file.outputFormat,
-        sources: file.sources,
-        regenPolicy: file.regenPolicy,
-        generatedAt: file.generatedAt,
-      },
-    });
-  }
-
-  if (selected.has("assets")) {
-    for (const asset of manifest.generatedAssets ?? []) {
-      const assetVisibility = matchesVisibility(["internal"], visibility) ? "internal" : null;
-      if (!assetVisibility) {
-        continue;
-      }
-
-      const absolutePath = resolveProjectPath(slug, asset.path);
-      if (!(await fs.pathExists(absolutePath))) {
-        continue;
-      }
-
-      const stats = await fs.stat(absolutePath);
-      entries.push({
-        path: asset.path,
-        kind: "assets",
-        visibility: assetVisibility,
-        size: stats.size,
-        absolutePath,
-        metadata: {
-          type: asset.type,
-          provider: asset.provider,
-          model: asset.model,
-          generatedAt: asset.generatedAt,
-          prompt: asset.prompt,
-          canonFingerprint: asset.canonFingerprint,
-        },
-      });
-    }
-  }
-
-  if (selected.has("canon")) {
-    const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
-    const canonPayload = visibility === "public" ? publicCanonSlice(canon) : canon;
-    const content = JSON.stringify(canonPayload, null, 2);
-    entries.push({
-      path: "canon.json",
-      kind: "canon",
-      visibility: visibility === "all" ? "mixed" : visibility,
-      size: Buffer.byteLength(content),
-      content,
-      metadata: {
-        source: "00_admin/canon_lock.yaml",
-        filtered: visibility === "public",
-      },
-    });
-  }
-
-  entries.sort((left, right) => left.path.localeCompare(right.path));
-  return { manifest, entries };
-}
-
-function classifyGeneratedFile(file: GeneratedFileRecord): ExportInclude | null {
-  if (file.path === "00_admin/canon_lock.yaml" || file.path === "00_admin/package_manifest.json") {
-    return null;
-  }
-  if (file.path.startsWith("site/")) {
-    return "site";
-  }
-  if (file.department === "assets" || file.path.startsWith("assets/")) {
-    return "assets";
-  }
-  return "docs";
-}
-
-function deriveEntryVisibility(audience: string[]): ExportVisibility | "mixed" {
-  const hasPublic = audience.includes("public");
-  const hasInternal = audience.some((item) => item !== "public");
-  if (hasPublic && hasInternal) {
-    return "mixed";
-  }
-  return hasPublic ? "public" : "internal";
-}
-
-function matchesVisibility(audience: string[], visibility: ExportVisibility) {
-  if (visibility === "all") {
-    return true;
-  }
-  const hasPublic = audience.includes("public");
-  return visibility === "public" ? hasPublic : !hasPublic;
-}
-
-function normalizeExportInclude(value: unknown): ExportInclude[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  const allowed = new Set<ExportInclude>(["docs", "site", "canon", "assets"]);
-  return [...new Set(value.map(String).filter((item): item is ExportInclude => allowed.has(item as ExportInclude)))];
-}
-
-function normalizeExportVisibility(value: unknown): ExportVisibility {
-  return value === "public" || value === "internal" || value === "all" ? value : "all";
 }
 
 async function readFileTree(rootDir: string, baseDir: string = rootDir): Promise<Array<{ path: string; type: "file" | "directory" }>> {

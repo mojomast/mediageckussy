@@ -139,6 +139,25 @@ export type ProjectExportManifest = {
   files: ProjectExportEntry[];
 };
 
+export type CanonSnapshot = {
+  snapshotId: string;
+  projectSlug: string;
+  createdAt: string;
+  trigger: "iteration_accept" | "manual_edit" | "hydration" | "import";
+  runId?: string;
+  fieldChanges: Array<{ field: string; before: unknown; after: unknown }>;
+  authorKind: "agent" | "user" | "system";
+};
+
+export type ShareRecord = {
+  shareToken: string;
+  projectSlug: string;
+  createdAt: string;
+  include: ProjectExportInclude[];
+  visibility: ProjectExportVisibility;
+  url: string;
+};
+
 export type InterviewStartResponse = {
   sessionId: string;
   message: string;
@@ -184,6 +203,14 @@ export const api = {
   },
   getCanon: (slug: string) => fetchJson(`/api/projects/${slug}/canon`),
   saveCanon: (slug: string, canon: unknown) => fetchJson(`/api/projects/${slug}/canon`, { method: "PUT", body: JSON.stringify(canon) }),
+  getCanonHistory: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/history`);
+    return response.data as CanonSnapshot[];
+  },
+  revertCanonHistory: async (slug: string, snapshotId: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/history/${snapshotId}/revert`, { method: "POST", body: JSON.stringify({}) });
+    return response.data;
+  },
   getSuggestions: (slug: string) => fetchJson(`/api/projects/${slug}/suggestions`),
   acceptSuggestion: (slug: string, field: string) => fetchJson(`/api/projects/${slug}/suggestions/accept`, { method: "POST", body: JSON.stringify({ field }) }),
   rejectSuggestion: (slug: string, field: string) => fetchJson(`/api/projects/${slug}/suggestions/reject`, { method: "POST", body: JSON.stringify({ field }) }),
@@ -273,6 +300,10 @@ export const api = {
       blob,
       filename: filenameMatch?.[1] ?? `${slug}.zip`,
     };
+  },
+  createShareLink: async (slug: string, payload: { include: ProjectExportInclude[]; visibility: ProjectExportVisibility }) => {
+    const response = await fetchJson(`/api/projects/${slug}/share`, { method: "POST", body: JSON.stringify(payload) });
+    return response.data as ShareRecord;
   },
   startInterview: async (opts?: { provider?: string; model?: string }) => {
     const response = await fetchJson("/api/interview/start", { method: "POST", body: JSON.stringify(opts ?? {}) });
