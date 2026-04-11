@@ -15,8 +15,12 @@ function buildTemplateData(canon: CanonProject, fingerprint: string) {
   const generatedAt = new Date().toISOString();
   return {
     project: canon,
+    packageTier: canon.package_tier,
     canon: canon.canon,
     publicCanon,
+    generatedAt,
+    canonFingerprint: fingerprint,
+    templateVersion: "v1",
     meta: {
       generatedAt,
       canonFingerprint: fingerprint,
