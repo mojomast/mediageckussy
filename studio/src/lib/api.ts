@@ -15,6 +15,85 @@ export type ProjectSummary = {
   settings?: { llmProvider: string; llmModel: string };
 };
 
+export type IterationDirectiveType =
+  | "new_character"
+  | "new_episode"
+  | "develop_character"
+  | "develop_episode"
+  | "new_storyline"
+  | "develop_themes"
+  | "world_expansion"
+  | "suggest_next"
+  | "custom";
+
+export type IterationMode = "autonomous" | "gated" | "confidence";
+
+export type IterationRunStatus =
+  | "pending"
+  | "running"
+  | "awaiting_review"
+  | "accepted"
+  | "rejected"
+  | "partial"
+  | "error";
+
+export type IterationDirective = {
+  type: IterationDirectiveType;
+  instruction: string;
+  targetId?: string;
+  constraints?: string[];
+  steeringNote?: string;
+};
+
+export type IterationProposal = {
+  proposalId: string;
+  runId: string;
+  field: string;
+  operation: "add" | "update" | "append";
+  value: unknown;
+  rationale: string;
+  confidence: number;
+  status: "pending" | "accepted" | "rejected";
+  acceptedAt?: string;
+  rejectedAt?: string;
+};
+
+export type IterationRun = {
+  runId: string;
+  sessionId: string;
+  runNumber: number;
+  directive: IterationDirective;
+  canonSnapshot: Record<string, unknown>;
+  startedAt: string;
+  completedAt?: string;
+  status: IterationRunStatus;
+  proposals: IterationProposal[];
+  summary?: string;
+  confidence: number;
+  error?: string;
+  suggestedNextDirectives?: Array<{
+    type: IterationDirectiveType;
+    instruction: string;
+    targetId?: string;
+  }>;
+};
+
+export type IterationSession = {
+  sessionId: string;
+  projectSlug: string;
+  mode: IterationMode;
+  maxRuns: number;
+  confidenceThreshold: number;
+  completedRuns: number;
+  status: "running" | "paused" | "complete" | "stopped" | "error";
+  runs: IterationRun[];
+  startedAt: string;
+  updatedAt: string;
+  provider?: string;
+  model?: string;
+  pendingSteeringNote?: string;
+};
+
 export type SSEvent = { event: string; data: unknown };
 
 export type InterviewStartResponse = {
@@ -47,6 +126,58 @@ export const api = {
   saveFile: (slug: string, filePath: string, content: string) => fetchJson(`/api/projects/${slug}/files/${encodePath(filePath)}`, { method: "PUT", body: JSON.stringify({ content }) }),
   getAssets: (slug: string) => fetchJson(`/api/projects/${slug}/assets`),
   getValidation: (slug: string) => fetchJson(`/api/projects/${slug}/validation`),
+  listIterationSessions: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/iterations`);
+    return response.data as IterationSession[];
+  },
+  getIterationSession: async (slug: string, sessionId: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/iterations/${sessionId}`);
+    return response.data as IterationSession;
+  },
+  getIterationRun: async (slug: string, sessionId: string, runId: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/iterations/${sessionId}/runs/${runId}`);
+    return response.data as IterationRun;
+  },
+  startIterationSession: async (
+    slug: string,
+    opts: {
+      mode: IterationMode;
+      maxRuns: number;
+      confidenceThreshold?: number;
+      firstDirective: IterationDirective;
+      provider?: string;
+      model?: string;
+    },
+    onEvent: (event: string, data: unknown) => void,
+  ) => {
+    await streamJson(`/api/projects/${slug}/iterations`, opts, (event) => onEvent(event.event, event.data));
+  },
+  continueIterationSession: async (
+    slug: string,
+    sessionId: string,
+    opts: {
+      accepted: string[];
+      steeringNote?: string;
+      nextDirective?: IterationDirective;
+    },
+    onEvent: (event: string, data: unknown) => void,
+  ) => {
+    await streamJson(`/api/projects/${slug}/iterations/${sessionId}/continue`, opts, (event) => onEvent(event.event, event.data));
+  },
+  stopIterationSession: async (slug: string, sessionId: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/iterations/${sessionId}/stop`, { method: "POST", body: JSON.stringify({}) });
+    return response.data as { sessionId: string; completedRuns: number; status: "stopped" };
+  },
+  queueIterationSteering: async (slug: string, sessionId: string, steeringNote: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/iterations/${sessionId}/steer`, {
+      method: "POST",
+      body: JSON.stringify({ steeringNote }),
+    });
+    return response.data as { sessionId: string; pendingSteeringNote?: string };
+  },
+  acceptAllIterationRun: async (slug: string, sessionId: string, runId: string, opts: { minConfidence?: number }, onEvent: (event: string, data: unknown) => void) => {
+    await streamJson(`/api/projects/${slug}/iterations/${sessionId}/runs/${runId}/accept-all`, opts, (event) => onEvent(event.event, event.data));
+  },
   runGenerate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/generate`, body, onEvent),
   runHydrate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/hydrate`, body, onEvent),
   runAsset: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/assets/generate`, body, onEvent),
@@ -92,11 +223,55 @@ async function streamJson(url: string, body: unknown, onEvent?: (event: SSEvent)
     body: JSON.stringify(body),
     headers: { "Content-Type": "application/json" },
   });
-  const text = await response.text();
-  const events = parseSSE(text);
-  for (const event of events) {
-    onEvent?.(event);
+  if (!response.ok) {
+    const payload = await response.text();
+    throw new Error(payload || `Request failed: ${response.status}`);
   }
+
+  const reader = response.body?.getReader();
+  const decoder = new TextDecoder();
+  let text = "";
+  const events: SSEvent[] = [];
+
+  if (!reader) {
+    text = await response.text();
+    const parsed = parseSSE(text);
+    for (const event of parsed) {
+      onEvent?.(event);
+      events.push(event);
+    }
+    return { text, events };
+  }
+
+  let buffer = "";
+  while (true) {
+    const chunk = await reader.read();
+    if (chunk.done) {
+      buffer += decoder.decode();
+      text += buffer;
+      const parsed = parseSSE(buffer);
+      for (const event of parsed) {
+        onEvent?.(event);
+        events.push(event);
+      }
+      break;
+    }
+
+    const decoded = decoder.decode(chunk.value, { stream: true });
+    text += decoded;
+    buffer += decoded;
+    const segments = buffer.split("\n\n");
+    buffer = segments.pop() ?? "";
+
+    for (const segment of segments) {
+      const parsed = parseSSE(`${segment}\n\n`);
+      for (const event of parsed) {
+        onEvent?.(event);
+        events.push(event);
+      }
+    }
+  }
+
   return { text, events };
 }
 

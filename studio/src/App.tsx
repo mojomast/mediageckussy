@@ -4,6 +4,7 @@ import { api, type ProjectSummary, type StudioOptions } from "./lib/api";
 import { AssetGallery } from "./views/AssetGallery";
 import { CanonEditor } from "./views/CanonEditor";
 import { InterviewView } from "./views/InterviewView";
+import { IterationView } from "./views/IterationView";
 import { PackagePreview } from "./views/PackagePreview";
 import { ProjectDashboard } from "./views/ProjectDashboard";
 import { ValidationOps } from "./views/ValidationOps";
@@ -74,10 +75,12 @@ export function App() {
     const suffix = selectedSlug ? ` - ${selectedSlug}` : "";
     const title = view.tab === "Dashboard"
       ? "Dashboard"
-      : view.tab === "Canon"
-        ? "Canon"
-        : view.tab === "Files"
-          ? "Files"
+        : view.tab === "Canon"
+          ? "Canon"
+          : view.tab === "Iterate"
+            ? "Iterate"
+          : view.tab === "Files"
+            ? "Files"
           : view.tab === "Site"
             ? "Site"
             : view.tab === "Assets"
@@ -125,6 +128,7 @@ export function App() {
       }} />}
 
       {!inInterview && tab === "Canon" && selectedSlug && <CanonEditor slug={selectedSlug} projectSettings={projectSettings} onProjectSettingsChange={setProjectSettings} status={status} setStatus={setStatus} />}
+      {!inInterview && tab === "Iterate" && selectedSlug && <IterationView slug={selectedSlug} projectSettings={projectSettings} setStatus={setStatus} />}
       {!inInterview && tab === "Files" && selectedSlug && <PackagePreview slug={selectedSlug} status={status} setStatus={setStatus} />}
       {!inInterview && tab === "Site" && selectedSlug && <iframe className="site-frame" src={api.siteUrl(selectedSlug)} title="Site Preview" />}
       {!inInterview && tab === "Assets" && selectedSlug && <AssetGallery slug={selectedSlug} setStatus={setStatus} />}
@@ -145,6 +149,7 @@ function resolveTabFromPath(): Tab {
   if (window.location.pathname.includes("/site")) return "Site";
   if (window.location.pathname.includes("/assets")) return "Assets";
   if (window.location.pathname.includes("/ops")) return "Ops";
+  if (window.location.pathname.includes("/iterate")) return "Iterate";
   if (window.location.pathname.includes("/canon")) return "Canon";
   return "Dashboard";
 }
@@ -164,6 +169,7 @@ function resolvePath(view: View, slug: string | null) {
   }
 
   if (view.tab === "Canon") return `/projects/${slug}/canon`;
+  if (view.tab === "Iterate") return `/projects/${slug}/iterate`;
   if (view.tab === "Files") return `/projects/${slug}/files`;
   if (view.tab === "Site") return `/projects/${slug}/site`;
   if (view.tab === "Assets") return `/projects/${slug}/assets`;

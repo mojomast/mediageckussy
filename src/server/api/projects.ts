@@ -390,6 +390,25 @@ export function registerProjectRoutes(app: Express) {
     }
   });
 
+  app.post("/api/projects/:slug/iterations/:sessionId/steer", async (req, res) => {
+    try {
+      const session = await loadIterationSession(req.params.slug, req.params.sessionId);
+      if (!session) {
+        return fail(res, new Error(`Iteration session not found: ${req.params.sessionId}`), 404);
+      }
+
+      const steeringNote = typeof req.body?.steeringNote === "string" ? req.body.steeringNote.trim() : "";
+      session.pendingSteeringNote = steeringNote || undefined;
+      await saveIterationSession(req.params.slug, session);
+      return ok(res, {
+        sessionId: session.sessionId,
+        pendingSteeringNote: session.pendingSteeringNote,
+      });
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
   app.post("/api/projects/:slug/iterations/:sessionId/runs/:runId/accept-all", async (req, res) => streamJob(res, async (send) => {
     const slug = req.params.slug;
     const session = await loadIterationSession(slug, req.params.sessionId);
@@ -718,7 +737,15 @@ async function runIterationLoop(input: {
   const canonPath = path.join(outputDir, "00_admin/canon_lock.yaml");
 
   while (currentDirective && session.completedRuns < session.maxRuns) {
+    const persistedSession = await loadIterationSession(slug, session.sessionId);
+    if (persistedSession?.status === "stopped") {
+      session.status = "stopped";
+      await saveIterationSession(slug, session);
+      return { canon, completed: false };
+    }
+
     send("run_start", {
+      sessionId: session.sessionId,
       runNumber: session.completedRuns + 1,
       directive: currentDirective,
     });
@@ -733,6 +760,7 @@ async function runIterationLoop(input: {
       session.status = run.status === "error" ? "error" : "paused";
       await saveIterationSession(slug, session);
       send("run_complete", {
+        sessionId: session.sessionId,
         runId: run.runId,
         runNumber: run.runNumber,
         summary: run.summary,
@@ -741,6 +769,7 @@ async function runIterationLoop(input: {
         status: run.status,
       });
       send("hitl_pause", {
+        sessionId: session.sessionId,
         runId: run.runId,
         reason: pauseReason(session, run),
         proposals: run.proposals,
@@ -757,6 +786,7 @@ async function runIterationLoop(input: {
     session.status = "running";
     await saveIterationSession(slug, session);
     send("run_complete", {
+      sessionId: session.sessionId,
       runId: run.runId,
       runNumber: run.runNumber,
       summary: run.summary,
@@ -765,6 +795,14 @@ async function runIterationLoop(input: {
       status: run.status,
     });
 
+    const refreshedSession = await loadIterationSession(slug, session.sessionId);
+    if (refreshedSession?.status === "stopped") {
+      session.status = "stopped";
+      await saveIterationSession(slug, session);
+      return { canon, completed: false };
+    }
+
+    session.pendingSteeringNote = refreshedSession?.pendingSteeringNote;
     currentDirective = buildNextDirective(session, run, session.pendingSteeringNote);
     session.pendingSteeringNote = undefined;
   }

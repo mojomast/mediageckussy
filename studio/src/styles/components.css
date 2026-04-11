@@ -876,6 +876,118 @@ textarea {
   gap: var(--space-3);
 }
 
+.iteration-shell {
+  width: min(100%, var(--content-max-width));
+  margin: 0 auto;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.iteration-panel {
+  background: var(--color-panel-strong);
+}
+
+.iteration-panel__body,
+.iteration-run-list,
+.iteration-proposal-list,
+.iteration-proposal-card__body,
+.iteration-steering-card__body,
+.iteration-review-summary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.iteration-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.iteration-settings-grid__full {
+  grid-column: 1 / -1;
+}
+
+.iteration-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: end;
+}
+
+.iteration-status-line {
+  color: var(--color-text-dim);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.iteration-run-card,
+.iteration-steering-card,
+.iteration-proposal-card {
+  background: var(--color-surface);
+}
+
+.iteration-run-card--running {
+  border-color: var(--color-phosphor-mid);
+  box-shadow: var(--glow-phosphor-sm), var(--shadow-card);
+}
+
+.iteration-run-card__toggle {
+  width: 100%;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  color: inherit;
+}
+
+.iteration-run-card__body {
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.iteration-progress-bar {
+  height: var(--space-3);
+}
+
+.iteration-progress-bar--animated .progress-bar__fill {
+  position: relative;
+  overflow: hidden;
+}
+
+.iteration-progress-bar--animated .progress-bar__fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(200, 230, 192, 0.24), transparent);
+  box-shadow: var(--glow-phosphor-sm);
+  animation: iteration-sweep 1.3s linear infinite;
+}
+
+.iteration-proposal-card--amber {
+  border-color: var(--color-amber-dim);
+  box-shadow: var(--glow-amber-sm), var(--shadow-card);
+}
+
+.iteration-proposal-card--amber .dossier__header {
+  color: var(--color-amber);
+  border-bottom-color: var(--color-amber-dim);
+}
+
+.iteration-override-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+@keyframes iteration-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(200%);
+  }
+}
+
 .suggestion-card pre,
 .card pre {
   white-space: pre-wrap;

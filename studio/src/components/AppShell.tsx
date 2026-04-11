@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-type WorkspaceTab = "Dashboard" | "Interview" | "Canon" | "Files" | "Site" | "Assets" | "Ops";
+type WorkspaceTab = "Dashboard" | "Interview" | "Canon" | "Iterate" | "Files" | "Site" | "Assets" | "Ops";
 
 type NavItem = {
   tab: WorkspaceTab;
@@ -12,6 +12,7 @@ const NAV_ITEMS: NavItem[] = [
   { tab: "Dashboard", glyph: "◈", label: "Dashboard" },
   { tab: "Interview", glyph: "◉", label: "Interview" },
   { tab: "Canon", glyph: "⊞", label: "Canon" },
+  { tab: "Iterate", glyph: "◫", label: "Iterate" },
   { tab: "Files", glyph: "⊟", label: "Files" },
   { tab: "Site", glyph: "⊙", label: "Site" },
   { tab: "Assets", glyph: "◧", label: "Assets" },
