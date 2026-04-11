@@ -597,6 +597,18 @@ function resolveParent(root: Record<string, unknown>, fieldPath: string) {
   const finalSegment = segments[segments.length - 1];
   const objectCursor = cursor as Record<string, unknown>;
 
+  if (!(finalSegment.key in objectCursor) && segments.length === 2 && OPTIONAL_CANON_ARRAY_FIELDS.has(finalSegment.key)) {
+    objectCursor[finalSegment.key] = {
+      value: [],
+      status: "draft",
+      owner: "agent",
+      updated_at: new Date().toISOString(),
+      confidence: 0,
+      downstream_dependencies: [],
+      visibility: "internal",
+    };
+  }
+
   if (segments.length === 2 && isCanonField(objectCursor[finalSegment.key])) {
     return { parent: objectCursor[finalSegment.key] as Record<string, unknown>, key: "value" };
   }

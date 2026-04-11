@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { MockLLMProvider } from "../../ai/providers/index.js";
+import { analyzeCanonCompleteness } from "../../ai/iteration/completeness.js";
 import { buildIterationContext } from "../../ai/iteration/context.js";
 import {
   applyProposals,
@@ -190,6 +191,172 @@ describe("iteration engine", () => {
     });
   });
 
+  describe("applyProposals — new entity types", () => {
+    test("adds a StorylineEntry to canon.storylines", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.storylines",
+        operation: "add",
+        value: {
+          id: "relay-fallout",
+          title: "Relay Fallout",
+          logline: "A hidden relay cover-up pulls the harbor toward open fracture.",
+          episodes: ["S01E02", "S01E03"],
+          characters: ["dara-osei", "reyes"],
+          theme_connection: "institutional decay",
+          arc_shape: ["setup", "complication", "resolution"],
+        },
+      });
+
+      expect(nextCanon.canon.storylines?.value[0]?.title).toBe("Relay Fallout");
+    });
+
+    test("adds a LocationEntry to canon.locations", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.locations",
+        operation: "add",
+        value: {
+          id: "relay-yard",
+          name: "Relay Yard",
+          description: "A flooded equipment graveyard below the central tower.",
+          atmosphere: "electric and unstable",
+          frequent_characters: ["dara-osei"],
+        },
+      });
+
+      expect(nextCanon.canon.locations?.value[0]?.name).toBe("Relay Yard");
+    });
+
+    test("adds a WorldLoreEntry to canon.world_lore", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.world_lore",
+        operation: "add",
+        value: {
+          id: "storm-blackout",
+          fact: "Every state blackout is preceded by a relay silence.",
+          narrative_implication: "Signal gaps are political events, not accidents.",
+        },
+      });
+
+      expect(nextCanon.canon.world_lore?.value[0]?.fact).toContain("relay silence");
+    });
+
+    test("adds a MotifEntry to canon.motifs", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.motifs",
+        operation: "add",
+        value: {
+          id: "red-static",
+          description: "A red static bloom that appears before each truth leak.",
+          theme_connection: "memory as evidence",
+        },
+      });
+
+      expect(nextCanon.canon.motifs?.value[0]?.description).toContain("red static");
+    });
+
+    test("adds a ThemeEntry to canon.themes_structured", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.themes_structured",
+        operation: "add",
+        value: {
+          label: "institutional decay",
+          theme_expression: "The city keeps functioning by normalizing evidence rot.",
+          motif: "failing emergency lights",
+        },
+      });
+
+      expect(nextCanon.canon.themes_structured?.value[0]?.label).toBe("institutional decay");
+    });
+
+    test("adds a FactionEntry to canon.factions", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.factions",
+        operation: "add",
+        value: {
+          id: "harbor-command",
+          name: "Harbor Command",
+          description: "The authority layer keeping the station alive through selective truth.",
+          allegiance: "order over transparency",
+          members: ["reyes"],
+        },
+      });
+
+      expect(nextCanon.canon.factions?.value[0]?.name).toBe("Harbor Command");
+    });
+  });
+
+  describe("applyProposals — sub-field updates", () => {
+    test("appends a backstory item to canon.characters[id].backstory", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.characters[dara-osei].backstory",
+        operation: "append",
+        value: "Dara once signed off on a relay maintenance report she knew was falsified.",
+      });
+
+      expect(nextCanon.canon.characters.value[0]?.backstory).toEqual([
+        ["Dara once signed off on a relay maintenance report she knew was falsified."],
+      ]);
+    });
+
+    test("appends a relationship to canon.characters[id].initial_relationships", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.characters[dara-osei].initial_relationships",
+        operation: "append",
+        value: { characterId: "reyes", dynamic: "strained dependence" },
+      });
+
+      expect(nextCanon.canon.characters.value[0]?.initial_relationships).toEqual([
+        { characterId: "reyes", dynamic: "strained dependence" },
+      ]);
+    });
+
+    test("appends a scene to canon.episodes[code].scenes", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.episodes[S01E01].scenes",
+        operation: "append",
+        value: {
+          scene_number: 1,
+          location: "Relay Tower",
+          characters: ["dara-osei"],
+          beat: "Dara hears the signal repeat an erased distress call.",
+        },
+      });
+
+      expect(nextCanon.canon.episodes.value[0]?.scenes?.[0]?.location).toBe("Relay Tower");
+    });
+
+    test("appends a featured_character to canon.episodes[code].featured_characters", async () => {
+      const nextCanon = await applySingleProposal({
+        field: "canon.episodes[S01E01].featured_characters",
+        operation: "append",
+        value: "reyes",
+      });
+
+      expect(nextCanon.canon.episodes.value[0]?.featured_characters).toEqual(["reyes"]);
+    });
+
+    test("throws a useful error when character selector does not match any id", async () => {
+      const session = createSessionWithHistory();
+      const run = baseRun({
+        proposals: [
+          {
+            proposalId: "proposal-miss",
+            runId: "run-1",
+            field: "canon.characters[missing].backstory",
+            operation: "append",
+            value: "Unresolvable selector",
+            rationale: "Test missing selector",
+            confidence: 0.5,
+            status: "pending",
+          },
+        ],
+      });
+
+      await expect(applyProposals(session, run, buildCanon(), ["proposal-miss"]))
+        .rejects.toThrow('Unable to resolve selector "missing"');
+    });
+  });
+
   test("shouldPauseForHITL returns true for gated mode", () => {
     const session = createIterationSession({ projectSlug: "signal-harbor", mode: "gated", maxRuns: 5 });
     expect(shouldPauseForHITL(session, baseRun())).toBe(true);
@@ -290,7 +457,115 @@ describe("iteration engine", () => {
 
     expect(["new_episode", "develop_episode"]).toContain(next?.type);
   });
+
+  describe("analyzeCanonCompleteness — storyline scoring", () => {
+    test("scores 0 when no storylines", () => {
+      const report = analyzeCanonCompleteness(buildCanon());
+      expect(report.dimensions.storylines.score).toBe(0);
+    });
+
+    test("scores 5 base when one storyline exists", () => {
+      const canon = buildCanon();
+      canon.canon.storylines = field([
+        {
+          id: "relay-fallout",
+          title: "Relay Fallout",
+          logline: "A cover-up starts to crack.",
+          episodes: ["S01E01"],
+          characters: ["dara-osei"],
+          theme_connection: "institutional decay",
+          arc_shape: ["setup"],
+          visibility: "internal",
+        },
+      ], new Date().toISOString());
+
+      const report = analyzeCanonCompleteness(canon);
+      expect(report.dimensions.storylines.score).toBe(5);
+    });
+
+    test("scores up to 15 for a fully-specified storyline", () => {
+      const canon = buildCanon();
+      canon.canon.storylines = field([
+        {
+          id: "relay-fallout",
+          title: "Relay Fallout",
+          logline: "A cover-up starts to crack.",
+          episodes: ["S01E01", "S01E02", "S01E03"],
+          characters: ["dara-osei", "reyes"],
+          theme_connection: "institutional decay",
+          arc_shape: ["setup", "complication", "resolution"],
+          visibility: "internal",
+        },
+      ], new Date().toISOString());
+
+      const report = analyzeCanonCompleteness(canon);
+      expect(report.dimensions.storylines.score).toBe(12);
+    });
+  });
+
+  describe("analyzeCanonCompleteness — theme scoring", () => {
+    test("scores 1 per raw string theme", () => {
+      const report = analyzeCanonCompleteness(buildCanon());
+      expect(report.dimensions.themes.score).toBe(4);
+    });
+
+    test("scores 2 per structured theme without theme_expression", () => {
+      const canon = buildCanon();
+      canon.canon.themes_structured = field([
+        { id: "institutional-decay", label: "institutional decay" },
+      ], new Date().toISOString());
+
+      const report = analyzeCanonCompleteness(canon);
+      expect(report.dimensions.themes.score).toBe(5);
+    });
+
+    test("scores 4 per structured theme with theme_expression", () => {
+      const canon = buildCanon();
+      canon.canon.themes_structured = field([
+        {
+          id: "institutional-decay",
+          label: "institutional decay",
+          theme_expression: "Systems normalize moral compromise through routine process.",
+          motif: "failing emergency lights",
+        },
+      ], new Date().toISOString());
+      canon.canon.motifs = field([
+        {
+          id: "failing-emergency-lights",
+          description: "Emergency lights flicker whenever buried truth surfaces.",
+          theme_connection: "institutional decay",
+        },
+      ], new Date().toISOString());
+
+      const report = analyzeCanonCompleteness(canon);
+      expect(report.dimensions.themes.score).toBe(9);
+    });
+  });
 });
+
+async function applySingleProposal(input: {
+  field: string;
+  operation: "add" | "update" | "append";
+  value: unknown;
+}) {
+  const session = createSessionWithHistory();
+  const run = baseRun({
+    proposals: [
+      {
+        proposalId: "proposal-single",
+        runId: "run-1",
+        field: input.field,
+        operation: input.operation,
+        value: input.value,
+        rationale: "Test proposal",
+        confidence: 0.9,
+        status: "pending",
+      },
+    ],
+  });
+
+  return applyProposals(session, run, buildCanon(), ["proposal-single"]);
+}
 
 function createSessionWithHistory(): IterationSession {
   const session = createIterationSession({ projectSlug: "signal-harbor", mode: "autonomous", maxRuns: 5 });
