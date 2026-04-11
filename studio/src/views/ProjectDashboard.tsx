@@ -79,9 +79,9 @@ export function ProjectDashboard({ projects, status, setStatus, onOpen, onContin
           <section className="card card--glow interview-banner dashboard-banner">
             <div>
               <div className="dashboard-banner__title">◈ NEW PROJECT? START WITH AN INTERVIEW</div>
-              <p>Answer ~15 questions. Walk away with a full package.</p>
+              <p>Start from onboarding, then choose interview, quick AI draft, or blank canon.</p>
             </div>
-            <button className="btn btn--primary" onClick={onStartInterview}>Begin Interview →</button>
+            <button className="btn btn--primary" onClick={onStartInterview}>+ New Project</button>
           </section>
 
           <section className="dashboard-grid">

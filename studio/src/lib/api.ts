@@ -282,8 +282,8 @@ export const api = {
     const response = await fetchJson("/api/interview/turn", { method: "POST", body: JSON.stringify({ sessionId, message }) });
     return response.data as InterviewTurnResponse;
   },
-  completeInterview: async (sessionId: string, onEvent: (event: string, data: unknown) => void) => {
-    const result = await streamJson("/api/interview/complete", { sessionId }, (event) => onEvent(event.event, event.data));
+  completeInterview: async (sessionId: string, opts: { title?: string } | undefined, onEvent: (event: string, data: unknown) => void) => {
+    const result = await streamJson("/api/interview/complete", { sessionId, ...(opts ?? {}) }, (event) => onEvent(event.event, event.data));
     return result;
   },
   siteUrl: (slug: string, filePath = "index.html") => `/api/projects/${slug}/site/${encodePath(filePath)}`,

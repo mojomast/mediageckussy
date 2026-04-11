@@ -6,15 +6,22 @@ import { CanonEditor } from "./views/CanonEditor";
 import { InterviewView } from "./views/InterviewView";
 import { IterationView } from "./views/IterationView";
 import { PackagePreview } from "./views/PackagePreview";
+import { OnboardingView } from "./views/OnboardingView";
 import { ProjectDashboard } from "./views/ProjectDashboard";
 import { ValidationOps } from "./views/ValidationOps";
 
 type Tab = Exclude<WorkspaceTab, "Interview">;
-type View = { kind: "workspace"; tab: Tab } | { kind: "interview" };
+type View = { kind: "workspace"; tab: Tab } | { kind: "interview" } | { kind: "onboarding" };
 type IterationPrefill = {
   slug: string;
   directive: IterationDirective;
   nonce: number;
+};
+
+type InterviewDraft = {
+  title?: string;
+  provider?: string;
+  model?: string;
 };
 
 export function App() {
@@ -25,11 +32,13 @@ export function App() {
   const [status, setStatus] = useState("Ready to create or continue a hosted demo project.");
   const [projectSettings, setProjectSettings] = useState<{ llmProvider: string; llmModel: string } | null>(null);
   const [iterationPrefill, setIterationPrefill] = useState<IterationPrefill | null>(null);
+  const [interviewDraft, setInterviewDraft] = useState<InterviewDraft | null>(null);
 
   const tab = view.kind === "workspace" ? view.tab : "Dashboard";
   const inInterview = view.kind === "interview";
+  const inOnboarding = view.kind === "onboarding";
   const selectedProject = selectedSlug ? projects.find((project) => project.slug === selectedSlug) : null;
-  const shellProjectTitle = selectedProject?.title ?? (inInterview ? "NEW PROJECT INITIALIZATION" : "NO PROJECT LOADED");
+  const shellProjectTitle = selectedProject?.title ?? (inInterview ? "NEW PROJECT INITIALIZATION" : inOnboarding ? "NEW PROJECT" : "NO PROJECT LOADED");
 
   async function refreshProjects() {
     const [projectResponse, optionsResponse] = await Promise.all([
@@ -39,6 +48,9 @@ export function App() {
     const nextProjects = projectResponse.data ?? [];
     setProjects(nextProjects);
     setOptions(optionsResponse.data ?? null);
+    if (nextProjects.length === 0 && view.kind !== "interview") {
+      setView({ kind: "onboarding" });
+    }
     if (!selectedSlug && nextProjects[0]?.slug) {
       setSelectedSlug(nextProjects[0].slug);
       setProjectSettings(nextProjects[0].settings ?? null);
@@ -75,6 +87,10 @@ export function App() {
   useEffect(() => {
     if (view.kind === "interview") {
       document.title = "Interview | Mediageckussy Studio";
+      return;
+    }
+    if (view.kind === "onboarding") {
+      document.title = "Onboarding | Mediageckussy Studio";
       return;
     }
 
@@ -115,8 +131,8 @@ export function App() {
         setStatus={setStatus}
         onProjectsChange={refreshProjects}
         onStartInterview={() => {
-          setView({ kind: "interview" });
-          setStatus("Interview mode.");
+          setView({ kind: "onboarding" });
+          setStatus("Project onboarding.");
         }}
         onOpen={(slug) => {
           setSelectedSlug(slug);
@@ -142,7 +158,28 @@ export function App() {
         }}
       />}
 
-      {inInterview && <InterviewView options={options} onProjectReady={(slug) => {
+      {inOnboarding && <OnboardingView
+        options={options}
+        projects={projects}
+        setStatus={setStatus}
+        onProjectCreated={(slug) => {
+          setSelectedSlug(slug);
+          setView({ kind: "workspace", tab: "Canon" });
+          void refreshProjects();
+        }}
+        onOpenProject={(slug) => {
+          setSelectedSlug(slug);
+          setView({ kind: "workspace", tab: "Canon" });
+          setStatus(`Opened ${slug}.`);
+        }}
+        onStartInterview={(draft) => {
+          setInterviewDraft(draft);
+          setView({ kind: "interview" });
+          setStatus("Interview mode.");
+        }}
+      />}
+
+      {inInterview && <InterviewView options={options} initialTitle={interviewDraft?.title} initialProvider={interviewDraft?.provider} initialModel={interviewDraft?.model} onProjectReady={(slug) => {
         setSelectedSlug(slug);
         setStatus(`Project ${slug} generated.`);
         void refreshProjects();
@@ -195,6 +232,9 @@ function resolveSlugFromPath() {
 function resolvePath(view: View, slug: string | null) {
   if (view.kind === "interview") {
     return "/interview";
+  }
+  if (view.kind === "onboarding") {
+    return "/";
   }
 
   if (!slug || view.tab === "Dashboard") {

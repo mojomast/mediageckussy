@@ -7,6 +7,9 @@ type Props = {
   options: StudioOptions | null;
   onProjectReady: (slug: string) => void;
   onOpenProject: (slug: string) => void;
+  initialTitle?: string;
+  initialProvider?: string;
+  initialModel?: string;
 };
 
 type BuildState = {
@@ -21,9 +24,9 @@ const SESSION_STORAGE_KEY = "studio-interview-session-id";
 
 const PHASE_LABELS = ["FORMAT", "WORLD", "CHARACTERS", "THEMES"];
 
-export function InterviewView({ options, onProjectReady, onOpenProject }: Props) {
-  const [provider, setProvider] = useState<string>(options?.providers.find((item) => item.available)?.id ?? "openrouter");
-  const [model, setModel] = useState<string>(options?.providers.find((item) => item.available)?.model ?? "google/gemini-2.5-flash-lite");
+export function InterviewView({ options, onProjectReady, onOpenProject, initialTitle, initialProvider, initialModel }: Props) {
+  const [provider, setProvider] = useState<string>(initialProvider ?? options?.providers.find((item) => item.available)?.id ?? "openrouter");
+  const [model, setModel] = useState<string>(initialModel ?? options?.providers.find((item) => item.available)?.model ?? "google/gemini-2.5-flash-lite");
   const [sessionId, setSessionId] = useState<string | null>(() => window.localStorage.getItem(SESSION_STORAGE_KEY));
   const [phase, setPhase] = useState<number | "complete">(1);
   const [totalQuestions, setTotalQuestions] = useState(15);
@@ -56,12 +59,12 @@ export function InterviewView({ options, onProjectReady, onOpenProject }: Props)
   }, [sessionId]);
 
   useEffect(() => {
-    const available = options?.providers.find((item) => item.available);
-    if (available) {
-      setProvider((current) => current === "openrouter" ? available.id : current);
-      setModel((current) => current === "google/gemini-2.5-flash-lite" ? available.model : current);
-    }
-  }, [options]);
+        const available = options?.providers.find((item) => item.available);
+        if (available) {
+      setProvider((current) => initialProvider ?? (current === "openrouter" ? available.id : current));
+      setModel((current) => initialModel ?? (current === "google/gemini-2.5-flash-lite" ? available.model : current));
+        }
+  }, [initialModel, initialProvider, options]);
 
   useEffect(() => {
     transcriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -132,7 +135,7 @@ export function InterviewView({ options, onProjectReady, onOpenProject }: Props)
     setBuildState({});
     setError(null);
 
-    await api.completeInterview(activeSessionId, (event, data) => {
+      await api.completeInterview(activeSessionId, { title: initialTitle }, (event, data) => {
       if (event === "progress" && typeof data === "object" && data) {
         setBuildState((current) => ({ ...current, ...(data as Record<string, unknown>) }));
       }

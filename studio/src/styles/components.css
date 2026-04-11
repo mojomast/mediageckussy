@@ -595,6 +595,42 @@ textarea::placeholder {
   text-transform: uppercase;
 }
 
+.onboarding-layout,
+.onboarding-panel,
+.onboarding-provider-row,
+.onboarding-media-grid,
+.onboarding-mode-grid,
+.onboarding-card,
+.onboarding-hero {
+  display: grid;
+}
+
+.onboarding-layout,
+.onboarding-panel,
+.onboarding-hero {
+  gap: var(--space-4);
+}
+
+.onboarding-provider-row {
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: var(--space-3);
+}
+
+.onboarding-card {
+  gap: var(--space-2);
+  text-align: left;
+  border-color: var(--color-border);
+}
+
+.onboarding-card span {
+  color: var(--color-text-dim);
+}
+
+.onboarding-card--active {
+  border-color: var(--color-phosphor-mid);
+  box-shadow: var(--glow-phosphor-sm), var(--shadow-card);
+}
+
 .project-dossier {
   transition: border-color var(--duration-normal) var(--ease-smooth),
     box-shadow var(--duration-normal) var(--ease-smooth),
