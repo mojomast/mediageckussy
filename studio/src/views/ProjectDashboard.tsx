@@ -1,14 +1,42 @@
-import type { ProjectSummary } from "../lib/api";
+import { useEffect, useState } from "react";
+import { api, type IterationSession, type ProjectSummary } from "../lib/api";
 
 type Props = {
   projects: ProjectSummary[];
   status: string;
   onOpen: (slug: string) => void;
+  onContinueIterating: (slug: string) => void;
   onStartInterview: () => void;
 };
 
-export function ProjectDashboard({ projects, status, onOpen, onStartInterview }: Props) {
+export function ProjectDashboard({ projects, status, onOpen, onContinueIterating, onStartInterview }: Props) {
   const hasProjects = projects.length > 0;
+  const [iterationMeta, setIterationMeta] = useState<Record<string, { label: string; hasSession: boolean }>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    if (projects.length === 0) {
+      setIterationMeta({});
+      return;
+    }
+
+    void Promise.all(projects.map(async (project) => {
+      try {
+        const sessions = await api.listIterationSessions(project.slug);
+        return [project.slug, summarizeLatestSession(sessions)] as const;
+      } catch {
+        return [project.slug, { label: "LAST ITERATION: NONE", hasSession: false }] as const;
+      }
+    })).then((entries) => {
+      if (!cancelled) {
+        setIterationMeta(Object.fromEntries(entries));
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projects]);
 
   return (
     <main className="dashboard-layout">
@@ -80,8 +108,10 @@ export function ProjectDashboard({ projects, status, onOpen, onStartInterview }:
                       </div>
                       <span>{project.validation.completenessScore}% complete</span>
                     </div>
+                    <p className="project-dossier__meta">{iterationMeta[project.slug]?.label ?? "LAST ITERATION: LOADING..."}</p>
                     <div className="row gap wrap project-dossier__actions">
                       <button className="btn btn--ghost" onClick={() => onOpen(project.slug)}>Open →</button>
+                      <button className="btn btn--ghost" onClick={() => onContinueIterating(project.slug)}>◈ Continue Iterating</button>
                       <a className="btn btn--ghost" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
                     </div>
                   </div>
@@ -111,4 +141,17 @@ function formatGeneratedAt(value: string) {
 
 function formatLabel(mediaType: string) {
   return mediaType.replace(/_/g, " ").toUpperCase();
+}
+
+function summarizeLatestSession(sessions: IterationSession[]) {
+  const latest = sessions[0];
+  if (!latest) {
+    return { label: "LAST ITERATION: NONE", hasSession: false };
+  }
+
+  const acceptedCount = latest.runs.reduce((count, run) => count + run.proposals.filter((proposal) => proposal.status === "accepted").length, 0);
+  return {
+    label: `LAST ITERATION: ${formatGeneratedAt(latest.startedAt)} // ${latest.completedRuns} runs // ${acceptedCount} proposals accepted`,
+    hasSession: true,
+  };
 }

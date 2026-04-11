@@ -12,6 +12,12 @@ type CanonOption = { id: string; label: string };
 
 type CanonState = {
   canon: {
+    title?: { value: string };
+    format?: { value: string };
+    tone?: { value: string[] };
+    logline?: { value: string };
+    themes?: { value: unknown[] };
+    world_setting?: { value: string };
     characters?: { value: Array<{ id: string; name: string }> };
     episodes?: { value: Array<{ code: string; title: string }> };
   };
@@ -39,6 +45,9 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
   const [canon, setCanon] = useState<CanonState | null>(null);
   const [sessions, setSessions] = useState<IterationSession[]>([]);
   const [session, setSession] = useState<IterationSession | null>(null);
+  const [viewMode, setViewMode] = useState<"current" | "history">("current");
+  const [selectedHistorySessionId, setSelectedHistorySessionId] = useState<string | null>(null);
+  const [showDiff, setShowDiff] = useState(false);
   const [directiveType, setDirectiveType] = useState<IterationDirectiveType>("new_character");
   const [instruction, setInstruction] = useState("Add a morally ambiguous government handler who can pressure the existing command structure.");
   const [targetId, setTargetId] = useState("");
@@ -66,6 +75,8 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
   const pausedRun = session?.status === "paused" ? session.runs[session.runs.length - 1] ?? null : null;
   const isActive = Boolean(session && ["running", "paused", "error"].includes(session.status));
   const isReview = Boolean(pausedRun && session?.status === "paused");
+  const selectedHistorySession = useMemo(() => sessions.find((entry) => entry.sessionId === selectedHistorySessionId) ?? sessions[0] ?? null, [selectedHistorySessionId, sessions]);
+  const canonDiff = useMemo(() => selectedHistorySession && canon ? buildCanonDiff(selectedHistorySession, canon) : [], [canon, selectedHistorySession]);
 
   useEffect(() => {
     setProvider(projectSettings?.llmProvider ?? "openrouter");
@@ -89,7 +100,102 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
 
   return (
     <div className="iteration-shell">
-      {!isActive && (
+      <div className="row gap wrap iteration-view-toggle">
+        <button className={`btn ${viewMode === "current" ? "btn--primary" : "btn--ghost"}`} onClick={() => setViewMode("current")}>Current</button>
+        <button className={`btn ${viewMode === "history" ? "btn--primary" : "btn--ghost"}`} onClick={() => setViewMode("history")}>History</button>
+      </div>
+
+      {viewMode === "history" && selectedHistorySession ? (
+        <div className="three-column hosted-grid iteration-history-layout">
+          <aside className="panel sidebar">
+            <div className="section-label">Iteration Sessions</div>
+            {sessions.map((entry, index) => (
+              <button key={entry.sessionId} className={`field-button ${selectedHistorySession.sessionId === entry.sessionId ? "selected" : ""}`} onClick={() => setSelectedHistorySessionId(entry.sessionId)}>
+                <span className="status-dot approved"></span>
+                <span>
+                  ◈ Session {sessions.length - index}
+                  <br />
+                  {formatDateOnly(entry.startedAt)} // {entry.completedRuns} runs // {entry.status}
+                </span>
+              </button>
+            ))}
+          </aside>
+
+          <section className="dossier iteration-panel card--glow iteration-history-main">
+            <div className="dossier__header">
+              <span>Session Detail</span>
+              <span>{selectedHistorySession.completedRuns} runs // {countAcceptedProposals(selectedHistorySession)} accepted // {selectedHistorySession.status}</span>
+            </div>
+            <div className="dossier__body iteration-panel__body">
+              <div className="row between wrap">
+                <div>
+                  <div className="section-label">Session {selectedHistorySession.sessionId}</div>
+                  <p>{formatDateOnly(selectedHistorySession.startedAt)} // Mode: {selectedHistorySession.mode}</p>
+                </div>
+                <div className="row gap wrap">
+                  {selectedHistorySession.status !== "complete" && selectedHistorySession.status !== "stopped" && (
+                    <button className="btn btn--ghost" onClick={() => {
+                      setSession(selectedHistorySession);
+                      setViewMode("current");
+                    }}>◈ Continue This Session</button>
+                  )}
+                  <button className="btn btn--ghost" onClick={() => {
+                    setViewMode("current");
+                    setSession(null);
+                  }}>⟳ Start New Session</button>
+                </div>
+              </div>
+
+              <div className="iteration-run-list">
+                {selectedHistorySession.runs.map((run) => (
+                  <article key={run.runId} className="dossier iteration-run-card">
+                    <button type="button" className="iteration-run-card__toggle" onClick={() => setSelectedRunId((current) => current === run.runId ? null : run.runId)}>
+                      <span>◈ RUN {run.runNumber} {run.directive.type.toUpperCase()} {formatConfidence(run.confidence)}</span>
+                      <span>{run.summary ?? "No summary"}</span>
+                    </button>
+                    {selectedRunId === run.runId && (
+                      <div className="dossier__body iteration-run-card__body">
+                        {run.proposals.map((proposal) => (
+                          <div key={proposal.proposalId} className="iteration-history-proposal-row">
+                            <span>{proposal.field} {proposal.operation.toUpperCase()}</span>
+                            <span>{proposal.status === "accepted" ? "✓ ACCEPTED" : proposal.status.toUpperCase()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <aside className="panel iteration-diff-panel">
+            <div className="row between wrap">
+              <div className="section-label">Canon Changes</div>
+              <button className="btn btn--ghost" onClick={() => setShowDiff((current) => !current)}>{showDiff ? "Hide Diff" : "Show Diff"}</button>
+            </div>
+            {showDiff && (
+              <div className="iteration-diff-list">
+                {canonDiff.length === 0 && <p className="muted">No field-level changes detected against the current canon.</p>}
+                {canonDiff.map((entry) => (
+                  <article key={entry.field} className="dossier iteration-diff-card">
+                    <div className="dossier__header">
+                      <span>{entry.field}</span>
+                      <span>{entry.kind}</span>
+                    </div>
+                    <div className="dossier__body iteration-proposal-card__body">
+                      <p>Before: {entry.before}</p>
+                      <p>After: {entry.after}</p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </aside>
+        </div>
+      ) : null}
+
+      {viewMode === "current" && !isActive && (
         <section className="dossier iteration-panel card--glow">
           <div className="dossier__header">
             <span>Canon Iteration Engine</span>
@@ -161,7 +267,7 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
         </section>
       )}
 
-      {session && !isReview && isActive && (
+      {viewMode === "current" && session && !isReview && isActive && (
         <section className="dossier iteration-panel card--glow">
           <div className="dossier__header">
             <span>Iteration Loop</span>
@@ -233,7 +339,7 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
         </section>
       )}
 
-      {session && pausedRun && isReview && (
+      {viewMode === "current" && session && pausedRun && isReview && (
         <section className="dossier iteration-panel card--amber">
           <div className="dossier__header">
             <span>Awaiting Review</span>
@@ -313,6 +419,7 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
     setCanon(canonResponse.data as CanonState);
     setSessions(nextSessions);
     setSession(nextSessions[0] ?? null);
+    setSelectedHistorySessionId((current) => current ?? nextSessions[0]?.sessionId ?? null);
     setQueuedSteering(nextSessions[0]?.pendingSteeringNote ?? "");
   }
 
@@ -452,6 +559,79 @@ export function IterationView({ slug, projectSettings, setStatus }: Props) {
       targetId: overrideTargetId || undefined,
     };
   }
+}
+
+function buildCanonDiff(session: IterationSession, canon: CanonState) {
+  const baseline = session.runs[0]?.canonSnapshot as Record<string, unknown> | undefined;
+  if (!baseline) {
+    return [] as Array<{ field: string; before: string; after: string; kind: string }>;
+  }
+
+  const current = {
+    title: canon.canon.title?.value,
+    format: canon.canon.format?.value,
+    tone: canon.canon.tone?.value ?? [],
+    logline: canon.canon.logline?.value,
+    themes: canon.canon.themes?.value ?? [],
+    world_setting: canon.canon.world_setting?.value,
+    characters: canon.canon.characters?.value ?? [],
+    episodes: canon.canon.episodes?.value ?? [],
+  };
+
+  const diffs: Array<{ field: string; before: string; after: string; kind: string }> = [];
+
+  if (JSON.stringify(baseline.characters) !== JSON.stringify(current.characters)) {
+    diffs.push({
+      field: "canon.characters",
+      before: summarizeNamedArray((baseline.characters as Array<{ name?: string }> | undefined) ?? [], "name"),
+      after: summarizeNamedArray(current.characters, "name"),
+      kind: "Changed",
+    });
+  }
+
+  if (JSON.stringify(baseline.episodes) !== JSON.stringify(current.episodes)) {
+    diffs.push({
+      field: "canon.episodes",
+      before: summarizeNamedArray((baseline.episodes as Array<{ code?: string }> | undefined) ?? [], "code"),
+      after: summarizeNamedArray(current.episodes, "code"),
+      kind: "Changed",
+    });
+  }
+
+  const scalarFields: Array<keyof typeof current> = ["title", "format", "logline", "tone", "themes", "world_setting"];
+  for (const field of scalarFields) {
+    if (JSON.stringify(baseline[field]) !== JSON.stringify(current[field])) {
+      diffs.push({
+        field: `canon.${field}`,
+        before: summarizeValue(baseline[field]),
+        after: summarizeValue(current[field]),
+        kind: Array.isArray(current[field]) ? "Changed Array" : "Changed",
+      });
+    }
+  }
+
+  return diffs;
+}
+
+function summarizeNamedArray(items: Array<Record<string, unknown>>, key: "name" | "code") {
+  return `[${items.map((item) => String(item[key] ?? item.id ?? "?")).join(", ")}]`;
+}
+
+function summarizeValue(value: unknown) {
+  if (typeof value === "string") {
+    return value;
+  }
+  return JSON.stringify(value);
+}
+
+function countAcceptedProposals(session: IterationSession) {
+  return session.runs.reduce((count, run) => count + run.proposals.filter((proposal) => proposal.status === "accepted").length, 0);
+}
+
+function formatDateOnly(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toISOString().slice(0, 10);
 }
 
 function buildRunCards(session: IterationSession) {

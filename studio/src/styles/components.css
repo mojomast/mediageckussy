@@ -978,6 +978,35 @@ textarea {
   gap: var(--space-3);
 }
 
+.iteration-view-toggle,
+.iteration-history-layout,
+.iteration-diff-list {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.iteration-history-main,
+.iteration-diff-panel {
+  min-height: 100%;
+}
+
+.iteration-history-proposal-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--color-border-dim);
+  font-size: var(--text-sm);
+}
+
+.iteration-history-proposal-row:last-child {
+  border-bottom: 0;
+}
+
+.iteration-diff-card {
+  background: var(--color-surface);
+}
+
 @keyframes iteration-sweep {
   0% {
     transform: translateX(-100%);

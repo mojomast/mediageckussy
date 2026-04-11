@@ -115,6 +115,11 @@ export function App() {
           setView({ kind: "workspace", tab: "Canon" });
           setStatus(`Opened ${slug}.`);
         }}
+        onContinueIterating={(slug) => {
+          setSelectedSlug(slug);
+          setView({ kind: "workspace", tab: "Iterate" });
+          setStatus(`Opened iteration workspace for ${slug}.`);
+        }}
       />}
 
       {inInterview && <InterviewView options={options} onProjectReady={(slug) => {
