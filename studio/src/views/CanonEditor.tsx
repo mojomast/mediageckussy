@@ -24,6 +24,13 @@ type Suggestion = {
   status: string;
 };
 
+type HydrationState = {
+  mode: "field" | "panel";
+  field: string;
+  step: string;
+  progress: number;
+};
+
 type Props = {
   slug: string;
   projectSettings: { llmProvider: string; llmModel: string } | null;
@@ -37,6 +44,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selectedField, setSelectedField] = useState<string>("title");
   const [promptHint, setPromptHint] = useState("Tighten the idea while keeping the current tone and format constraints.");
+  const [hydrationState, setHydrationState] = useState<HydrationState | null>(null);
 
   async function loadState() {
     const [canonResponse, suggestionResponse] = await Promise.all([
@@ -56,6 +64,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
     () => suggestions.find((item) => item.field === `canon.${selectedField}`),
     [selectedField, suggestions],
   );
+  const isHydratingSelectedField = hydrationState?.field === selectedField;
 
   if (!canon || !field) return <div className="panel">Loading canon...</div>;
 
@@ -108,21 +117,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
                 setStatus("Canon saved.");
               }}>Edit</button>
               <button className="btn btn--ghost" disabled={field.status === "locked"}>Lock</button>
-              <button className="btn btn--ghost" onClick={async () => {
-                setStatus(`Hydrating canon.${selectedField}...`);
-                await api.runHydrate(slug, {
-                  field: `canon.${selectedField}`,
-                  provider: projectSettings?.llmProvider,
-                  model: projectSettings?.llmModel,
-                  promptHint,
-                  force: true,
-                }, async (event) => {
-                  if (event.event === "done") {
-                    await loadState();
-                    setStatus(`Suggestion ready for canon.${selectedField}.`);
-                  }
-                });
-              }}>AI Fill ◈</button>
+              <button className="btn btn--ghost" disabled={isHydratingSelectedField} onClick={() => void hydrateSelectedField("field")}>AI Fill ◈</button>
               <button className="btn btn--primary" onClick={async () => {
                 setStatus("Regenerating package...");
                 await api.runGenerate(slug, {}, (event) => {
@@ -132,6 +127,22 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
                 });
               }}>Regenerate Package</button>
             </div>
+            {isHydratingSelectedField && hydrationState && (
+              <div className="dossier hydration-status-card">
+                <div className="dossier__header">
+                  <span>INFERENCE ACTIVE</span>
+                  <span>{hydrationState.progress}%</span>
+                </div>
+                <div className="dossier__body hydration-status-card__body">
+                  <div className="section-label">canon.{selectedField}</div>
+                  <div className="progress-bar" aria-label="Hydration progress">
+                    <div className="progress-bar__fill" style={{ width: `${hydrationState.progress}%` }} />
+                  </div>
+                  <p>{hydrationState.step}</p>
+                  <div className="typing-dots" aria-label="Inference in progress"><span></span><span></span><span></span></div>
+                </div>
+              </div>
+            )}
             <p className="status-inline">{status}</p>
           </div>
         </article>
@@ -158,22 +169,21 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
             await api.updateSettings(slug, projectSettings);
             setStatus("Inference settings saved.");
           }}>Save Settings</button>
-          <button className="btn btn--ghost" onClick={async () => {
-            setStatus(`Hydrating canon.${selectedField}...`);
-            await api.runHydrate(slug, {
-              field: `canon.${selectedField}`,
-              provider: projectSettings?.llmProvider,
-              model: projectSettings?.llmModel,
-              promptHint,
-              force: true,
-            }, async (event) => {
-              if (event.event === "done") {
-                await loadState();
-                setStatus(`Suggestion ready for canon.${selectedField}.`);
-              }
-            });
-          }}>Suggest</button>
+          <button className="btn btn--ghost" disabled={isHydratingSelectedField} onClick={() => void hydrateSelectedField("panel")}>Suggest</button>
         </div>
+
+        {isHydratingSelectedField && hydrationState && (
+          <div className="hydration-inline-status">
+            <div className="row between wrap">
+              <span className="section-label">Inference Pipeline</span>
+              <span>{hydrationState.progress}%</span>
+            </div>
+            <div className="progress-bar" aria-label="Inference pipeline progress">
+              <div className="progress-bar__fill" style={{ width: `${hydrationState.progress}%` }} />
+            </div>
+            <p className="muted">{hydrationState.step}</p>
+          </div>
+        )}
 
         {selectedSuggestion ? (
           <article className="dossier suggestion-card suggestion-card--amber">
@@ -184,27 +194,17 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
             <div className="dossier__body suggestion-card__body">
               <pre>{selectedSuggestion.value}</pre>
               <div className="row gap wrap">
-                <button className="btn btn--primary" onClick={async () => {
-                  if (typeof field.value === "string") {
-                    setCanon({ ...canon, canon: { ...canon.canon, [selectedField]: { ...field, value: selectedSuggestion.value } } });
-                  }
-                  await api.acceptSuggestion(slug, selectedSuggestion.field);
-                  await loadState();
-                  setStatus(`Accepted ${selectedSuggestion.field}.`);
-                }}>Accept</button>
+                <button className="btn btn--primary" onClick={() => void handleAcceptSuggestion(selectedSuggestion.field, false)}>Accept</button>
                 <button className="btn btn--danger" onClick={async () => {
-                  await api.rejectSuggestion(slug, selectedSuggestion.field);
-                  await loadState();
-                  setStatus(`Rejected ${selectedSuggestion.field}.`);
-                }}>Reject</button>
-                <button className="btn btn--ghost" onClick={async () => {
-                  if (typeof field.value === "string") {
-                    setCanon({ ...canon, canon: { ...canon.canon, [selectedField]: { ...field, value: selectedSuggestion.value } } });
+                  try {
+                    await api.rejectSuggestion(slug, selectedSuggestion.field);
+                    await loadState();
+                    setStatus(`Rejected ${selectedSuggestion.field}.`);
+                  } catch (error) {
+                    setStatus(error instanceof Error ? error.message : "Reject failed.");
                   }
-                  await api.acceptSuggestion(slug, selectedSuggestion.field);
-                  await loadState();
-                  setStatus(`Accepted edited suggestion for ${selectedSuggestion.field}.`);
-                }}>Edit &amp; Accept</button>
+                }}>Reject</button>
+                <button className="btn btn--ghost" onClick={() => void handleAcceptSuggestion(selectedSuggestion.field, true)}>Edit &amp; Accept</button>
               </div>
             </div>
           </article>
@@ -214,6 +214,93 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
       </aside>
     </div>
   );
+
+  async function hydrateSelectedField(mode: "field" | "panel") {
+    setHydrationState({
+      mode,
+      field: selectedField,
+      step: `Preparing canon.${selectedField} prompt package...`,
+      progress: 15,
+    });
+    setStatus(`Hydrating canon.${selectedField}...`);
+
+    try {
+      await api.runHydrate(slug, {
+        field: `canon.${selectedField}`,
+        provider: projectSettings?.llmProvider,
+        model: projectSettings?.llmModel,
+        promptHint,
+        force: true,
+      }, async (event) => {
+        if (event.event === "started") {
+          setHydrationState({
+            mode,
+            field: selectedField,
+            step: `Submitting canon.${selectedField} to ${projectSettings?.llmProvider ?? "provider"}...`,
+            progress: 45,
+          });
+          return;
+        }
+
+        if (event.event === "done") {
+          setHydrationState({
+            mode,
+            field: selectedField,
+            step: `Suggestion received for canon.${selectedField}. Updating review panel...`,
+            progress: 100,
+          });
+          await loadState();
+          setStatus(`Suggestion ready for canon.${selectedField}.`);
+          setTimeout(() => setHydrationState((current) => current?.field === selectedField ? null : current), 600);
+        }
+
+        if (event.event === "error") {
+          const message = typeof event.data === "object" && event.data && "message" in (event.data as Record<string, unknown>)
+            ? String((event.data as { message?: unknown }).message ?? "Hydration failed.")
+            : "Hydration failed.";
+          setHydrationState({
+            mode,
+            field: selectedField,
+            step: message,
+            progress: 100,
+          });
+          setStatus(message);
+        }
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Hydration failed.";
+      setHydrationState({
+        mode,
+        field: selectedField,
+        step: message,
+        progress: 100,
+      });
+      setStatus(message);
+    }
+  }
+
+  async function handleAcceptSuggestion(fieldPath: string, preserveEditorValue: boolean) {
+    try {
+      if (preserveEditorValue && canon && field && typeof field.value === "string") {
+        await api.saveCanon(slug, {
+          ...canon,
+          canon: {
+            ...canon.canon,
+            [selectedField]: {
+              ...field,
+              value: field.value,
+            },
+          },
+        });
+      }
+
+      await api.acceptSuggestion(slug, fieldPath);
+      await loadState();
+      setStatus(`${preserveEditorValue ? "Accepted edited suggestion for" : "Accepted"} ${fieldPath}.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Accept failed.");
+    }
+  }
 }
 
 function formatConfidence(value: number | undefined) {

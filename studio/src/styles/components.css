@@ -233,11 +233,11 @@ textarea::placeholder {
 }
 
 .bubble {
-  max-width: 76%;
-  padding: var(--space-3) var(--space-4);
+  max-width: var(--interview-bubble-width);
+  padding: var(--interview-bubble-padding-y) var(--interview-bubble-padding-x);
   animation: terminal-in var(--duration-slow) var(--ease-smooth);
   line-height: var(--leading-normal);
-  font-size: var(--text-base);
+  font-size: var(--text-md);
 }
 
 .bubble--interviewer {
@@ -865,6 +865,17 @@ textarea {
   gap: var(--space-4);
 }
 
+.hydration-status-card {
+  border-color: var(--color-phosphor-dim);
+  box-shadow: var(--glow-phosphor-sm), var(--shadow-card);
+}
+
+.hydration-status-card__body,
+.hydration-inline-status {
+  display: grid;
+  gap: var(--space-3);
+}
+
 .suggestion-card pre,
 .card pre {
   white-space: pre-wrap;
@@ -883,19 +894,22 @@ textarea {
   min-height: calc(100vh - var(--header-height));
   display: grid;
   grid-template-rows: auto 1fr auto;
+  font-size: calc(var(--text-base) * var(--interview-font-scale));
 }
 
 .interview-header {
   position: sticky;
   top: var(--header-height);
   z-index: 5;
-  padding: var(--space-4);
+  width: min(100%, var(--interview-width));
+  margin: 0 auto;
+  padding: var(--interview-header-padding) var(--space-3);
   background: var(--color-backdrop);
   border-bottom: var(--border-width) solid var(--color-border);
 }
 
 .interview-header__eyebrow {
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
   color: var(--color-text-dim);
   font-size: var(--text-xs);
   letter-spacing: var(--tracking-widest);
@@ -906,18 +920,42 @@ textarea {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--space-4);
+  gap: var(--interview-density-gap);
+}
+
+.interview-header__controls {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.interview-font-control {
+  display: grid;
+  gap: var(--space-1);
+  min-width: var(--interview-control-width);
+}
+
+.interview-font-control span {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.interview-font-control input {
+  padding: 0;
 }
 
 .interview-header__phase {
   color: var(--color-text);
   text-transform: uppercase;
   letter-spacing: var(--tracking-wide);
+  font-size: var(--text-sm);
 }
 
 .interview-header__labels {
   color: var(--color-text-dim);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
@@ -937,15 +975,15 @@ textarea {
 .interview-phase-bar {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: var(--space-2);
-  margin-top: var(--space-3);
+  gap: var(--space-1);
+  margin-top: var(--space-2);
 }
 
 .phase-segment {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-1) var(--space-2);
   background: var(--color-surface-2);
   border: var(--border-width) solid var(--color-border);
   color: var(--color-text-dim);
@@ -967,23 +1005,25 @@ textarea {
 }
 
 .interview-progress {
-  margin-top: var(--space-3);
+  margin-top: var(--space-2);
 }
 
 .interview-transcript {
-  padding: var(--space-4);
+  width: min(100%, var(--interview-width));
+  margin: 0 auto;
+  padding: var(--space-2) var(--space-3);
   overflow: auto;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--interview-density-gap);
 }
 
 .welcome-dossier {
-  max-width: var(--card-max-width);
+  max-width: 100%;
 }
 
 .welcome-dossier__body {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .welcome-dossier__provider {
@@ -1005,7 +1045,7 @@ textarea {
 
 .transcript-entry {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .transcript-entry--interviewer,
@@ -1019,7 +1059,7 @@ textarea {
 
 .transcript-entry__label {
   color: var(--color-text-dim);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
 }
@@ -1033,7 +1073,7 @@ textarea {
 .welcome-card,
 .completion-card {
   max-width: var(--card-max-width);
-  padding: var(--space-6);
+  padding: var(--interview-panel-padding);
   background: var(--color-panel);
   border: var(--border-width) solid var(--color-border);
   box-shadow: var(--shadow-card);
@@ -1068,7 +1108,7 @@ textarea {
 .typing-indicator {
   display: inline-flex;
   gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--interview-bubble-padding-y) var(--interview-bubble-padding-x);
   background: var(--color-surface-trace);
   width: fit-content;
   border: var(--border-width) solid var(--color-border);
@@ -1079,16 +1119,16 @@ textarea {
   justify-content: space-between;
   align-items: center;
   gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-2) var(--space-3);
 }
 
 .completion-card {
-  max-width: var(--card-max-width);
+  max-width: 100%;
 }
 
 .completion-card__body {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
 }
 
 .completion-card__line {
@@ -1099,12 +1139,14 @@ textarea {
 .interview-footer {
   position: sticky;
   bottom: 0;
-  padding: var(--space-4);
+  padding: var(--space-2) var(--space-3);
   background: var(--color-backdrop-strong);
   border-top: var(--border-width) solid var(--color-border);
 }
 
 .interview-input-row {
+  width: min(100%, var(--interview-width));
+  margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: var(--space-3);
@@ -1161,6 +1203,7 @@ textarea {
 
   .app-shell__header,
   .interview-header__phase-row,
+  .interview-header__controls,
   .interview-banner,
   .asset-toolbar {
     align-items: flex-start;

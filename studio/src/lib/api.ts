@@ -79,7 +79,11 @@ async function fetchJson(url: string, init?: RequestInit) {
       ...(init?.headers ?? {}),
     },
   });
-  return response.json();
+  const payload = await response.json();
+  if (!response.ok || payload?.ok === false) {
+    throw new Error(payload?.error ?? `Request failed: ${response.status}`);
+  }
+  return payload;
 }
 
 async function streamJson(url: string, body: unknown, onEvent?: (event: SSEvent) => void) {

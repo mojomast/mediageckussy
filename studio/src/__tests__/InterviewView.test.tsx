@@ -41,7 +41,7 @@ describe("InterviewView", () => {
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "What kind of project is this?", phase: 1, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "", phase: 1, questionIndex: 0, complete: false });
 
-    render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
 
     expect(await screen.findByText("G.E.C.K. INITIALIZATION SEQUENCE")).toBeTruthy();
     expect(await screen.findByText("What kind of project is this?")).toBeTruthy();
@@ -51,7 +51,7 @@ describe("InterviewView", () => {
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "What kind of project is this?", phase: 1, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "What's your project called?", phase: 1, questionIndex: 1, complete: false });
 
-    render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
@@ -66,7 +66,7 @@ describe("InterviewView", () => {
     let resolveTurn: ((value: { message: string; phase: number; questionIndex: number; complete: boolean }) => void) | undefined;
     apiState.sendInterviewMessage.mockImplementation(() => new Promise((resolve) => { resolveTurn = resolve; }));
 
-    render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
@@ -81,7 +81,7 @@ describe("InterviewView", () => {
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "What kind of project is this?", phase: 1, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "Tell me about the world.", phase: 2, questionIndex: 5, complete: false });
 
-    render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "TV series");
@@ -98,7 +98,7 @@ describe("InterviewView", () => {
       onEvent("done", { slug: "signal-harbor", suggestionCount: 14, completenessScore: 72 });
     });
 
-    render(<InterviewView options={mockOptions()} onOpenProject={() => undefined} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "Found family and identity");
@@ -109,13 +109,14 @@ describe("InterviewView", () => {
 
   test("Open Project link renders with correct slug after done event", async () => {
     const onOpenProject = vi.fn();
+    const onProjectReady = vi.fn();
     apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "Final question", phase: 4, totalQuestions: 15 });
     apiState.sendInterviewMessage.mockResolvedValue({ message: "That gives me a strong foundation.", phase: "complete", questionIndex: 14, complete: true });
     apiState.completeInterview.mockImplementation(async (_sessionId: string, onEvent: (event: string, data: unknown) => void) => {
       onEvent("done", { slug: "signal-harbor", suggestionCount: 14, completenessScore: 72 });
     });
 
-    render(<InterviewView options={mockOptions()} onOpenProject={onOpenProject} />);
+    render(<InterviewView options={mockOptions()} onProjectReady={onProjectReady} onOpenProject={onOpenProject} />);
 
     const input = await screen.findByLabelText("Interview answer");
     await userEvent.type(input, "Found family and identity");
@@ -125,6 +126,24 @@ describe("InterviewView", () => {
     await userEvent.click(button);
 
     expect(onOpenProject).toHaveBeenCalledWith("signal-harbor");
+    expect(onProjectReady).toHaveBeenCalledWith("signal-harbor");
+  });
+
+  test("shows interview build error when completion stream emits error", async () => {
+    apiState.startInterview.mockResolvedValue({ sessionId: "sess-1", message: "Final question", phase: 4, totalQuestions: 15 });
+    apiState.sendInterviewMessage.mockResolvedValue({ message: "That gives me a strong foundation.", phase: "complete", questionIndex: 14, complete: true });
+    apiState.completeInterview.mockImplementation(async (_sessionId: string, onEvent: (event: string, data: unknown) => void) => {
+      onEvent("error", { message: "OpenRouter API key missing." });
+    });
+
+    render(<InterviewView options={mockOptions()} onProjectReady={() => undefined} onOpenProject={() => undefined} />);
+
+    const input = await screen.findByLabelText("Interview answer");
+    await userEvent.type(input, "Found family and identity");
+    await userEvent.click(screen.getByRole("button", { name: "Transmit →" }));
+
+    expect((await screen.findAllByText("OpenRouter API key missing.")).length).toBeGreaterThan(0);
+    expect(await screen.findByRole("button", { name: "Retry Build" })).toBeTruthy();
   });
 });
 

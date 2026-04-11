@@ -114,7 +114,11 @@ export function App() {
         }}
       />}
 
-      {inInterview && <InterviewView options={options} onOpenProject={(slug) => {
+      {inInterview && <InterviewView options={options} onProjectReady={(slug) => {
+        setSelectedSlug(slug);
+        setStatus(`Project ${slug} generated.`);
+        void refreshProjects();
+      }} onOpenProject={(slug) => {
         setSelectedSlug(slug);
         setView({ kind: "workspace", tab: "Canon" });
         void refreshProjects();

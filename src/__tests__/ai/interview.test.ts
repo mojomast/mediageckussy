@@ -32,6 +32,34 @@ describe("interview engine", () => {
     expect(getNextQuestion(session)?.prompt).toBe("What's the approximate runtime?");
   });
 
+  test("getNextQuestion uses podcast-specific structure question instead of story world prompt", () => {
+    const session = createSession();
+    session.answers["canon.format"] = "podcast";
+    session.answers["canon.title"] = "Project";
+    session.answers["canon.logline"] = "A podcast.";
+    session.answers["canon.genre"] = "comedy";
+    session.answers["canon.tone"] = ["loose"];
+
+    expect(getNextQuestion(session)?.prompt).toBe("What's the core setup of the show - the format, recurring segments, or frame listeners can expect each episode?");
+  });
+
+  test("getNextQuestion uses podcast host framing instead of story protagonist framing", () => {
+    const session = createSession();
+    session.answers = {
+      "canon.format": "podcast",
+      "canon.title": "Project",
+      "canon.logline": "A podcast.",
+      "canon.genre": "comedy",
+      "canon.tone": ["loose"],
+      "canon.world_setting": "Panel hangout format.",
+      "canon.audience": ["developers"],
+      "canon.comps": ["Comp One"],
+      "canon.duration_count": "weekly, 45 minutes",
+    };
+
+    expect(getNextQuestion(session)?.prompt).toBe("Who is the main host or on-mic voice we should anchor around? Name and a brief description.");
+  });
+
   test("getNextQuestion continues to optional follow-ups after required questions are answered", () => {
     const session = createSession();
     session.answers = {
@@ -183,6 +211,22 @@ describe("interview engine", () => {
     expect(() => canonProjectSchema.parse(canon)).not.toThrow();
     expect(canon.canon.characters.value).toHaveLength(2);
     expect(canon.canon.episodes.value).toHaveLength(2);
+  });
+
+  test("buildCanonFromAnswers flattens malformed nested character arrays instead of failing schema parse", () => {
+    const state = createSession();
+    state.answers = {
+      ...fullAnswerSet(),
+      "canon.characters": [
+        fullAnswerSet()["canon.characters"][0],
+        [fullAnswerSet()["canon.characters"][1]],
+      ],
+    };
+
+    const canon = buildCanonFromAnswers(state);
+
+    expect(canon.canon.characters.value).toHaveLength(2);
+    expect(canon.canon.characters.value[1].name).toBe("Rene Ortiz");
   });
 
   test("buildCanonFromAnswers all fields have status draft and owner agent", () => {

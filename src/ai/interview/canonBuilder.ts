@@ -67,11 +67,23 @@ function asStringArray(value: unknown, fallback: string[]) {
 }
 
 function asCharacters(value: unknown): CharacterEntity[] {
-  return Array.isArray(value) ? value as CharacterEntity[] : [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .flatMap((item) => Array.isArray(item) ? item : [item])
+    .filter(isCharacterEntity);
 }
 
 function asEpisodes(value: unknown): EpisodeEntry[] {
-  return Array.isArray(value) ? value as EpisodeEntry[] : [];
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .flatMap((item) => Array.isArray(item) ? item : [item])
+    .filter(isEpisodeEntry);
 }
 
 function hasValue(value: unknown) {
@@ -116,4 +128,30 @@ function normalizeFormat(value: string) {
 
 function slugify(input: string) {
   return input.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+function isCharacterEntity(value: unknown): value is CharacterEntity {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<CharacterEntity>;
+  return typeof candidate.id === "string"
+    && typeof candidate.name === "string"
+    && typeof candidate.role === "string"
+    && typeof candidate.description === "string"
+    && (candidate.visibility === "public" || candidate.visibility === "internal");
+}
+
+function isEpisodeEntry(value: unknown): value is EpisodeEntry {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as Partial<EpisodeEntry>;
+  return typeof candidate.code === "string"
+    && typeof candidate.title === "string"
+    && typeof candidate.logline === "string"
+    && (candidate.status === "planned" || candidate.status === "draft" || candidate.status === "approved")
+    && (candidate.visibility === "public" || candidate.visibility === "internal");
 }

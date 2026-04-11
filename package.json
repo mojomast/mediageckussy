@@ -15,7 +15,7 @@
     "onboard:film": "tsx src/cli/onboard.ts examples/sample-film/canon.yaml output/glass-harbor",
     "onboard:podcast": "tsx src/cli/onboard.ts examples/sample-podcast/canon.yaml output/signal-and-bone",
     "onboard:web": "tsx src/cli/onboard.ts examples/sample-web-series/canon.yaml output/soft-launch",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node ./scripts/copy-prompt-assets.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

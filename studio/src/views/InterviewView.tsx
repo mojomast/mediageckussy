@@ -5,15 +5,26 @@ type ChatMessage = { role: "interviewer" | "user" | "system"; content: string };
 
 type Props = {
   options: StudioOptions | null;
+  onProjectReady: (slug: string) => void;
   onOpenProject: (slug: string) => void;
 };
 
+type BuildState = {
+  slug?: string;
+  suggestionCount?: number;
+  completenessScore?: number;
+  step?: string;
+  error?: string;
+};
+
+const SESSION_STORAGE_KEY = "studio-interview-session-id";
+
 const PHASE_LABELS = ["FORMAT", "WORLD", "CHARACTERS", "THEMES"];
 
-export function InterviewView({ options, onOpenProject }: Props) {
+export function InterviewView({ options, onProjectReady, onOpenProject }: Props) {
   const [provider, setProvider] = useState<string>(options?.providers.find((item) => item.available)?.id ?? "openrouter");
   const [model, setModel] = useState<string>(options?.providers.find((item) => item.available)?.model ?? "google/gemini-2.5-flash-lite");
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(() => window.localStorage.getItem(SESSION_STORAGE_KEY));
   const [phase, setPhase] = useState<number | "complete">(1);
   const [totalQuestions, setTotalQuestions] = useState(15);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -21,10 +32,28 @@ export function InterviewView({ options, onOpenProject }: Props) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [building, setBuilding] = useState(false);
-  const [buildState, setBuildState] = useState<{ slug?: string; suggestionCount?: number; completenessScore?: number; step?: string }>({});
+  const [buildState, setBuildState] = useState<BuildState>({});
   const [error, setError] = useState<string | null>(null);
+  const [fontScale, setFontScale] = useState<number>(() => {
+    const stored = window.localStorage.getItem("studio-interview-font-scale");
+    return stored ? Number(stored) || 1 : 1;
+  });
   const lastMessageRef = useRef<string>("");
   const transcriptEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--interview-font-scale", String(fontScale));
+    window.localStorage.setItem("studio-interview-font-scale", String(fontScale));
+  }, [fontScale]);
+
+  useEffect(() => {
+    if (sessionId) {
+      window.localStorage.setItem(SESSION_STORAGE_KEY, sessionId);
+      return;
+    }
+
+    window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  }, [sessionId]);
 
   useEffect(() => {
     const available = options?.providers.find((item) => item.available);
@@ -39,7 +68,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
   }, [messages, loading, building]);
 
   useEffect(() => {
-    if (sessionId) return;
+    if (sessionId || messages.length > 0) return;
     let cancelled = false;
     void (async () => {
       try {
@@ -60,7 +89,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [model, provider, sessionId]);
+  }, [messages.length, model, provider, sessionId]);
 
   const currentPhaseIndex = phase === "complete" ? 4 : phase;
   const progressText = phase === "complete" ? "Phase 4 of 4" : `Phase ${phase} of 4`;
@@ -88,17 +117,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
       setQuestionIndex(response.questionIndex + 1);
       if (response.complete) {
         setPhase("complete");
-        setBuilding(true);
-        await api.completeInterview(sessionId, (event, data) => {
-          if (event === "progress" && typeof data === "object" && data) {
-            setBuildState((current) => ({ ...current, ...(data as Record<string, unknown>) }));
-          }
-          if (event === "done" && typeof data === "object" && data) {
-            const done = data as { slug: string; suggestionCount: number; completenessScore: number };
-            setBuildState(done);
-            setBuilding(false);
-          }
-        });
+        await completeProjectBuild(sessionId);
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -106,6 +125,33 @@ export function InterviewView({ options, onOpenProject }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function completeProjectBuild(activeSessionId: string) {
+    setBuilding(true);
+    setBuildState({});
+    setError(null);
+
+    await api.completeInterview(activeSessionId, (event, data) => {
+      if (event === "progress" && typeof data === "object" && data) {
+        setBuildState((current) => ({ ...current, ...(data as Record<string, unknown>) }));
+      }
+      if (event === "done" && typeof data === "object" && data) {
+        const done = data as { slug: string; suggestionCount: number; completenessScore: number };
+        setBuildState(done);
+        setBuilding(false);
+        setSessionId(null);
+        onProjectReady(done.slug);
+      }
+      if (event === "error") {
+        const message = typeof data === "object" && data && "message" in data
+          ? String((data as { message?: unknown }).message ?? "Interview build failed.")
+          : "Interview build failed.";
+        setBuildState((current) => ({ ...current, error: message }));
+        setError(message);
+        setBuilding(false);
+      }
+    });
   }
 
   return (
@@ -117,7 +163,21 @@ export function InterviewView({ options, onOpenProject }: Props) {
             <div className="interview-header__phase">{progressText}: {currentPhaseLabel}</div>
             <div className="interview-header__labels">{PHASE_LABELS.join(" · ")}</div>
           </div>
-          <span className="badge badge--dim">{progressText}</span>
+          <div className="interview-header__controls">
+            <span className="badge badge--dim">{progressText}</span>
+            <label className="interview-font-control">
+              <span>TEXT SIZE</span>
+              <input
+                aria-label="Interview font size"
+                type="range"
+                min="0.9"
+                max="1.35"
+                step="0.05"
+                value={fontScale}
+                onChange={(event) => setFontScale(Number(event.target.value))}
+              />
+            </label>
+          </div>
         </div>
         <div className="interview-phase-bar" aria-label="Phase progress bar">
           {PHASE_LABELS.map((label, index) => {
@@ -197,7 +257,7 @@ export function InterviewView({ options, onOpenProject }: Props) {
           </div>
         )}
 
-        {(phase === "complete" || building || buildState.slug) && (
+        {(phase === "complete" || building || buildState.slug || buildState.error) && (
           <section className="completion-card dossier">
             <div className="dossier__body completion-card__body">
               <strong>◈ INTERVIEW COMPLETE</strong>
@@ -210,6 +270,12 @@ export function InterviewView({ options, onOpenProject }: Props) {
                   {line}
                 </div>
               ))}
+              {buildState.error && <div className="issue error">{buildState.error}</div>}
+              {buildState.error && sessionId && (
+                <button className="btn btn--amber" onClick={() => void completeProjectBuild(sessionId)}>
+                  Retry Build
+                </button>
+              )}
               {buildState.slug && (
                 <button className="btn btn--primary" onClick={() => onOpenProject(buildState.slug ?? "")}>Open Project Dossier →</button>
               )}
@@ -247,10 +313,16 @@ export function InterviewView({ options, onOpenProject }: Props) {
   );
 }
 
-function completionLines(
-  buildState: { slug?: string; suggestionCount?: number; completenessScore?: number; step?: string },
-  building: boolean,
-) {
+function completionLines(buildState: BuildState, building: boolean) {
+  if (buildState.error) {
+    return [
+      "Compiling project parameters... [████████████] DONE",
+      "Initializing canon lock... [████████████] DONE",
+      "Generating package... [████████░░░░] INTERRUPTED",
+      "Running AI hydration... [░░░░░░░░░░░░] ABORTED",
+    ];
+  }
+
   const completeness = buildState.completenessScore ?? 72;
   const slug = buildState.slug ?? "pending-project";
   const projectName = slug.replace(/-/g, " ").toUpperCase();

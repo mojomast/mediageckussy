@@ -131,6 +131,74 @@ describe("AI hydrators", () => {
     expect(updated.canon.logline.owner).toBe("agent");
   });
 
+  test("acceptSuggestion coerces string-array fields instead of corrupting canon shape", async () => {
+    const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
+    const outputDir = await createTempOutputDir("hydrate-accept-themes");
+    await fs.ensureDir(path.join(outputDir, "00_admin"));
+    await fs.writeJson(path.join(outputDir, "00_admin/package_manifest.json"), {
+      projectId: canon.id,
+      generatedAt: new Date().toISOString(),
+      mediaType: canon.canon.format.value,
+      packageTier: canon.package_tier,
+      generatedFiles: [],
+      requiredFiles: [],
+      departments: [],
+      hydrationLog: [],
+    });
+
+    await addSuggestion(outputDir, {
+      field: "canon.themes",
+      value: [
+        "Themes:",
+        "- institutional decay",
+        "- corrosive ambition",
+        "- survival at any cost",
+      ].join("\n"),
+      confidence: 0.9,
+      provider: "mock",
+      model: "mock-llm",
+      generatedAt: new Date().toISOString(),
+      status: "pending",
+      tokenUsage: { prompt: 1, completion: 2 },
+    });
+
+    const updated = await acceptSuggestion(outputDir, "canon.themes", canon);
+    expect(updated.canon.themes.value).toEqual([
+      "institutional decay",
+      "corrosive ambition",
+      "survival at any cost",
+    ]);
+  });
+
+  test("acceptSuggestion rejects invalid structured-array suggestions instead of corrupting canon", async () => {
+    const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
+    const outputDir = await createTempOutputDir("hydrate-accept-episodes-invalid");
+    await fs.ensureDir(path.join(outputDir, "00_admin"));
+    await fs.writeJson(path.join(outputDir, "00_admin/package_manifest.json"), {
+      projectId: canon.id,
+      generatedAt: new Date().toISOString(),
+      mediaType: canon.canon.format.value,
+      packageTier: canon.package_tier,
+      generatedFiles: [],
+      requiredFiles: [],
+      departments: [],
+      hydrationLog: [],
+    });
+
+    await addSuggestion(outputDir, {
+      field: "canon.episodes",
+      value: "Logline: this is not a structured episode array",
+      confidence: 0.9,
+      provider: "mock",
+      model: "mock-llm",
+      generatedAt: new Date().toISOString(),
+      status: "pending",
+      tokenUsage: { prompt: 1, completion: 2 },
+    });
+
+    await expect(acceptSuggestion(outputDir, "canon.episodes", canon)).rejects.toThrow(/structured array/);
+  });
+
   test("rejectSuggestion removes suggestion from sidecar", async () => {
     const outputDir = await createTempOutputDir("hydrate-reject");
     await fs.ensureDir(path.join(outputDir, "00_admin"));

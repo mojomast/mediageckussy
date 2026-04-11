@@ -103,6 +103,8 @@ function buildSystemPrompt(input: {
   fieldType: "string" | "string[]" | "character" | "episode";
   format: string;
 }) {
+  const formatGuidance = podcastFormatGuidance(input.format, input.fieldPath);
+
   return [
     "You are a warm, curious creative development assistant helping a writer or producer describe their media project. You are conducting a structured interview to gather the information needed to generate their production package.",
     "",
@@ -121,10 +123,31 @@ function buildSystemPrompt(input: {
     "For episode: { \"code\": \"S01E01\", \"title\": \"<title>\", \"logline\": \"<logline>\", \"status\": \"planned\", \"visibility\": \"internal\" }",
     "If the answer is unclear, vague, or the user says \"skip\"/\"done\" for an optional question, set value to null",
     "For optional questions where user says \"done\"/\"skip\"/\"just the one\"/\"nothing specific\": set value to null (this will close the question)",
+    formatGuidance,
     `CURRENT_FIELD: ${input.fieldPath}`,
     `CURRENT_QUESTION: ${input.currentQuestion}`,
     `FORMAT_SO_FAR: ${input.format}`,
   ].join("\n");
+}
+
+function podcastFormatGuidance(format: string, fieldPath: string) {
+  if (format !== "podcast") {
+    return "Format guidance: respect the user's chosen format and never rewrite the next question into a different medium.";
+  }
+
+  if (fieldPath === "canon.world_setting") {
+    return "Format guidance: this is a podcast. Do not ask about fictional worldbuilding, setting, or story location unless the user explicitly says it is a narrative fiction podcast. Ask about the show structure, format, recurring segments, and listener experience instead.";
+  }
+
+  if (fieldPath === "canon.characters") {
+    return "Format guidance: this is a podcast. Treat characters as hosts, co-hosts, guests, or recurring voices. Do not frame them as fictional protagonists unless the user explicitly says the podcast is scripted fiction.";
+  }
+
+  if (fieldPath === "canon.episodes") {
+    return "Format guidance: this is a podcast. Treat episodes as topics, hooks, recurring bits, or installment concepts. Do not ask what 'happens' in a story episode unless the user explicitly says the podcast is scripted fiction.";
+  }
+
+  return "Format guidance: this is a podcast. Keep questions anchored in show concept, host chemistry, audience, release cadence, and recurring episode structure.";
 }
 
 function parseExtractBlock(content: string): { field: string; value: unknown } | null {
