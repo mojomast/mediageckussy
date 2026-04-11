@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import ReactMarkdown from "react-markdown";
-import { api } from "../lib/api";
+import { api, type ProjectExportInclude, type ProjectExportVisibility } from "../lib/api";
 
 export function PackagePreview({ slug, status, setStatus }: { slug: string; status: string; setStatus: (value: string) => void }) {
   const [files, setFiles] = useState<Array<{ path: string; type: string }>>([]);
@@ -12,6 +12,9 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
   const [iterationCount, setIterationCount] = useState(2);
   const [refinementGoals, setRefinementGoals] = useState("clarity, canon consistency, audience fit");
   const [hydrationProgress, setHydrationProgress] = useState<{ step: string; progress: number } | null>(null);
+  const [exportInclude, setExportInclude] = useState<ProjectExportInclude[]>(["docs", "site", "canon"]);
+  const [exportVisibility, setExportVisibility] = useState<ProjectExportVisibility>("all");
+  const [isExporting, setIsExporting] = useState(false);
 
   async function refreshFiles() {
     const response = await api.getFiles(slug);
@@ -36,6 +39,46 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
         {files.filter((entry) => entry.type === "file").map((entry) => (
           <button key={entry.path} className={`file-button ${selected === entry.path ? "selected" : ""}`} onClick={() => setSelected(entry.path)}>{entry.path}</button>
         ))}
+        <div className="export-panel">
+          <div className="section-label">Export</div>
+          <div className="export-panel__group">
+            <span className="muted">Include</span>
+            {EXPORT_INCLUDE_OPTIONS.map((option) => (
+              <label key={option.value} className="checkbox-row">
+                <input
+                  type="checkbox"
+                  checked={exportInclude.includes(option.value)}
+                  onChange={() => setExportInclude((current) => current.includes(option.value)
+                    ? current.filter((entry) => entry !== option.value)
+                    : [...current, option.value])}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="export-panel__group">
+            <span className="muted">Visibility</span>
+            {EXPORT_VISIBILITY_OPTIONS.map((option) => (
+              <label key={option.value} className="checkbox-row">
+                <input
+                  type="radio"
+                  name="export-visibility"
+                  checked={exportVisibility === option.value}
+                  onChange={() => setExportVisibility(option.value)}
+                />
+                <span>{option.label}</span>
+              </label>
+            ))}
+          </div>
+          <div className="export-panel__actions">
+            <button className="btn btn--primary" disabled={isExporting || exportInclude.length === 0} onClick={() => void downloadZip()}>
+              Download ZIP
+            </button>
+            <button className="btn btn--ghost" disabled={isExporting || exportInclude.length === 0} onClick={() => void copyManifest()}>
+              Copy Manifest
+            </button>
+          </div>
+        </div>
       </aside>
       <section className="panel">
         <div className="row between wrap">
@@ -108,8 +151,64 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
       </section>
     </div>
   );
+
+  async function downloadZip() {
+    setIsExporting(true);
+    setStatus(`Building ${slug} export...`);
+    try {
+      const result = await api.downloadProjectExport(slug, {
+        format: "zip",
+        include: exportInclude,
+        visibility: exportVisibility,
+      });
+      const url = URL.createObjectURL(result.blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = result.filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+      setStatus(`Downloaded ${result.filename}.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Export failed.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function copyManifest() {
+    setIsExporting(true);
+    setStatus(`Building ${slug} manifest...`);
+    try {
+      const manifest = await api.exportProjectManifest(slug, {
+        format: "folder-manifest",
+        include: exportInclude,
+        visibility: exportVisibility,
+      });
+      await navigator.clipboard.writeText(JSON.stringify(manifest, null, 2));
+      setStatus(`Copied export manifest for ${slug}.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Manifest export failed.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
 }
 
 function splitGoals(value: string) {
   return value.split(",").map((entry) => entry.trim()).filter(Boolean);
 }
+
+const EXPORT_INCLUDE_OPTIONS: Array<{ value: ProjectExportInclude; label: string }> = [
+  { value: "docs", label: "Docs" },
+  { value: "site", label: "Site" },
+  { value: "canon", label: "Canon" },
+  { value: "assets", label: "Assets" },
+];
+
+const EXPORT_VISIBILITY_OPTIONS: Array<{ value: ProjectExportVisibility; label: string }> = [
+  { value: "public", label: "Public" },
+  { value: "internal", label: "Internal" },
+  { value: "all", label: "All" },
+];

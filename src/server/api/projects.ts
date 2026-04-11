@@ -1,9 +1,11 @@
 import path from "node:path";
 import fs from "fs-extra";
+import archiver from "archiver";
 import { c as tarCreate } from "tar";
 import type { Express, Response } from "express";
 import { generatePackage } from "../../core/generator.js";
 import { readManifest } from "../../core/manifest.js";
+import type { GeneratedFileRecord } from "../../core/types.js";
 import { generateAsset } from "../../ai/assetGenerator.js";
 import { planArtifactRequest } from "../../ai/artifactPlanner.js";
 import { hydrateDocument } from "../../ai/hydrators/docHydrator.js";
@@ -20,7 +22,7 @@ import { createIterationSession, listIterationSessions, loadIterationSession, sa
 import { analyzeCanonCompleteness } from "../../ai/iteration/completeness.js";
 import type { IterationCanonSection, IterationDirective, IterationMode, IterationPlannerConfig, IterationProposal, IterationRun, IterationSession } from "../../ai/iteration/types.js";
 import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/suggestions.js";
-import { loadCanon, saveCanon, diffLockedFields } from "../../utils/canon.js";
+import { loadCanon, saveCanon, diffLockedFields, publicCanonSlice } from "../../utils/canon.js";
 import { analyzeProtectedRegions, reapplyProtectedRegions } from "../../utils/protectedRegions.js";
 import {
   archiveRoot,
@@ -599,6 +601,68 @@ export function registerProjectRoutes(app: Express) {
     }
   });
 
+  app.post("/api/projects/:slug/export", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const format = req.body?.format;
+      const include = normalizeExportInclude(req.body?.include);
+      const visibility = normalizeExportVisibility(req.body?.visibility);
+
+      if (!format || !["zip", "pdf-bundle", "folder-manifest"].includes(format)) {
+        return fail(res, new Error("format must be one of: zip, pdf-bundle, folder-manifest"), 400);
+      }
+      if (include.length === 0) {
+        return fail(res, new Error("include must contain at least one of: docs, site, canon, assets"), 400);
+      }
+
+      if (format === "pdf-bundle") {
+        return fail(res, new Error("pdf-bundle export is not implemented yet"), 400);
+      }
+
+      const exportBundle = await buildProjectExport(slug, include, visibility);
+
+      if (format === "folder-manifest") {
+        return ok(res, {
+          slug,
+          format,
+          visibility,
+          include,
+          files: exportBundle.entries.map(({ path: filePath, kind, visibility: fileVisibility, size, metadata }) => ({
+            path: filePath,
+            kind,
+            visibility: fileVisibility,
+            size,
+            metadata,
+          })),
+        });
+      }
+
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${slug}-${visibility}.zip"`);
+      const zip = archiver("zip", { zlib: { level: 9 } });
+      zip.on("error", (error: Error) => {
+        if (!res.headersSent) {
+          fail(res, error);
+          return;
+        }
+        res.destroy(error);
+      });
+      zip.pipe(res);
+
+      for (const entry of exportBundle.entries) {
+        if (entry.absolutePath) {
+          zip.file(entry.absolutePath, { name: entry.path });
+          continue;
+        }
+        zip.append(entry.content ?? "", { name: entry.path });
+      }
+
+      await zip.finalize();
+    } catch (error) {
+      return fail(res, error);
+    }
+  });
+
   app.post("/api/projects/:slug/assets/generate", async (req, res) => streamJob(res, async (send) => {
     const outputDir = projectDir(req.params.slug);
     const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
@@ -692,6 +756,149 @@ async function listProjects() {
 
 function projectDir(slug: string) {
   return projectWorkspace(slug);
+}
+
+type ExportInclude = "docs" | "site" | "canon" | "assets";
+type ExportVisibility = "public" | "internal" | "all";
+
+type ProjectExportEntry = {
+  path: string;
+  kind: ExportInclude;
+  visibility: ExportVisibility | "mixed";
+  size: number;
+  absolutePath?: string;
+  content?: string;
+  metadata: Record<string, unknown>;
+};
+
+async function buildProjectExport(slug: string, include: ExportInclude[], visibility: ExportVisibility) {
+  const outputDir = projectDir(slug);
+  const manifest = await readManifest(outputDir);
+  const selected = new Set(include);
+  const entries: ProjectExportEntry[] = [];
+
+  for (const file of manifest.generatedFiles) {
+    const kind = classifyGeneratedFile(file);
+    if (!kind || !selected.has(kind) || !matchesVisibility(file.audience, visibility)) {
+      continue;
+    }
+
+    const absolutePath = resolveProjectPath(slug, file.path);
+    if (!(await fs.pathExists(absolutePath))) {
+      continue;
+    }
+
+    const stats = await fs.stat(absolutePath);
+    entries.push({
+      path: file.path,
+      kind,
+      visibility: deriveEntryVisibility(file.audience),
+      size: stats.size,
+      absolutePath,
+      metadata: {
+        templateId: file.templateId,
+        department: file.department,
+        audience: file.audience,
+        outputFormat: file.outputFormat,
+        sources: file.sources,
+        regenPolicy: file.regenPolicy,
+        generatedAt: file.generatedAt,
+      },
+    });
+  }
+
+  if (selected.has("assets")) {
+    for (const asset of manifest.generatedAssets ?? []) {
+      const assetVisibility = matchesVisibility(["internal"], visibility) ? "internal" : null;
+      if (!assetVisibility) {
+        continue;
+      }
+
+      const absolutePath = resolveProjectPath(slug, asset.path);
+      if (!(await fs.pathExists(absolutePath))) {
+        continue;
+      }
+
+      const stats = await fs.stat(absolutePath);
+      entries.push({
+        path: asset.path,
+        kind: "assets",
+        visibility: assetVisibility,
+        size: stats.size,
+        absolutePath,
+        metadata: {
+          type: asset.type,
+          provider: asset.provider,
+          model: asset.model,
+          generatedAt: asset.generatedAt,
+          prompt: asset.prompt,
+          canonFingerprint: asset.canonFingerprint,
+        },
+      });
+    }
+  }
+
+  if (selected.has("canon")) {
+    const canon = await loadCanon(path.join(outputDir, "00_admin/canon_lock.yaml"));
+    const canonPayload = visibility === "public" ? publicCanonSlice(canon) : canon;
+    const content = JSON.stringify(canonPayload, null, 2);
+    entries.push({
+      path: "canon.json",
+      kind: "canon",
+      visibility: visibility === "all" ? "mixed" : visibility,
+      size: Buffer.byteLength(content),
+      content,
+      metadata: {
+        source: "00_admin/canon_lock.yaml",
+        filtered: visibility === "public",
+      },
+    });
+  }
+
+  entries.sort((left, right) => left.path.localeCompare(right.path));
+  return { manifest, entries };
+}
+
+function classifyGeneratedFile(file: GeneratedFileRecord): ExportInclude | null {
+  if (file.path === "00_admin/canon_lock.yaml" || file.path === "00_admin/package_manifest.json") {
+    return null;
+  }
+  if (file.path.startsWith("site/")) {
+    return "site";
+  }
+  if (file.department === "assets" || file.path.startsWith("assets/")) {
+    return "assets";
+  }
+  return "docs";
+}
+
+function deriveEntryVisibility(audience: string[]): ExportVisibility | "mixed" {
+  const hasPublic = audience.includes("public");
+  const hasInternal = audience.some((item) => item !== "public");
+  if (hasPublic && hasInternal) {
+    return "mixed";
+  }
+  return hasPublic ? "public" : "internal";
+}
+
+function matchesVisibility(audience: string[], visibility: ExportVisibility) {
+  if (visibility === "all") {
+    return true;
+  }
+  const hasPublic = audience.includes("public");
+  return visibility === "public" ? hasPublic : !hasPublic;
+}
+
+function normalizeExportInclude(value: unknown): ExportInclude[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  const allowed = new Set<ExportInclude>(["docs", "site", "canon", "assets"]);
+  return [...new Set(value.map(String).filter((item): item is ExportInclude => allowed.has(item as ExportInclude)))];
+}
+
+function normalizeExportVisibility(value: unknown): ExportVisibility {
+  return value === "public" || value === "internal" || value === "all" ? value : "all";
 }
 
 async function readFileTree(rootDir: string, baseDir: string = rootDir): Promise<Array<{ path: string; type: "file" | "directory" }>> {

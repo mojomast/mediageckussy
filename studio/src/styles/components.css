@@ -745,6 +745,35 @@ textarea::placeholder {
   overflow: auto;
 }
 
+.export-panel,
+.export-panel__group,
+.export-panel__actions,
+.checkbox-row {
+  display: grid;
+}
+
+.export-panel {
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.export-panel__group,
+.export-panel__actions {
+  gap: var(--space-2);
+}
+
+.checkbox-row {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.checkbox-row input {
+  width: auto;
+}
+
 .editor-panel {
   display: grid;
 }

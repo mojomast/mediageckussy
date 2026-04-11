@@ -118,6 +118,26 @@ export type CanonCompletenessReport = {
 
 export type SSEvent = { event: string; data: unknown };
 
+export type ProjectExportFormat = "zip" | "pdf-bundle" | "folder-manifest";
+export type ProjectExportInclude = "docs" | "site" | "canon" | "assets";
+export type ProjectExportVisibility = "public" | "internal" | "all";
+
+export type ProjectExportEntry = {
+  path: string;
+  kind: ProjectExportInclude;
+  visibility: ProjectExportVisibility | "mixed";
+  size: number;
+  metadata: Record<string, unknown>;
+};
+
+export type ProjectExportManifest = {
+  slug: string;
+  format: ProjectExportFormat;
+  visibility: ProjectExportVisibility;
+  include: ProjectExportInclude[];
+  files: ProjectExportEntry[];
+};
+
 export type InterviewStartResponse = {
   sessionId: string;
   message: string;
@@ -208,6 +228,28 @@ export const api = {
   runGenerate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/generate`, body, onEvent),
   runHydrate: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/hydrate`, body, onEvent),
   runAsset: (slug: string, body: unknown, onEvent?: (event: SSEvent) => void) => streamJson(`/api/projects/${slug}/assets/generate`, body, onEvent),
+  exportProjectManifest: async (slug: string, payload: { format: ProjectExportFormat; include: ProjectExportInclude[]; visibility: ProjectExportVisibility }) => {
+    const response = await fetchJson(`/api/projects/${slug}/export`, { method: "POST", body: JSON.stringify(payload) });
+    return response.data as ProjectExportManifest;
+  },
+  downloadProjectExport: async (slug: string, payload: { format: ProjectExportFormat; include: ProjectExportInclude[]; visibility: ProjectExportVisibility }) => {
+    const response = await fetch(`/api/projects/${slug}/export`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!response.ok) {
+      const payloadText = await response.text();
+      throw new Error(payloadText || `Request failed: ${response.status}`);
+    }
+    const blob = await response.blob();
+    const contentDisposition = response.headers.get("Content-Disposition") ?? "";
+    const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+    return {
+      blob,
+      filename: filenameMatch?.[1] ?? `${slug}.zip`,
+    };
+  },
   startInterview: async (opts?: { provider?: string; model?: string }) => {
     const response = await fetchJson("/api/interview/start", { method: "POST", body: JSON.stringify(opts ?? {}) });
     return response.data as InterviewStartResponse;
