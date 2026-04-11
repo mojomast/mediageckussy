@@ -241,7 +241,7 @@ Use stable region IDs in custom templates. Nested markers are not supported, and
 
 Grow your media package through AI iteration loops. Start with a
 character, let the engine develop them across episodes. Add storylines.
-Expand the world. Steer it whenever you want.
+Expand the world. Define factions. Steer it whenever you want.
 
 ```bash
 npm run studio:dev
@@ -250,6 +250,7 @@ npm run studio:dev
 
 Three modes: **Gated** (review every run), **Autonomous** (hands-off
 to max iterations), **Confidence** (auto-run until confidence drops).
+Planner strategies: **Coverage** (force cross-section canon growth with configurable targets) and **Adaptive** (lighter structural guidance).
 See [docs/iteration.md](docs/iteration.md) for full details.
 
 Examples:
