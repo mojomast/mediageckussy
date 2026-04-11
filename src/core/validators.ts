@@ -29,6 +29,39 @@ export async function validatePackage(params: {
     }
   }
 
+  if (
+    params.canon.canon.characters.value.length >= 2
+    && params.canon.canon.episodes.value.length >= 2
+    && (!params.canon.canon.storylines || params.canon.canon.storylines.value.length === 0)
+  ) {
+    issues.push({
+      level: "warning",
+      code: "MISSING_STORYLINES",
+      message: "No storyline arcs defined. Consider running a new_storyline iteration.",
+      path: "canon.storylines",
+    });
+  }
+
+  if (params.canon.canon.themes.value.some((theme) => typeof theme === "string")) {
+    if (!params.canon.canon.themes_structured || params.canon.canon.themes_structured.value.length === 0) {
+      issues.push({
+        level: "warning",
+        code: "UNSTRUCTURED_THEMES",
+        message: "Themes are raw strings. Run develop_themes to add structure and motifs.",
+        path: "canon.themes",
+      });
+    }
+  }
+
+  if (!params.canon.canon.locations || params.canon.canon.locations.value.length === 0) {
+    issues.push({
+      level: "warning",
+      code: "MISSING_LOCATIONS",
+      message: "No locations defined. Run world_expansion to ground the world.",
+      path: "canon.locations",
+    });
+  }
+
   for (const record of params.manifest.generatedFiles) {
     const filePath = path.join(params.outputDir, record.path);
     if (!(await fs.pathExists(filePath))) {
