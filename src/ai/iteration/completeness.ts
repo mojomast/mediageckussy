@@ -1,4 +1,10 @@
-import type { CanonProject } from "../../core/types.js";
+import type {
+  CanonProject,
+  FactionEntry,
+  LocationEntry,
+  StorylineEntry,
+  ThemeEntry,
+} from "../../core/types.js";
 import type { IterationDirective } from "./types.js";
 
 export interface CanonCompletenessReport {
@@ -16,28 +22,44 @@ export interface CanonCompletenessReport {
 export function analyzeCanonCompleteness(
   canon: CanonProject,
 ): CanonCompletenessReport {
-  const characterEntries = canon.canon.characters.value as unknown as Array<Record<string, unknown>>;
-  const episodeEntries = canon.canon.episodes.value as unknown as Array<Record<string, unknown>>;
+  const characterEntries = canon.canon.characters.value;
+  const episodeEntries = canon.canon.episodes.value;
   const themeEntries = canon.canon.themes.value as unknown[];
-  const extendedCanon = canon.canon as Record<string, { value?: unknown } | undefined>;
-  const locations = Array.isArray(extendedCanon.locations?.value) ? extendedCanon.locations?.value as unknown[] : [];
-  const worldLore = Array.isArray(extendedCanon.world_lore?.value) ? extendedCanon.world_lore?.value as unknown[] : [];
-  const storylines = Array.isArray(extendedCanon.storylines?.value) ? extendedCanon.storylines?.value as unknown[] : [];
+  const storylines = Array.isArray(canon.canon.storylines?.value)
+    ? canon.canon.storylines.value
+    : [];
+  const locations = Array.isArray(canon.canon.locations?.value)
+    ? canon.canon.locations.value
+    : [];
+  const worldLore = Array.isArray(canon.canon.world_lore?.value)
+    ? canon.canon.world_lore.value
+    : [];
+  const motifs = Array.isArray(canon.canon.motifs?.value)
+    ? canon.canon.motifs.value
+    : [];
+  const themesStructured = Array.isArray(canon.canon.themes_structured?.value)
+    ? canon.canon.themes_structured.value
+    : [];
+  const factions = Array.isArray(canon.canon.factions?.value)
+    ? canon.canon.factions.value
+    : [];
 
   const characters = scoreCharacters(characterEntries);
   const episodes = scoreEpisodes(episodeEntries);
-  const themes = scoreThemes(themeEntries);
+  const themes = scoreThemes(themeEntries, themesStructured, motifs.length);
   const world = scoreWorld(String(canon.canon.world_setting.value ?? ""), locations, worldLore);
   const storylinesDimension = scoreStorylines(storylines);
 
   const score = characters.score + episodes.score + themes.score + world.score + storylinesDimension.score;
   const suggestedDirectives = buildSuggestedDirectives({
-    characterEntries,
-    episodeEntries,
-    themeEntries,
-    locations,
-    storylines,
-  });
+      characterEntries,
+      episodeEntries,
+      rawThemes: themeEntries,
+      themesStructured,
+      locations,
+      storylines,
+      factions,
+    });
 
   return {
     score,
@@ -52,7 +74,7 @@ export function analyzeCanonCompleteness(
   };
 }
 
-function scoreCharacters(characterEntries: Array<Record<string, unknown>>) {
+function scoreCharacters(characterEntries: CanonProject["canon"]["characters"]["value"]) {
   let score = 0;
   const gaps: string[] = [];
   for (const character of characterEntries.slice(0, 4)) {
@@ -74,7 +96,7 @@ function scoreCharacters(characterEntries: Array<Record<string, unknown>>) {
   return { score: Math.min(25, score), gaps };
 }
 
-function scoreEpisodes(episodeEntries: Array<Record<string, unknown>>) {
+function scoreEpisodes(episodeEntries: CanonProject["canon"]["episodes"]["value"]) {
   let score = 0;
   const gaps: string[] = [];
   for (const episode of episodeEntries.slice(0, 6)) {
@@ -96,16 +118,35 @@ function scoreEpisodes(episodeEntries: Array<Record<string, unknown>>) {
   return { score: Math.min(25, score), gaps };
 }
 
-function scoreThemes(themeEntries: unknown[]) {
+function scoreThemes(
+  rawThemes: unknown[],
+  structured: ThemeEntry[],
+  motifCount: number,
+) {
   let score = 0;
   const gaps: string[] = [];
-  for (const theme of themeEntries.slice(0, 5)) {
-    if (theme && typeof theme === "object" && !Array.isArray(theme) && "theme_expression" in (theme as Record<string, unknown>)) {
-      score += 4;
+  const structuredLabels = new Set(structured.map((theme) => theme.label.toLowerCase()));
+
+  for (const theme of rawThemes.slice(0, 5)) {
+    const label = typeof theme === "string" ? theme : "";
+    if (structuredLabels.has(label.toLowerCase())) {
+      const entry = structured.find((item) => item.label.toLowerCase() === label.toLowerCase());
+      if (entry?.theme_expression) {
+        score += 4;
+      } else {
+        score += 2;
+        gaps.push(`Theme "${label}" is structured but missing a theme_expression.`);
+      }
     } else {
-      gaps.push(`Theme ${typeof theme === "string" ? theme : "entry"} is still a raw string.`);
+      score += 1;
+      gaps.push(`Theme "${label}" is a raw string — develop it with develop_themes.`);
     }
   }
+
+  if (motifCount > 0) {
+    score += 2;
+  }
+
   return { score: Math.min(20, score), gaps };
 }
 
@@ -130,19 +171,45 @@ function scoreWorld(worldSetting: string, locations: unknown[], worldLore: unkno
   return { score, gaps };
 }
 
-function scoreStorylines(storylines: unknown[]) {
-  return {
-    score: storylines.length >= 1 ? 15 : 0,
-    gaps: storylines.length >= 1 ? [] : ["No multi-episode storylines are defined yet."],
-  };
+function scoreStorylines(storylines: StorylineEntry[]) {
+  if (storylines.length === 0) {
+    return { score: 0, gaps: ["No multi-episode storylines are defined yet."] };
+  }
+
+  let score = 5;
+  const gaps: string[] = [];
+
+  for (const storyline of storylines.slice(0, 2)) {
+    if (storyline.episodes.length >= 2) {
+      score += 3;
+    } else {
+      gaps.push(`Storyline "${storyline.title}" spans fewer than 2 episodes.`);
+    }
+
+    if (storyline.characters.length >= 2) {
+      score += 2;
+    } else {
+      gaps.push(`Storyline "${storyline.title}" involves fewer than 2 characters.`);
+    }
+
+    if (storyline.arc_shape.length >= 3) {
+      score += 2;
+    } else {
+      gaps.push(`Storyline "${storyline.title}" is missing a 3-point arc shape.`);
+    }
+  }
+
+  return { score: Math.min(15, score), gaps };
 }
 
 function buildSuggestedDirectives(input: {
-  characterEntries: Array<Record<string, unknown>>;
-  episodeEntries: Array<Record<string, unknown>>;
-  themeEntries: unknown[];
-  locations: unknown[];
-  storylines: unknown[];
+  characterEntries: CanonProject["canon"]["characters"]["value"];
+  episodeEntries: CanonProject["canon"]["episodes"]["value"];
+  rawThemes: unknown[];
+  themesStructured: ThemeEntry[];
+  locations: LocationEntry[];
+  storylines: StorylineEntry[];
+  factions: FactionEntry[];
 }) {
   const directives: IterationDirective[] = [];
 
@@ -156,10 +223,18 @@ function buildSuggestedDirectives(input: {
     }
   }
 
-  if (input.themeEntries.some((theme) => typeof theme === "string")) {
+  if (input.rawThemes.some((theme) => typeof theme === "string")) {
     directives.push({
       type: "develop_themes",
       instruction: "Convert the raw themes into structured theme expressions and add a motif.",
+    });
+  }
+
+  const structuredMissingExpression = input.themesStructured.filter((theme) => !theme.theme_expression);
+  if (structuredMissingExpression.length > 0) {
+    directives.push({
+      type: "develop_themes",
+      instruction: `Add theme_expression entries for: ${structuredMissingExpression.map((theme) => theme.label).join(", ")}.`,
     });
   }
 
@@ -168,6 +243,16 @@ function buildSuggestedDirectives(input: {
       type: "new_storyline",
       instruction: "Add a new storyline arc that connects existing characters across multiple episodes.",
     });
+  }
+
+  for (const storyline of input.storylines) {
+    if (storyline.arc_shape.length < 3) {
+      directives.push({
+        type: "new_storyline",
+        instruction: `Deepen storyline "${storyline.title}" with a full 3-point arc shape and additional episode connections.`,
+        targetId: storyline.id,
+      });
+    }
   }
 
   const firstEpisodeWithoutScenes = input.episodeEntries.find((episode) => !Array.isArray(episode.scenes) || episode.scenes.length === 0);
@@ -183,6 +268,13 @@ function buildSuggestedDirectives(input: {
     directives.push({
       type: "world_expansion",
       instruction: "Expand the world with locations and lore that support the current canon.",
+    });
+  }
+
+  if (input.characterEntries.length >= 2 && input.factions.length === 0) {
+    directives.push({
+      type: "custom",
+      instruction: "Identify and define factions or allegiances among the existing characters. Propose canon.factions entries.",
     });
   }
 
