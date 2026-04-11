@@ -1,14 +1,13 @@
 import path from "node:path";
 import crypto from "node:crypto";
 import fs from "fs-extra";
-import Handlebars from "handlebars";
 import { registerAsset } from "../core/manifest.js";
 import type { CanonProject } from "../core/types.js";
 import { fingerprintCanon } from "../utils/canon.js";
 import type { ImageProvider } from "./image/types.js";
-import { promptRoot } from "./prompting.js";
+import { buildAssetPrompt, type AssetKind } from "./image/prompts.js";
 
-export type AssetType = "poster" | "key-art" | "character-portrait" | "episode-card" | "mood-board-panel" | "social-banner" | "podcast-cover";
+export type AssetType = AssetKind;
 
 export interface AssetGenerationResult {
   path: string;
@@ -41,7 +40,7 @@ export async function generateAsset(
   },
 ): Promise<AssetGenerationResult> {
   const spec = ASSET_SPECS[assetType];
-  const prompt = options.promptOverride ?? await buildAssetPrompt(canon, assetType, options.characterId);
+  const prompt = options.promptOverride ?? buildAssetPrompt(canon, assetType, { characterId: options.characterId });
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const fileName = `${canon.slug}-${assetType}-${timestamp}-${crypto.randomUUID().slice(0, 8)}.png`;
   const relativeAssetPath = path.join("site", "assets", "generated", assetType, fileName);
@@ -73,19 +72,4 @@ export async function generateAsset(
   });
 
   return { path: relativeAssetPath, prompt, model: result.model, durationMs: result.durationMs, width: spec.width, height: spec.height };
-}
-
-async function buildAssetPrompt(canon: CanonProject, assetType: AssetType, characterId?: string) {
-  const template = await fs.readFile(path.join(promptRoot(), "assets", ASSET_SPECS[assetType].template), "utf8");
-  const character = characterId ? canon.canon.characters.value.find((entry) => entry.id === characterId) : undefined;
-  const compiled = Handlebars.compile(template);
-  return compiled({
-    title: canon.canon.title.value,
-    logline: canon.canon.logline.value,
-    genre: canon.canon.genre.value,
-    tone: canon.canon.tone.value.join(", "),
-    comps: canon.canon.comps.value.join(", "),
-    world_setting: canon.canon.world_setting.value,
-    character_description: character?.description ?? "",
-  });
 }

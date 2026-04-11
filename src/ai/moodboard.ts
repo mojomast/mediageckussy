@@ -2,6 +2,7 @@ import path from "node:path";
 import fs from "fs-extra";
 import sharp from "sharp";
 import type { CanonProject } from "../core/types.js";
+import { buildAssetPrompt } from "./image/prompts.js";
 import type { ImageProvider } from "./image/types.js";
 import { generateAsset } from "./assetGenerator.js";
 
@@ -17,7 +18,7 @@ export async function generateMoodBoard(
   const panels: string[] = [];
   for (let index = 0; index < panelCount; index += 1) {
     const result = await generateAsset(canon, outputDir, "mood-board-panel", provider, {
-      promptOverride: `${canon.canon.title.value}; variation ${index + 1}; tones: ${canon.canon.tone.value.join(", ")}`,
+      promptOverride: buildAssetPrompt(canon, "mood-board-panel", { variationIndex: index + 1 }),
     });
     panels.push(path.join(outputDir, result.path));
   }

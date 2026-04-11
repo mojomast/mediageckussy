@@ -1,15 +1,9 @@
 import type { CanonProject } from "../core/types.js";
+import { ALL_ASSET_KINDS, buildAssetPrompt, type AssetKind } from "./image/prompts.js";
 import type { LLMProvider } from "./providers/types.js";
 import { buildFieldContextBundle, buildSystemPrompt } from "./prompting.js";
 
-export type PlannedArtifactType =
-  | "poster"
-  | "key-art"
-  | "character-portrait"
-  | "episode-card"
-  | "mood-board-panel"
-  | "social-banner"
-  | "podcast-cover";
+export type PlannedArtifactType = AssetKind;
 
 export type ArtifactPlan = {
   assetType: PlannedArtifactType;
@@ -18,15 +12,7 @@ export type ArtifactPlan = {
   characterId?: string;
 };
 
-const SUPPORTED_TYPES: PlannedArtifactType[] = [
-  "poster",
-  "key-art",
-  "character-portrait",
-  "episode-card",
-  "mood-board-panel",
-  "social-banner",
-  "podcast-cover",
-];
+const SUPPORTED_TYPES: PlannedArtifactType[] = ALL_ASSET_KINDS;
 
 export async function planArtifactRequest(
   canon: CanonProject,
@@ -82,17 +68,5 @@ function buildFallbackPrompt(
   assetType: PlannedArtifactType,
   characterId?: string,
 ) {
-  const character = characterId
-    ? canon.canon.characters.value.find((entry) => entry.id === characterId)
-    : undefined;
-  return [
-    `${assetType} for ${canon.canon.title.value}.`,
-    `User request: ${request}`,
-    `Logline: ${canon.canon.logline.value}`,
-    `Genre: ${canon.canon.genre.value}`,
-    `Tone: ${canon.canon.tone.value.join(", ")}`,
-    `World: ${canon.canon.world_setting.value}`,
-    character ? `Character focus: ${character.name} - ${character.description}` : "",
-    `Themes: ${canon.canon.themes.value.join("; ")}`,
-  ].filter(Boolean).join("\n");
+  return buildAssetPrompt(canon, assetType, { characterId, requestContext: request });
 }

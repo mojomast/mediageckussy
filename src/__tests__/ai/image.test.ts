@@ -3,6 +3,7 @@ import path from "node:path";
 import sharp from "sharp";
 import { describe, expect, test } from "vitest";
 import { generateAsset } from "../../ai/assetGenerator.js";
+import { ALL_ASSET_KINDS, buildAssetPrompt } from "../../ai/image/prompts.js";
 import { MockImageProvider, resolveImageProviderWithMetadata } from "../../ai/image/index.js";
 import { generateMoodBoard } from "../../ai/moodboard.js";
 import { registerAsset, readManifest } from "../../core/manifest.js";
@@ -52,6 +53,27 @@ describe("image tools", () => {
     const result = await generateAsset(canon, outputDir, "poster", provider, { dryRun: true });
     expect(result.model).toBe("dry-run");
     await expect(fs.pathExists(path.join(outputDir, result.path))).resolves.toBe(false);
+  });
+
+  test("buildAssetPrompt returns canon-aware prompts for all supported asset kinds", async () => {
+    const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
+
+    for (const assetKind of ALL_ASSET_KINDS) {
+      const prompt = buildAssetPrompt(canon, assetKind, { characterId: canon.canon.characters.value[0]?.id, variationIndex: 2 });
+      expect(prompt).toContain(canon.canon.title.value);
+      expect(prompt).toContain(canon.canon.logline.value);
+      expect(prompt).toContain("Avoid text, logos, watermarks");
+    }
+  });
+
+  test("character portrait prompt uses focused character canon details", async () => {
+    const canon = await loadCanon(fixturePath("examples/sample-tv/canon.yaml"));
+    const character = canon.canon.characters.value[0];
+
+    const prompt = buildAssetPrompt(canon, "character-portrait", { characterId: character.id });
+
+    expect(prompt).toContain(character.name);
+    expect(prompt).toContain(character.description);
   });
 
   test("registerAsset adds entry to manifest generatedAssets array", async () => {
