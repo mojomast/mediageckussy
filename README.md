@@ -237,6 +237,21 @@ Use stable region IDs in custom templates. Nested markers are not supported, and
 - Document hydration fills placeholders in generated docs while respecting protected manual-edit regions.
 - Bulk hydration writes a summary to `00_admin/hydration_report.yaml`.
 
+## ◈ Canon Iteration
+
+Grow your media package through AI iteration loops. Start with a
+character, let the engine develop them across episodes. Add storylines.
+Expand the world. Steer it whenever you want.
+
+```bash
+npm run studio:dev
+# ITERATE tab → choose a directive → BEGIN ITERATION
+```
+
+Three modes: **Gated** (review every run), **Autonomous** (hands-off
+to max iterations), **Confidence** (auto-run until confidence drops).
+See [docs/iteration.md](docs/iteration.md) for full details.
+
 Examples:
 
 ```bash
@@ -386,6 +401,7 @@ Generated packages are meant to behave like working project repos:
 - `docs/architecture.md`
 - `docs/roadmap.md`
 - `docs/ai-hydration.md`
+- `docs/iteration.md`
 - `docs/creative-assets.md`
 - `docs/studio-ui.md`
 
