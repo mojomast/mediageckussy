@@ -626,6 +626,25 @@ textarea::placeholder {
   gap: var(--space-2);
 }
 
+.project-settings-panel,
+.project-settings-panel__actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.project-settings-panel {
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.project-settings-panel .section-label {
+  margin-bottom: var(--space-2);
+}
+
+.project-settings-panel__actions {
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+}
+
 .project-dossier__actions {
   margin-top: var(--space-2);
 }

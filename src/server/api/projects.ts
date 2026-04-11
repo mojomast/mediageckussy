@@ -25,14 +25,20 @@ import { acceptSuggestion, loadSuggestions, rejectSuggestion } from "../../ai/su
 import { loadCanon, saveCanon, diffLockedFields, publicCanonSlice } from "../../utils/canon.js";
 import { analyzeProtectedRegions, reapplyProtectedRegions } from "../../utils/protectedRegions.js";
 import {
+  archivedProjectWorkspace,
   archiveRoot,
+  archiveHostedProject,
   availableDemoProviders,
   availableStableFormats,
   createHostedProject,
+  deleteHostedProject,
+  duplicateHostedProject,
+  renameHostedProject,
   projectWorkspace,
   readHostedProject,
   resolveProjectPath,
   listHostedProjects,
+  unarchiveHostedProject,
   updateHostedProjectSettings,
 } from "../workspace.js";
 
@@ -136,9 +142,9 @@ export function registerProjectRoutes(app: Express) {
     packageTiers: ["light", "standard", "full"],
   }));
 
-  app.get("/api/projects", async (_req, res) => {
+  app.get("/api/projects", async (req, res) => {
     try {
-      return ok(res, await listProjects());
+      return ok(res, await listProjects({ includeArchived: req.query.includeArchived === "true" }));
     } catch (error) {
       return fail(res, error);
     }
@@ -190,6 +196,55 @@ export function registerProjectRoutes(app: Express) {
       }));
     } catch (error) {
       return fail(res, error);
+    }
+  });
+
+  app.patch("/api/projects/:slug/rename", async (req, res) => {
+    try {
+      const title = String(req.body?.title ?? "").trim();
+      if (!title) {
+        return fail(res, new Error("title is required"), 400);
+      }
+      return ok(res, await renameHostedProject(req.params.slug, title));
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
+    }
+  });
+
+  app.post("/api/projects/:slug/duplicate", async (req, res) => {
+    try {
+      return ok(res, await duplicateHostedProject(req.params.slug, typeof req.body?.title === "string" ? req.body.title : undefined));
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
+    }
+  });
+
+  app.post("/api/projects/:slug/archive", async (req, res) => {
+    try {
+      return ok(res, await archiveHostedProject(req.params.slug));
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
+    }
+  });
+
+  app.post("/api/projects/:slug/unarchive", async (req, res) => {
+    try {
+      return ok(res, await unarchiveHostedProject(req.params.slug));
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
+    }
+  });
+
+  app.delete("/api/projects/:slug", async (req, res) => {
+    try {
+      const confirm = String(req.body?.confirm ?? "");
+      if (confirm !== req.params.slug) {
+        return fail(res, new Error("confirm must match project slug"), 400);
+      }
+      await deleteHostedProject(req.params.slug);
+      return ok(res, { slug: req.params.slug, deleted: true });
+    } catch (error) {
+      return fail(res, error, error instanceof Error && /not found/i.test(error.message) ? 404 : 400);
     }
   });
 
@@ -728,10 +783,10 @@ async function loadInterviewState(sessionId: string) {
   return fs.readJson(statePath) as Promise<ReturnType<typeof createSession>>;
 }
 
-async function listProjects() {
-  const hosted = await listHostedProjects();
+async function listProjects(options: { includeArchived?: boolean } = {}) {
+  const hosted = await listHostedProjects(options);
   const projects = await Promise.all(hosted.map(async (entry) => {
-    const outputDir = path.join(projectWorkspace(entry.slug));
+    const outputDir = entry.archived ? archivedProjectWorkspace(entry.slug) : projectWorkspace(entry.slug);
     const manifestPath = path.join(outputDir, "00_admin/package_manifest.json");
     const validationPath = path.join(outputDir, "16_ops/validation_report.json");
     if (!(await fs.pathExists(manifestPath)) || !(await fs.pathExists(validationPath))) {
@@ -749,6 +804,7 @@ async function listProjects() {
       pendingSuggestionCount: suggestions.filter((item) => item.status === "pending").length,
       generatedAt: manifest.generatedAt,
       settings: entry.settings,
+      archived: Boolean(entry.archived),
     };
   }));
   return projects.filter(Boolean);

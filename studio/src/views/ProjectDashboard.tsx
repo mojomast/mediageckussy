@@ -4,15 +4,19 @@ import { api, type IterationSession, type ProjectSummary } from "../lib/api";
 type Props = {
   projects: ProjectSummary[];
   status: string;
+  setStatus?: (value: string) => void;
   onOpen: (slug: string) => void;
   onContinueIterating: (slug: string) => void;
   onIterateSuggested: (slug: string) => Promise<void>;
   onStartInterview: () => void;
+  onProjectsChange?: () => Promise<void>;
 };
 
-export function ProjectDashboard({ projects, status, onOpen, onContinueIterating, onIterateSuggested, onStartInterview }: Props) {
+export function ProjectDashboard({ projects, status, setStatus, onOpen, onContinueIterating, onIterateSuggested, onStartInterview, onProjectsChange }: Props) {
   const hasProjects = projects.length > 0;
   const [iterationMeta, setIterationMeta] = useState<Record<string, { label: string; hasSession: boolean }>>({});
+  const [busySlug, setBusySlug] = useState<string | null>(null);
+  const [renameDrafts, setRenameDrafts] = useState<Record<string, string>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -86,12 +90,15 @@ export function ProjectDashboard({ projects, status, onOpen, onContinueIterating
               const suggestionText = project.pendingSuggestionCount > 0
                 ? `${project.pendingSuggestionCount} suggestions pending`
                 : "0 suggestions pending";
+              const renameDraft = renameDrafts[project.slug] ?? project.title;
+              const isBusy = busySlug === project.slug;
 
               return (
                 <article key={project.slug} className="dossier project-dossier card--glow">
                   <div className="dossier__header">
                     <span>Dossier</span>
                     <div className="row gap wrap">
+                      {project.archived && <span className="badge badge--dim">Archived</span>}
                       <span className="badge badge--dim">{formatLabel(project.mediaType)}</span>
                       <span className={`badge ${project.validation.ok ? "badge--ok" : "badge--warn"}`}>
                         {project.validation.ok ? "Draft" : "Review"}
@@ -109,12 +116,35 @@ export function ProjectDashboard({ projects, status, onOpen, onContinueIterating
                       </div>
                       <span>{project.validation.completenessScore}% complete</span>
                     </div>
+                    <div className="project-settings-panel">
+                      <label>
+                        <span className="section-label">Project Settings</span>
+                        <input value={renameDraft} onChange={(event) => setRenameDrafts((current) => ({ ...current, [project.slug]: event.target.value }))} />
+                      </label>
+                      <div className="row gap wrap project-settings-panel__actions">
+                        <button className="btn btn--ghost" disabled={isBusy || renameDraft.trim() === project.title} onClick={() => void runProjectAction(project.slug, async () => {
+                          await api.renameProject(project.slug, renameDraft);
+                        })}>Rename</button>
+                        <button className="btn btn--ghost" disabled={isBusy} onClick={() => void runProjectAction(project.slug, async () => {
+                          await api.duplicateProject(project.slug);
+                        })}>Duplicate</button>
+                        {!project.archived && <button className="btn btn--ghost" disabled={isBusy} onClick={() => void runProjectAction(project.slug, async () => {
+                          await api.archiveProject(project.slug);
+                        })}>Archive</button>}
+                        {project.archived && <button className="btn btn--ghost" disabled={isBusy} onClick={() => void runProjectAction(project.slug, async () => {
+                          await api.unarchiveProject(project.slug);
+                        })}>Unarchive</button>}
+                        <button className="btn btn--danger" disabled={isBusy} onClick={() => void runProjectAction(project.slug, async () => {
+                          await api.deleteProject(project.slug);
+                        })}>Delete</button>
+                      </div>
+                    </div>
                     <p className="project-dossier__meta">{iterationMeta[project.slug]?.label ?? "LAST ITERATION: LOADING..."}</p>
                     <div className="row gap wrap project-dossier__actions">
-                      <button className="btn btn--ghost" onClick={() => onOpen(project.slug)}>Open →</button>
-                      <button className="btn btn--ghost" onClick={() => void onIterateSuggested(project.slug)}>◈ Iterate Now</button>
-                      <button className="btn btn--ghost" onClick={() => onContinueIterating(project.slug)}>◈ Continue Iterating</button>
-                      <a className="btn btn--ghost" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>
+                      <button className="btn btn--ghost" disabled={project.archived} onClick={() => onOpen(project.slug)}>Open →</button>
+                      <button className="btn btn--ghost" disabled={project.archived} onClick={() => void onIterateSuggested(project.slug)}>◈ Iterate Now</button>
+                      <button className="btn btn--ghost" disabled={project.archived} onClick={() => onContinueIterating(project.slug)}>◈ Continue Iterating</button>
+                      {!project.archived && <a className="btn btn--ghost" href={`/api/projects/${project.slug}/archive`}>Download Archive</a>}
                     </div>
                   </div>
                 </article>
@@ -125,6 +155,20 @@ export function ProjectDashboard({ projects, status, onOpen, onContinueIterating
       )}
     </main>
   );
+
+  async function runProjectAction(slug: string, action: () => Promise<void>) {
+    try {
+      setBusySlug(slug);
+      setStatus?.(`Updating ${slug}...`);
+      await action();
+      await onProjectsChange?.();
+      setStatus?.(`Updated ${slug}.`);
+    } catch (error) {
+      setStatus?.(error instanceof Error ? error.message : `Failed to update ${slug}.`);
+    } finally {
+      setBusySlug(null);
+    }
+  }
 }
 
 function formatGeneratedAt(value: string) {

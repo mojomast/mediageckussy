@@ -33,7 +33,7 @@ export function App() {
 
   async function refreshProjects() {
     const [projectResponse, optionsResponse] = await Promise.all([
-      api.listProjects(),
+      api.listProjects({ includeArchived: true }),
       api.getStudioOptions(),
     ]);
     const nextProjects = projectResponse.data ?? [];
@@ -112,6 +112,8 @@ export function App() {
       {!inInterview && tab === "Dashboard" && <ProjectDashboard
         projects={projects}
         status={status}
+        setStatus={setStatus}
+        onProjectsChange={refreshProjects}
         onStartInterview={() => {
           setView({ kind: "interview" });
           setStatus("Interview mode.");

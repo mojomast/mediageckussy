@@ -13,6 +13,7 @@ export type ProjectSummary = {
   validation: { ok: boolean; completenessScore: number; issues: Array<{ level: string; code: string; message: string }> };
   pendingSuggestionCount: number;
   settings?: { llmProvider: string; llmModel: string };
+  archived?: boolean;
 };
 
 export type IterationDirectiveType =
@@ -154,10 +155,33 @@ export type InterviewTurnResponse = {
 
 export const api = {
   getStudioOptions: () => fetchJson("/api/studio/options"),
-  listProjects: () => fetchJson("/api/projects"),
+  listProjects: (opts?: { includeArchived?: boolean }) => {
+    const query = opts?.includeArchived ? "?includeArchived=true" : "";
+    return fetchJson(`/api/projects${query}`);
+  },
   getProject: (slug: string) => fetchJson(`/api/projects/${slug}`),
   createProject: (payload: unknown, onEvent?: (event: SSEvent) => void) => streamJson("/api/projects", payload, onEvent),
   updateSettings: (slug: string, payload: unknown) => fetchJson(`/api/projects/${slug}/settings`, { method: "PUT", body: JSON.stringify(payload) }),
+  renameProject: async (slug: string, title: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/rename`, { method: "PATCH", body: JSON.stringify({ title }) });
+    return response.data as ProjectSummary;
+  },
+  duplicateProject: async (slug: string, title?: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/duplicate`, { method: "POST", body: JSON.stringify({ title }) });
+    return response.data as ProjectSummary;
+  },
+  archiveProject: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/archive`, { method: "POST", body: JSON.stringify({}) });
+    return response.data as ProjectSummary;
+  },
+  unarchiveProject: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}/unarchive`, { method: "POST", body: JSON.stringify({}) });
+    return response.data as ProjectSummary;
+  },
+  deleteProject: async (slug: string) => {
+    const response = await fetchJson(`/api/projects/${slug}`, { method: "DELETE", body: JSON.stringify({ confirm: slug }) });
+    return response.data as { slug: string; deleted: true };
+  },
   getCanon: (slug: string) => fetchJson(`/api/projects/${slug}/canon`),
   saveCanon: (slug: string, canon: unknown) => fetchJson(`/api/projects/${slug}/canon`, { method: "PUT", body: JSON.stringify(canon) }),
   getSuggestions: (slug: string) => fetchJson(`/api/projects/${slug}/suggestions`),
