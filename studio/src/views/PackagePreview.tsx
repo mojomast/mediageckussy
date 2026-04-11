@@ -15,6 +15,7 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
   const [exportInclude, setExportInclude] = useState<ProjectExportInclude[]>(["docs", "site", "canon"]);
   const [exportVisibility, setExportVisibility] = useState<ProjectExportVisibility>("all");
   const [isExporting, setIsExporting] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   async function refreshFiles() {
     const response = await api.getFiles(slug);
@@ -77,7 +78,11 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
             <button className="btn btn--ghost" disabled={isExporting || exportInclude.length === 0} onClick={() => void copyManifest()}>
               Copy Manifest
             </button>
+            <button className="btn btn--ghost" disabled={isExporting || exportInclude.length === 0} onClick={() => void createShare()}>
+              Create Share Link
+            </button>
           </div>
+          {shareUrl && <input readOnly value={shareUrl} />}
         </div>
       </aside>
       <section className="panel">
@@ -190,6 +195,25 @@ export function PackagePreview({ slug, status, setStatus }: { slug: string; stat
       setStatus(`Copied export manifest for ${slug}.`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Manifest export failed.");
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  async function createShare() {
+    setIsExporting(true);
+    setStatus(`Creating share link for ${slug}...`);
+    try {
+      const share = await api.createShareLink(slug, {
+        include: exportInclude,
+        visibility: exportVisibility === "internal" ? "all" : exportVisibility,
+      });
+      const absoluteUrl = new URL(share.url, window.location.origin).toString();
+      setShareUrl(absoluteUrl);
+      await navigator.clipboard.writeText(absoluteUrl);
+      setStatus(`Share link copied for ${slug}.`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Share creation failed.");
     } finally {
       setIsExporting(false);
     }
