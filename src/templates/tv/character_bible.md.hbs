@@ -1,9 +1,53 @@
-# Character Bible
+# {{canon.title.value}} — Character Bible
 
 {{#each canon.characters.value}}
-## {{name}}
-- Role: {{role}}
-- Visibility: {{visibility}}
-- Description: {{description}}
+***
+
+## {{this.name}}
+**Role:** {{this.role}}
+**Visibility:** {{this.visibility}}
+
+{{this.description}}
+
+{{#if this.backstory}}
+### Backstory
+{{#each this.backstory}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if this.initial_relationships}}
+### Relationships
+| Character | Dynamic |
+|-----------|---------|
+{{#each this.initial_relationships}}
+| {{this.characterId}} | {{this.dynamic}} |
+{{/each}}
+{{/if}}
+
+{{#if this.episode_hooks}}
+### Story Hooks
+{{#each this.episode_hooks}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if this.arc_notes}}
+### Arc Notes
+{{this.arc_notes}}
+{{/if}}
 
 {{/each}}
+
+{{#if canon.factions}}
+***
+
+## Factions
+
+{{#each canon.factions.value}}
+### {{this.name}}
+{{this.description}}
+*Allegiance:* {{this.allegiance}}
+{{#if this.members}}*Members:* {{join this.members ", "}}{{/if}}
+{{/each}}
+{{/if}}

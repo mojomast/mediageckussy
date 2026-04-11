@@ -1,25 +1,63 @@
-# HANDOFF
+# {{canon.title.value}} — Production Handoff
 
-## Status
-- Generated package for `{{canon.title.value}}`
-- Media type: `{{canon.format.value}}`
-- Package tier: `{{project.package_tier}}`
-- Website export enabled: `{{project.outputs.website.enabled}}`
+**Generated:** {{date generatedAt}}
+**Package Tier:** {{packageTier}}
+**Completeness:** See validation report.
 
-## First Files To Read
-- `README.md`
-- `00_admin/canon_lock.yaml`
-- `00_admin/package_manifest.json`
-- `16_ops/missing_items_report.md`
-- `01_development/series_bible.md`
-- `06_press_kit/press_kit.md`
+***
 
-## Generation Notes
-- Canon-first generation with lock metadata preserved in `00_admin/canon_lock.yaml`
-- Downstream outputs are marked with canon fingerprints for stale-output detection
-- Public website pages are generated only from approved public fields
+## Canon Summary
 
-## Operator Notes
-- Re-run full generation after canon edits that change title, logline, visibility, characters, or episodes
-- Use partial regeneration for a single file or department when making scoped updates
-- Review `16_ops/validation_report.json` before external handoff
+| Field | Status | Confidence | Owner |
+|-------|--------|------------|-------|
+| Title | {{upper canon.title.status}} | {{canon.title.confidence}} | {{canon.title.owner}} |
+| Logline | {{upper canon.logline.status}} | {{canon.logline.confidence}} | {{canon.logline.owner}} |
+| Format | {{upper canon.format.status}} | {{canon.format.confidence}} | {{canon.format.owner}} |
+| World Setting | {{upper canon.world_setting.status}} | {{canon.world_setting.confidence}} | {{canon.world_setting.owner}} |
+| Characters ({{canon.characters.value.length}}) | {{upper canon.characters.status}} | {{canon.characters.confidence}} | {{canon.characters.owner}} |
+| Episodes ({{canon.episodes.value.length}}) | {{upper canon.episodes.status}} | {{canon.episodes.confidence}} | {{canon.episodes.owner}} |
+{{#if canon.storylines}}| Storylines ({{canon.storylines.value.length}}) | {{upper canon.storylines.status}} | {{canon.storylines.confidence}} | {{canon.storylines.owner}} |
+{{/if}}{{#if canon.locations}}| Locations ({{canon.locations.value.length}}) | {{upper canon.locations.status}} | — | agent |
+{{/if}}
+
+***
+
+## Open Items
+
+{{#each canon.characters.value}}
+{{#unless this.backstory}}
+- [ ] CHARACTER: {{this.name}} — no backstory defined
+{{/unless}}
+{{#unless this.initial_relationships}}
+- [ ] CHARACTER: {{this.name}} — no relationships defined
+{{/unless}}
+{{/each}}
+
+{{#each canon.episodes.value}}
+{{#unless this.scenes}}
+- [ ] EPISODE: {{this.code}} — no scene breakdown
+{{/unless}}
+{{/each}}
+
+{{#unless canon.storylines}}
+- [ ] STORYLINES — no arcs defined yet
+{{/unless}}
+{{#unless canon.locations}}
+- [ ] WORLD — no locations defined yet
+{{/unless}}
+
+***
+
+## Production Assumptions
+
+{{#each canon.production_assumptions.value}}
+- {{this}}
+{{/each}}
+
+***
+
+## Business Assumptions
+
+{{#each canon.business_assumptions.value}}
+- {{this}}
+{{/each}}

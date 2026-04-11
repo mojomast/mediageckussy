@@ -1,34 +1,182 @@
-# Series Bible
+# {{canon.title.value}} — Series Bible
 
-## Core Premise
-<!-- MANUAL_EDIT_START: tv.series-bible.logline -->
-{{canon.logline.value}}
-<!-- MANUAL_EDIT_END: tv.series-bible.logline -->
+> {{canon.logline.value}}
+
+***
 
 ## Format
-- {{canon.format.value}}
-- {{canon.duration_count.value}}
-- Genre: {{canon.genre.value}}
 
-## Tone
-{{#each canon.tone.value}}
+| Field | Value |
+|-------|-------|
+| Format | {{canon.format.value}} |
+| Genre | {{canon.genre.value}} |
+| Tone | {{join canon.tone.value ", "}} |
+| Duration | {{canon.duration_count.value}} |
+| Audience | {{join canon.audience.value ", "}} |
+
+***
+
+## Comps
+
+{{#each canon.comps.value}}
 - {{this}}
 {{/each}}
 
-## World / Setting
+***
+
+## The World
+
 {{canon.world_setting.value}}
 
+{{#if canon.locations}}
+### Locations
+
+{{#each canon.locations.value}}
+#### {{this.name}}
+{{this.description}}
+
+*Atmosphere:* {{this.atmosphere}}
+{{#if this.frequent_characters}}
+*Frequented by:* {{join this.frequent_characters ", "}}
+{{/if}}
+
+{{/each}}
+{{/if}}
+
+{{#if canon.world_lore}}
+### World Lore
+
+{{#each canon.world_lore.value}}
+- **{{this.fact}}** — {{this.narrative_implication}}
+{{/each}}
+{{/if}}
+
+***
+
 ## Themes
+
 {{#each canon.themes.value}}
 - {{this}}
 {{/each}}
 
-## Production Assumptions
-{{#each canon.production_assumptions.value}}
+{{#if canon.themes_structured}}
+### Thematic Deep Dive
+
+{{#each canon.themes_structured.value}}
+#### {{this.label}}
+{{#if this.theme_expression}}{{this.theme_expression}}{{/if}}
+{{#if this.motif}}*Motif:* {{this.motif}}{{/if}}
+
+{{/each}}
+{{/if}}
+
+{{#if canon.motifs}}
+### Motifs
+
+{{#each canon.motifs.value}}
+- **{{this.description}}**{{#if this.theme_connection}} *({{this.theme_connection}})*{{/if}}
+{{/each}}
+{{/if}}
+
+***
+
+## Characters
+
+{{#each canon.characters.value}}
+### {{this.name}}
+*{{this.role}}*
+
+{{this.description}}
+
+{{#if this.backstory}}
+**Backstory:**
+{{#each this.backstory}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if this.initial_relationships}}
+**Relationships:**
+{{#each this.initial_relationships}}
+- {{this.characterId}}: {{this.dynamic}}
+{{/each}}
+{{/if}}
+
+{{#if this.episode_hooks}}
+**Episode Hooks:**
+{{#each this.episode_hooks}}
+- {{this}}
+{{/each}}
+{{/if}}
+
+{{#if this.arc_notes}}
+**Arc Notes:** {{this.arc_notes}}
+{{/if}}
+
+***
+{{/each}}
+
+{{#if canon.factions}}
+## Factions & Organizations
+
+{{#each canon.factions.value}}
+### {{this.name}}
+{{this.description}}
+
+*Allegiance:* {{this.allegiance}}
+{{#if this.members}}*Members:* {{join this.members ", "}}{{/if}}
+
+{{/each}}
+{{/if}}
+
+***
+
+## Episode Guide
+
+{{#each canon.episodes.value}}
+### {{this.code}}: {{this.title}}
+{{this.logline}}
+
+{{#if this.story_function}}*Story function:* {{this.story_function}}{{/if}}
+{{#if this.featured_characters}}*Characters:* {{join this.featured_characters ", "}}{{/if}}
+
+{{#if this.scenes}}
+**Scene Breakdown:**
+{{#each this.scenes}}
+{{this.scene_number}}. **{{this.location}}** — {{join this.characters ", "}}
+   {{this.beat}}
+{{/each}}
+{{/if}}
+
+{{#if this.episode_end}}*Episode end:* {{this.episode_end}}{{/if}}
+
+{{/each}}
+
+***
+
+{{#if canon.storylines}}
+## Storyline Arcs
+
+{{#each canon.storylines.value}}
+### {{this.title}}
+{{this.logline}}
+
+*Episodes:* {{join this.episodes ", "}}
+*Characters:* {{join this.characters ", "}}
+*Theme connection:* {{this.theme_connection}}
+
+**Arc Shape:**
+{{#each this.arc_shape}}
 - {{this}}
 {{/each}}
 
-## Notes
-<!-- MANUAL_EDIT_START: tv.series-bible.notes -->
-This scaffold is intentionally structured for human expansion. Use canon lock fields as the source of truth when adding detailed story material.
-<!-- MANUAL_EDIT_END: tv.series-bible.notes -->
+{{/each}}
+{{/if}}
+
+***
+
+## Production Assumptions
+
+{{#each canon.production_assumptions.value}}
+- {{this}}
+{{/each}}

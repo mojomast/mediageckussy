@@ -1,22 +1,51 @@
-# Press Kit
+# {{canon.title.value}}
 
-## Project Snapshot
-- Title: {{canon.title.value}}
-- Format: {{canon.format.value}}
-- Genre: {{canon.genre.value}}
+**{{canon.format.value}}** | {{canon.genre.value}} | {{canon.duration_count.value}}
+
+***
 
 ## Logline
+
 {{canon.logline.value}}
 
-## Comparable Projects
-{{#each canon.comps.value}}
-- {{this}}
-{{/each}}
+***
 
-## Principal Characters
+## The World
+
+{{canon.world_setting.value}}
+
+***
+
+## Key Characters
+
 {{#each canon.characters.value}}
-- {{name}}: {{description}}
+{{#if (eq this.visibility "public")}}
+**{{this.name}}** — {{this.role}}
+{{this.description}}
+
+{{/if}}
 {{/each}}
 
-## Press Note
-This generated press kit is a baseline package. Replace assumptions with approved bios, assets, quotes, and contact details before active outreach.
+***
+
+## Episode Tease
+
+{{#each canon.episodes.value}}
+{{#if (eq this.visibility "public")}}
+**{{this.code}}: {{this.title}}** — {{this.logline}}
+{{/if}}
+{{/each}}
+
+***
+
+## Tone & Comps
+
+*Tone:* {{join canon.tone.value " · "}}
+
+*If you like:* {{join canon.comps.value ", "}} — you'll find a home here.
+
+***
+
+## Audience
+
+{{join canon.audience.value ", "}}

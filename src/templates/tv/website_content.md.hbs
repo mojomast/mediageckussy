@@ -1,22 +1,68 @@
-# Website Content Scaffold
+# {{canon.title.value}} — Website Content
 
-## Home
-- Title: {{canon.title.value}}
-- Logline: {{canon.logline.value}}
+***
 
-## About
-- World: {{canon.world_setting.value}}
-- Themes:
-{{#each canon.themes.value}}
-  - {{this}}
-{{/each}}
+## Hero Block
+
+**Headline:** {{canon.title.value}}
+**Subheadline:** {{canon.logline.value}}
+**Tone Tags:** {{join canon.tone.value " · "}}
+
+***
+
+## About the Series
+
+{{canon.world_setting.value}}
+
+**Format:** {{canon.format.value}} | **Genre:** {{canon.genre.value}}
+
+***
 
 ## Characters
-{{#each publicCanon.characters}}
-- {{name}}: {{description}}
+
+{{#each canon.characters.value}}
+{{#if (eq this.visibility "public")}}
+### {{this.name}}
+*{{this.role}}*
+{{this.description}}
+
+{{/if}}
 {{/each}}
 
+***
+
 ## Episodes
-{{#each publicCanon.episodes}}
-- {{code}} - {{title}}: {{logline}}
+
+{{#each canon.episodes.value}}
+{{#if (eq this.visibility "public")}}
+**{{this.code}} — {{this.title}}**
+{{this.logline}}
+
+{{/if}}
 {{/each}}
+
+***
+
+## Themes
+
+{{#each canon.themes.value}}
+- {{this}}
+{{/each}}
+
+{{#if canon.themes_structured}}
+{{#each canon.themes_structured.value}}
+{{#if this.theme_expression}}
+**{{this.label}}:** {{this.theme_expression}}
+{{/if}}
+{{/each}}
+{{/if}}
+
+{{#if canon.locations}}
+***
+
+## Locations
+
+{{#each canon.locations.value}}
+**{{this.name}}** — {{this.description}}
+{{/each}}
+{{/if}}

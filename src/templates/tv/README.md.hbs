@@ -19,6 +19,8 @@ Index the generated media package so creative, production, finance, legal, press
 - `01_development/series_bible.md`
 - `01_development/character_bible.md`
 - `03_story_room/episode_guide.md`
+- `creative/storyline_arc_document.md`
+- `creative/world_guide.md`
 
 ### Press / Public
 - `06_press_kit/press_kit.md`
@@ -41,6 +43,13 @@ Index the generated media package so creative, production, finance, legal, press
 {{#each canon.episodes.value}}
 - `{{code}}` - {{title}}
 {{/each}}
+
+{{#if canon.storylines}}
+## Storylines
+{{#each canon.storylines.value}}
+- `{{this.title}}` - {{this.theme_connection}}
+{{/each}}
+{{/if}}
 
 ## Public Website
 - `site/index.html`

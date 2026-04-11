@@ -1,0 +1,34 @@
+# {{canon.title.value}} — Storyline Arcs
+
+{{#if canon.storylines}}
+{{#each canon.storylines.value}}
+***
+
+## Arc {{@index_plus_1}}: {{this.title}}
+
+> {{this.logline}}
+
+**Episodes:** {{join this.episodes " → "}}
+**Characters:** {{join this.characters ", "}}
+**Theme Connection:** {{this.theme_connection}}
+
+### Arc Shape
+{{#each this.arc_shape}}
+**{{@index_plus_1}}.** {{this}}
+{{/each}}
+
+{{/each}}
+{{else}}
+*No storyline arcs have been defined yet. Use the Iteration Engine
+with directive type `new_storyline` to generate arc proposals.*
+{{/if}}
+
+***
+
+## Episode–Storyline Matrix
+
+| Episode | Title | Arcs |
+|---------|-------|------|
+{{#each canon.episodes.value}}
+| {{this.code}} | {{this.title}} | {{#if ../canon.storylines}}{{#each ../canon.storylines.value}}{{#if (includes this.episodes ../this.code)}}{{this.title}} {{/if}}{{/each}}{{else}}—{{/if}} |
+{{/each}}

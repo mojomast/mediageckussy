@@ -1,9 +1,52 @@
-# Episode Guide
+# {{canon.title.value}} — Episode Guide
+
+**Format:** {{canon.format.value}} | **Episodes:** {{canon.duration_count.value}}
 
 {{#each canon.episodes.value}}
-## {{code}} - {{title}}
-- Status: {{status}}
-- Visibility: {{visibility}}
-- Logline: {{logline}}
+***
+
+## {{this.code}}: {{this.title}}
+**Status:** {{upper this.status}}
+{{#if this.featured_characters}}**Characters:** {{join this.featured_characters ", "}}{{/if}}
+
+> {{this.logline}}
+
+{{#if this.story_function}}
+**Story Function:** {{this.story_function}}
+{{/if}}
+
+{{#if this.scenes}}
+### Scene Breakdown
+
+| # | Location | Characters | Beat |
+|---|----------|------------|------|
+{{#each this.scenes}}
+| {{this.scene_number}} | {{this.location}} | {{join this.characters ", "}} | {{this.beat}} |
+{{/each}}
+{{/if}}
+
+{{#if this.episode_end}}
+**Episode End:** {{this.episode_end}}
+{{/if}}
 
 {{/each}}
+
+{{#if canon.storylines}}
+***
+
+## Storyline Arcs
+
+{{#each canon.storylines.value}}
+### {{this.title}}
+> {{this.logline}}
+
+**Episodes:** {{join this.episodes " → "}}
+**Characters:** {{join this.characters ", "}}
+**Theme:** {{this.theme_connection}}
+
+{{#each this.arc_shape}}
+{{@index_plus_1}}. {{this}}
+{{/each}}
+
+{{/each}}
+{{/if}}
