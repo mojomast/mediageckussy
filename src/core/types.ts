@@ -26,6 +26,13 @@ export interface CharacterEntity {
   description: string;
   visibility: "public" | "internal";
   kind?: "character" | "host" | "contributor";
+  backstory?: string[];
+  initial_relationships?: Array<{
+    characterId: string;
+    dynamic: string;
+  }>;
+  episode_hooks?: string[];
+  arc_notes?: string;
 }
 
 export interface EpisodeEntry {
@@ -33,6 +40,63 @@ export interface EpisodeEntry {
   title: string;
   logline: string;
   status: "planned" | "draft" | "approved";
+  visibility: "public" | "internal";
+  featured_characters?: string[];
+  story_function?: string;
+  scenes?: Array<{
+    scene_number: number;
+    location: string;
+    characters: string[];
+    beat: string;
+  }>;
+  episode_end?: string;
+}
+
+export interface StorylineEntry {
+  id: string;
+  title: string;
+  logline: string;
+  episodes: string[];
+  characters: string[];
+  theme_connection: string;
+  arc_shape: string[];
+  visibility: "public" | "internal";
+}
+
+export interface LocationEntry {
+  id: string;
+  name: string;
+  description: string;
+  atmosphere: string;
+  frequent_characters?: string[];
+  visibility: "public" | "internal";
+}
+
+export interface WorldLoreEntry {
+  id: string;
+  fact: string;
+  narrative_implication: string;
+}
+
+export interface ThemeEntry {
+  id: string;
+  label: string;
+  theme_expression?: string;
+  motif?: string;
+}
+
+export interface MotifEntry {
+  id: string;
+  description: string;
+  theme_connection?: string;
+}
+
+export interface FactionEntry {
+  id: string;
+  name: string;
+  description: string;
+  allegiance?: string;
+  members?: string[];
   visibility: "public" | "internal";
 }
 
@@ -63,6 +127,12 @@ export interface CanonProject {
     characters: CanonField<CharacterEntity[]>;
     episodes: CanonField<EpisodeEntry[]>;
     structure?: CanonField<Array<{ id: string; title: string; summary: string; visibility: "public" | "internal" }>>;
+    storylines?: CanonField<StorylineEntry[]>;
+    locations?: CanonField<LocationEntry[]>;
+    world_lore?: CanonField<WorldLoreEntry[]>;
+    motifs?: CanonField<MotifEntry[]>;
+    themes_structured?: CanonField<ThemeEntry[]>;
+    factions?: CanonField<FactionEntry[]>;
   };
 }
 
