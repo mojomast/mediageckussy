@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Editor from "@monaco-editor/react";
-import { api } from "../lib/api";
+import { api, type CanonCompletenessReport, type IterationDirective } from "../lib/api";
 
 type CanonField = {
   value: unknown;
@@ -37,29 +37,64 @@ type Props = {
   onProjectSettingsChange: (settings: { llmProvider: string; llmModel: string }) => void;
   status: string;
   setStatus: (value: string) => void;
+  onIterateNow: (directive: IterationDirective) => Promise<void>;
 };
 
-export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, status, setStatus }: Props) {
+const FIELD_GROUPS = [
+  {
+    label: "Core",
+    fields: ["title", "logline", "format", "genre", "tone", "audience", "comps", "duration_count"],
+  },
+  {
+    label: "Story",
+    fields: ["themes", "themes_structured", "structure", "episodes", "storylines", "motifs"],
+  },
+  {
+    label: "World",
+    fields: ["world_setting", "locations", "world_lore", "factions", "characters"],
+  },
+  {
+    label: "Production",
+    fields: ["production_assumptions", "business_assumptions", "legal_assumptions", "publication_flags"],
+  },
+] as const;
+
+export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, status, setStatus, onIterateNow }: Props) {
   const [canon, setCanon] = useState<CanonState | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [completeness, setCompleteness] = useState<CanonCompletenessReport | null>(null);
   const [selectedField, setSelectedField] = useState<string>("title");
   const [promptHint, setPromptHint] = useState("Tighten the idea while keeping the current tone and format constraints.");
   const [iterationCount, setIterationCount] = useState(2);
   const [refinementGoals, setRefinementGoals] = useState("specificity, canon consistency, voice");
   const [hydrationState, setHydrationState] = useState<HydrationState | null>(null);
+  const [jsonDraft, setJsonDraft] = useState("");
+  const [jsonError, setJsonError] = useState<string | null>(null);
 
   async function loadState() {
-    const [canonResponse, suggestionResponse] = await Promise.all([
+    const [canonResponse, suggestionResponse, completenessResponse] = await Promise.all([
       api.getCanon(slug),
       api.getSuggestions(slug),
+      api.getCompleteness(slug),
     ]);
-    setCanon(canonResponse.data as CanonState);
+    const nextCanon = canonResponse.data as CanonState;
+    setCanon(nextCanon);
     setSuggestions(((suggestionResponse.data ?? []) as Suggestion[]).filter((item) => item.status === "pending"));
+    setCompleteness(completenessResponse);
   }
 
   useEffect(() => {
     void loadState();
   }, [slug]);
+
+  useEffect(() => {
+    if (!canon) {
+      return;
+    }
+    if (!canon.canon[selectedField]) {
+      setSelectedField(Object.keys(canon.canon)[0] ?? "title");
+    }
+  }, [canon, selectedField]);
 
   const field = canon?.canon?.[selectedField];
   const selectedSuggestion = useMemo(
@@ -67,22 +102,86 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
     [selectedField, suggestions],
   );
   const isHydratingSelectedField = hydrationState?.field === selectedField;
+  const fieldActions = useMemo(() => buildFieldActions(selectedField), [selectedField]);
+  const displayedGroups = useMemo(
+    () => FIELD_GROUPS.map((group) => ({
+      ...group,
+      fields: group.fields.filter((key) => canon?.canon[key]),
+    })).filter((group) => group.fields.length > 0),
+    [canon],
+  );
+
+  useEffect(() => {
+    if (!field || typeof field.value === "string") {
+      setJsonDraft("");
+      setJsonError(null);
+      return;
+    }
+
+    setJsonDraft(JSON.stringify(field.value, null, 2));
+    setJsonError(null);
+  }, [field, selectedField]);
 
   if (!canon || !field) return <div className="panel">Loading canon...</div>;
+
+  const completenessDimensions = completeness ? [
+    ["Characters", completeness.dimensions.characters.score],
+    ["Episodes", completeness.dimensions.episodes.score],
+    ["Themes", completeness.dimensions.themes.score],
+    ["World", completeness.dimensions.world.score],
+    ["Storylines", completeness.dimensions.storylines.score],
+  ] : [];
 
   return (
     <div className="three-column hosted-grid">
       <aside className="panel sidebar">
         <div className="section-label">Canon Fields</div>
-        {Object.entries(canon.canon).map(([key, value]) => (
-          <button key={key} className={`field-button ${selectedField === key ? "selected" : ""}`} onClick={() => setSelectedField(key)}>
-            <span className={`status-dot ${value.status}`}></span>
-            <span>{key}</span>
-          </button>
-        ))}
+        <div className="canon-field-groups">
+          {displayedGroups.map((group) => (
+            <section key={group.label} className="canon-field-group">
+              <div className="canon-field-group__title">{group.label}</div>
+              {group.fields.map((key) => {
+                const value = canon.canon[key];
+                return (
+                  <button key={key} className={`field-button ${selectedField === key ? "selected" : ""}`} onClick={() => setSelectedField(key)}>
+                    <span className={`status-dot ${value.status}`}></span>
+                    <span className="canon-field-button__label">{formatFieldName(key)}</span>
+                    <span className="canon-field-button__count">{summarizeFieldValue(value.value)}</span>
+                  </button>
+                );
+              })}
+            </section>
+          ))}
+        </div>
       </aside>
 
-      <section className="editor-panel">
+      <section className="editor-panel canon-editor-main">
+        {completeness && (
+          <article className="dossier canon-ribbon card--glow">
+            <div className="dossier__header">
+              <span>Canon Completeness</span>
+              <span>{completeness.score}/100</span>
+            </div>
+            <div className="dossier__body canon-ribbon__body">
+              <div className="canon-ribbon__metrics">
+                {completenessDimensions.map(([label, score]) => (
+                  <div key={label} className="canon-ribbon__metric">
+                    <span>{label}</span>
+                    <strong>{score}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="canon-ribbon__actions row gap wrap">
+                {completeness.suggestedDirectives.slice(0, 3).map((directive, index) => (
+                  <button key={`${directive.type}-${index}`} className="btn btn--ghost" onClick={() => void onIterateNow(directive)}>
+                    ◈ {directive.type.replace(/_/g, " ")}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </article>
+        )}
+
         <article className="dossier canon-field-card">
           <div className="dossier__header canon-field-card__header">
             <span>canon.{selectedField}</span>
@@ -92,11 +191,33 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
             </div>
           </div>
           <div className="dossier__body canon-field-card__body">
+            <div className="canon-field-card__summary row gap wrap">
+              <span className="badge badge--dim">{formatFieldName(selectedField)}</span>
+              <span className="badge badge--dim">{summarizeFieldValue(field.value)}</span>
+              {selectedSuggestion && <span className="badge badge--warn">SUGGESTION READY</span>}
+            </div>
+
             <div className="canon-field-card__value">
               {typeof field.value === "string" ? (
-                <textarea value={field.value} disabled={field.status === "locked"} onChange={(event) => setCanon({ ...canon, canon: { ...canon.canon, [selectedField]: { ...field, value: event.target.value } } })} />
+                <textarea
+                  value={field.value}
+                  disabled={field.status === "locked"}
+                  onChange={(event) => setCanon(updateFieldValue(canon, selectedField, event.target.value))}
+                />
               ) : (
-                <Editor height="60vh" defaultLanguage="json" value={JSON.stringify(field.value, null, 2)} onChange={(value) => setCanon({ ...canon, canon: { ...canon.canon, [selectedField]: { ...field, value: JSON.parse(value ?? "null") } } })} options={{ readOnly: field.status === "locked" }} />
+                <>
+                  <Editor
+                    height="60vh"
+                    defaultLanguage="json"
+                    value={jsonDraft}
+                    onChange={(value) => {
+                      setJsonDraft(value ?? "");
+                      setJsonError(null);
+                    }}
+                    options={{ readOnly: field.status === "locked" }}
+                  />
+                  {jsonError && <p className="canon-field-card__error">{jsonError}</p>}
+                </>
               )}
             </div>
 
@@ -113,13 +234,9 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
               </div>
             </div>
 
-            <div className="row gap wrap">
-              <button className="btn btn--ghost" onClick={async () => {
-                await api.saveCanon(slug, canon);
-                setStatus("Canon saved.");
-              }}>Edit</button>
-              <button className="btn btn--ghost" disabled={field.status === "locked"}>Lock</button>
-              <button className="btn btn--ghost" disabled={isHydratingSelectedField} onClick={() => void hydrateSelectedField("field")}>AI Fill ◈</button>
+            <div className="canon-field-actions row gap wrap">
+              <button className="btn btn--ghost" onClick={() => void saveCurrentField()}>Save Field</button>
+              <button className="btn btn--ghost" disabled={field.status === "locked"} onClick={() => void hydrateSelectedField("field")}>AI Fill ◈</button>
               <button className="btn btn--primary" onClick={async () => {
                 setStatus("Regenerating package...");
                 await api.runGenerate(slug, {}, (event) => {
@@ -129,6 +246,18 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
                 });
               }}>Regenerate Package</button>
             </div>
+
+            <div className="canon-iterate-strip">
+              <div className="section-label">Iterate This Section</div>
+              <div className="row gap wrap">
+                {fieldActions.map((directive, index) => (
+                  <button key={`${directive.type}-${index}`} className="btn btn--ghost" onClick={() => void onIterateNow(directive)}>
+                    ◈ {directive.instruction}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {isHydratingSelectedField && hydrationState && (
               <div className="dossier hydration-status-card">
                 <div className="dossier__header">
@@ -214,7 +343,7 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
                     setStatus(error instanceof Error ? error.message : "Reject failed.");
                   }
                 }}>Reject</button>
-                <button className="btn btn--ghost" onClick={() => void handleAcceptSuggestion(selectedSuggestion.field, true)}>Edit &amp; Accept</button>
+                <button className="btn btn--ghost" onClick={() => void handleAcceptSuggestion(selectedSuggestion.field, true)}>Keep Edits &amp; Accept</button>
               </div>
             </div>
           </article>
@@ -224,6 +353,24 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
       </aside>
     </div>
   );
+
+  async function saveCurrentField() {
+    if (!canon || !field) {
+      return;
+    }
+    try {
+      const nextCanon = materializeDraftCanon(canon, selectedField, field, jsonDraft);
+      setCanon(nextCanon);
+      await api.saveCanon(slug, nextCanon);
+      setJsonError(null);
+      await loadState();
+      setStatus(`Saved canon.${selectedField}.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Save failed.";
+      setJsonError(message);
+      setStatus(message);
+    }
+  }
 
   async function hydrateSelectedField(mode: "field" | "panel") {
     setHydrationState({
@@ -235,15 +382,15 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
     setStatus(`Hydrating canon.${selectedField}...`);
 
     try {
-        await api.runHydrate(slug, {
-          field: `canon.${selectedField}`,
-          provider: projectSettings?.llmProvider,
-          model: projectSettings?.llmModel,
-          promptHint,
-          iterations: iterationCount,
-          refinementGoals: splitRefinementGoals(refinementGoals),
-          force: true,
-        }, async (event) => {
+      await api.runHydrate(slug, {
+        field: `canon.${selectedField}`,
+        provider: projectSettings?.llmProvider,
+        model: projectSettings?.llmModel,
+        promptHint,
+        iterations: iterationCount,
+        refinementGoals: splitRefinementGoals(refinementGoals),
+        force: true,
+      }, async (event) => {
         if (event.event === "started") {
           setHydrationState({
             mode,
@@ -270,47 +417,35 @@ export function CanonEditor({ slug, projectSettings, onProjectSettingsChange, st
           const message = typeof event.data === "object" && event.data && "message" in (event.data as Record<string, unknown>)
             ? String((event.data as { message?: unknown }).message ?? "Hydration failed.")
             : "Hydration failed.";
-          setHydrationState({
-            mode,
-            field: selectedField,
-            step: message,
-            progress: 100,
-          });
+          setHydrationState({ mode, field: selectedField, step: message, progress: 100 });
           setStatus(message);
         }
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Hydration failed.";
-      setHydrationState({
-        mode,
-        field: selectedField,
-        step: message,
-        progress: 100,
-      });
+      setHydrationState({ mode, field: selectedField, step: message, progress: 100 });
       setStatus(message);
     }
   }
 
   async function handleAcceptSuggestion(fieldPath: string, preserveEditorValue: boolean) {
     try {
-      if (preserveEditorValue && canon && field && typeof field.value === "string") {
-        await api.saveCanon(slug, {
-          ...canon,
-          canon: {
-            ...canon.canon,
-            [selectedField]: {
-              ...field,
-              value: field.value,
-            },
-          },
-        });
+      if (preserveEditorValue) {
+        if (!canon || !field) {
+          return;
+        }
+        const nextCanon = materializeDraftCanon(canon, selectedField, field, jsonDraft);
+        setCanon(nextCanon);
+        await api.saveCanon(slug, nextCanon);
       }
 
       await api.acceptSuggestion(slug, fieldPath);
       await loadState();
-      setStatus(`${preserveEditorValue ? "Accepted edited suggestion for" : "Accepted"} ${fieldPath}.`);
+      setStatus(`${preserveEditorValue ? "Accepted suggestion after preserving editor edits for" : "Accepted"} ${fieldPath}.`);
     } catch (error) {
-      setStatus(error instanceof Error ? error.message : "Accept failed.");
+      const message = error instanceof Error ? error.message : "Accept failed.";
+      setJsonError(message);
+      setStatus(message);
     }
   }
 }
@@ -332,4 +467,78 @@ function formatUpdatedAt(value: string | undefined) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   return date.toISOString().slice(0, 10);
+}
+
+function formatFieldName(value: string) {
+  return value.replace(/_/g, " ").replace(/\b\w/g, (match) => match.toUpperCase());
+}
+
+function summarizeFieldValue(value: unknown) {
+  if (typeof value === "string") {
+    return value.length > 32 ? `${value.slice(0, 32)}...` : value || "String";
+  }
+  if (Array.isArray(value)) {
+    return `${value.length} items`;
+  }
+  if (value && typeof value === "object") {
+    return `${Object.keys(value).length} keys`;
+  }
+  return String(value ?? "empty");
+}
+
+function updateFieldValue(canon: CanonState, field: string, value: unknown): CanonState {
+  return {
+    ...canon,
+    canon: {
+      ...canon.canon,
+      [field]: {
+        ...canon.canon[field],
+        value,
+      },
+    },
+  };
+}
+
+function materializeDraftCanon(canon: CanonState, selectedField: string, field: CanonField, jsonDraft: string) {
+  if (typeof field.value === "string") {
+    return canon;
+  }
+
+  try {
+    const parsed = JSON.parse(jsonDraft);
+    return updateFieldValue(canon, selectedField, parsed);
+  } catch {
+    throw new Error(`Invalid JSON in canon.${selectedField}.`);
+  }
+}
+
+function buildFieldActions(field: string): IterationDirective[] {
+  if (field === "characters") {
+    return [
+      { type: "develop_character", instruction: "Deepen existing character relationships and arc notes." },
+      { type: "new_character", instruction: "Add one new character who pressures the current ensemble." },
+    ];
+  }
+  if (field === "episodes") {
+    return [
+      { type: "develop_episode", instruction: "Deepen episode beats, scenes, and endings." },
+      { type: "new_episode", instruction: "Add the next episode that best expands current arcs." },
+    ];
+  }
+  if (field === "storylines") {
+    return [{ type: "new_storyline", instruction: "Add or strengthen a storyline arc that spans the current slate." }];
+  }
+  if (["themes", "themes_structured", "motifs"].includes(field)) {
+    return [{ type: "develop_themes", instruction: "Sharpen themes, motifs, and thematic expression." }];
+  }
+  if (["world_setting", "locations", "world_lore"].includes(field)) {
+    return [{ type: "world_expansion", instruction: "Expand the world with clearer places, lore, and atmosphere." }];
+  }
+  if (field === "factions") {
+    return [
+      { type: "new_faction", instruction: "Add a faction or organization tied to the current character network." },
+      { type: "world_expansion", instruction: "Expand the institutions that shape this world." },
+    ];
+  }
+  return [{ type: "custom", instruction: `Refine canon.${field} for specificity and consistency.` }];
 }

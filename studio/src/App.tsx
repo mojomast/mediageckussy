@@ -150,7 +150,11 @@ export function App() {
         void refreshProjects();
       }} />}
 
-      {!inInterview && tab === "Canon" && selectedSlug && <CanonEditor slug={selectedSlug} projectSettings={projectSettings} onProjectSettingsChange={setProjectSettings} status={status} setStatus={setStatus} />}
+      {!inInterview && tab === "Canon" && selectedSlug && <CanonEditor slug={selectedSlug} projectSettings={projectSettings} onProjectSettingsChange={setProjectSettings} status={status} setStatus={setStatus} onIterateNow={async (directive) => {
+        setIterationPrefill({ slug: selectedSlug, directive, nonce: Date.now() });
+        setView({ kind: "workspace", tab: "Iterate" });
+        setStatus(`Loaded suggested iteration for ${selectedSlug}.`);
+      }} />}
       {!inInterview && tab === "Iterate" && selectedSlug && <IterationView slug={selectedSlug} projectSettings={projectSettings} setStatus={setStatus} prefill={iterationPrefill && iterationPrefill.slug === selectedSlug ? iterationPrefill : null} />}
       {!inInterview && tab === "Files" && selectedSlug && <PackagePreview slug={selectedSlug} status={status} setStatus={setStatus} />}
       {!inInterview && tab === "Site" && selectedSlug && <iframe className="site-frame" src={api.siteUrl(selectedSlug)} title="Site Preview" />}

@@ -749,6 +749,66 @@ textarea::placeholder {
   display: grid;
 }
 
+.canon-editor-main {
+  gap: var(--space-4);
+}
+
+.canon-ribbon__body,
+.canon-ribbon__metrics,
+.canon-field-groups,
+.canon-field-group,
+.canon-iterate-strip {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.canon-ribbon__metrics {
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr));
+}
+
+.canon-ribbon__metric {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.canon-ribbon__metric span {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+.canon-ribbon__metric strong {
+  font-size: var(--text-lg);
+}
+
+.canon-field-group {
+  padding-top: var(--space-2);
+  border-top: var(--border-width) solid var(--color-border-dim);
+}
+
+.canon-field-group__title {
+  color: var(--color-text-dim);
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-widest);
+  text-transform: uppercase;
+}
+
+.canon-field-button__label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.canon-field-button__count {
+  color: var(--color-text-ghost);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+}
+
 .canon-field-card {
   min-height: 100%;
 }
@@ -762,9 +822,18 @@ textarea::placeholder {
   gap: var(--space-4);
 }
 
+.canon-field-card__summary,
+.canon-field-actions {
+  align-items: center;
+}
+
 .canon-field-card__value {
   display: grid;
   gap: var(--space-3);
+}
+
+.canon-field-card__error {
+  color: var(--color-error);
 }
 
 .canon-field-card__meta {

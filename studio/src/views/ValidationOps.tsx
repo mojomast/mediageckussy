@@ -14,19 +14,37 @@ export function ValidationOps({ slug, setStatus, onIterateNow }: { slug: string;
   ] : [], [completeness]);
 
   useEffect(() => {
-    void Promise.all([
-      api.getValidation(slug),
-      api.getCompleteness(slug),
-    ]).then(([validationResponse, completenessResponse]) => {
-      setValidation(validationResponse.data);
-      setCompleteness(completenessResponse);
-    });
+    void loadOpsState();
   }, [slug]);
 
   if (!validation || !completeness) return <div className="panel">Loading validation...</div>;
 
   return (
     <section className="panel ops-list">
+      <div className="dossier canon-ribbon card--glow">
+        <div className="dossier__header">
+          <span>Ops Summary</span>
+          <span>{completeness.score}/100 canon // {validation.completenessScore}% package</span>
+        </div>
+        <div className="dossier__body canon-ribbon__body">
+          <div className="canon-ribbon__metrics">
+            {dimensions.map((dimension) => (
+              <div key={dimension.key} className="canon-ribbon__metric">
+                <span>{dimension.label}</span>
+                <strong>{dimension.score}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="row gap wrap">
+            {completeness.suggestedDirectives.slice(0, 4).map((directive, index) => (
+              <button key={`${directive.type}-${index}`} className="btn btn--ghost" onClick={() => void onIterateNow(directive)}>
+                ◈ {directive.type.replace(/_/g, " ")}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <div className="dossier iteration-panel card--glow">
         <div className="dossier__header">
           <span>Canon Completeness</span>
@@ -73,8 +91,7 @@ export function ValidationOps({ slug, setStatus, onIterateNow }: { slug: string;
         <button onClick={async () => {
           setStatus("Running bulk hydration...");
           await api.runHydrate(slug, { mode: "bulk" }, async () => {
-            const response = await api.getValidation(slug);
-            setValidation(response.data);
+            await loadOpsState();
             setStatus("Bulk hydration finished.");
           });
         }}>Fix All Placeholders</button>
@@ -88,4 +105,13 @@ export function ValidationOps({ slug, setStatus, onIterateNow }: { slug: string;
       ))}
     </section>
   );
+
+  async function loadOpsState() {
+    const [validationResponse, completenessResponse] = await Promise.all([
+      api.getValidation(slug),
+      api.getCompleteness(slug),
+    ]);
+    setValidation(validationResponse.data);
+    setCompleteness(completenessResponse);
+  }
 }
